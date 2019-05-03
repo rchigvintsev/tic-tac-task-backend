@@ -30,7 +30,11 @@ public class Task {
      * @param title task title (must not be {@code null} or empty)
      */
     public Task(String title) {
+        setTitle(title);
+    }
+
+    public void setTitle(String title) {
         Assert.hasText(title, "Task title must not be null or blank");
-        this.title = title;
+        this.title = title.trim();
     }
 }
