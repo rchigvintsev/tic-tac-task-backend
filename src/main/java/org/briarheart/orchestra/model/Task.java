@@ -9,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 /**
  * Main entity representing task to be done.
@@ -20,9 +21,10 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @NotBlank(message = "{javax.validation.constraints.NotBlank.title.message}")
     private String title;
+    @NotNull(message = "{javax.validation.constraints.NotNull.completed.message}")
+    private Boolean completed = false;
 
     /**
      * Creates new instance of this class with the given title.
