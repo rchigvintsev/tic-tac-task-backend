@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.config;
 
+import org.briarheart.orchestra.model.Task;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
@@ -10,5 +11,6 @@ public class RepositoryRestConfig implements RepositoryRestConfigurer {
     public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config) {
         // TODO: save client origin somewhere in the application settings
         config.getCorsRegistry().addMapping("/**").allowedOrigins("http://localhost:4200");
+        config.exposeIdsFor(Task.class);
     }
 }
