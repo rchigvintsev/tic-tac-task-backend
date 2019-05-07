@@ -9,8 +9,6 @@ import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
 public class RepositoryRestConfig implements RepositoryRestConfigurer {
     @Override
     public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config) {
-        // TODO: save client origin somewhere in the application settings
-        config.getCorsRegistry().addMapping("/**").allowedOrigins("http://localhost:4200");
         config.exposeIdsFor(Task.class);
     }
 }
