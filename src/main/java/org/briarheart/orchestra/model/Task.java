@@ -10,6 +10,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * Main entity representing task to be done.
@@ -22,6 +23,7 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotBlank(message = "{javax.validation.constraints.NotBlank.title.message}")
+    @Size(max = 255, message = "{javax.validation.constraints.Size.title.message}")
     private String title;
     @NotNull(message = "{javax.validation.constraints.NotNull.completed.message}")
     private Boolean completed = false;
