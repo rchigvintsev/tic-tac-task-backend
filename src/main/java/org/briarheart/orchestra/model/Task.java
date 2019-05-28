@@ -22,11 +22,14 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @NotBlank(message = "{javax.validation.constraints.NotBlank.title.message}")
     @Size(max = 255, message = "{javax.validation.constraints.Size.title.message}")
     private String title;
+
     @Size(max = 10_000, message = "{javax.validation.constraints.Size.description.message}")
     private String description;
+
     @NotNull(message = "{javax.validation.constraints.NotNull.completed.message}")
     private Boolean completed = false;
 
