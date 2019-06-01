@@ -23,7 +23,7 @@ public class TaskComment {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "task_id", nullable = false)
+    @JoinColumn(name = "task_id")
     private Task task;
 
     @NotBlank(message = "{javax.validation.constraints.NotBlank.commentText.message}")
