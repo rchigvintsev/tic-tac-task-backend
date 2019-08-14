@@ -1,33 +1,41 @@
 package org.briarheart.orchestra.controller;
 
+import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 
 /**
  * @author Roman Chigvintsev
  */
 @ExtendWith(SpringExtension.class)
-@WebMvcTest(TestController.class)
+@WebFluxTest(value = TestController.class)
+@Import(PermitAllSecurityConfig.class)
 public class GlobalExceptionHandlingControllerAdviceTest {
     @Autowired
-    private MockMvc mvc;
+    private WebTestClient testClient;
 
     @Test
-    public void shouldReturnBadRequestResponseStatusInCaseOfConstraintViolationException() throws Exception {
-        mvc.perform(post("/constraintViolationException")).andExpect(status().isBadRequest());
+    public void shouldGetBadRequestResponseStatusInCaseOfConstraintViolationException() {
+        testClient.mutateWith(csrf())
+                .post()
+                .uri("/constraintViolationException")
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
     @Test
-    public void shouldReturnErrorMessagesInResponseBodyInCaseOfConstraintViolationException() throws Exception {
-        mvc.perform(post("/constraintViolationException"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.messages").exists());
+    public void shouldGetErrorMessagesInResponseBodyInCaseOfConstraintViolationException() {
+        testClient.mutateWith(csrf())
+                .post()
+                .uri("/constraintViolationException")
+                .exchange()
+                .expectBody().jsonPath("$.messages").exists();
     }
 }

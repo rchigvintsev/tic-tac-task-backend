@@ -1,18 +1,14 @@
 package org.briarheart.orchestra.data;
 
 import org.briarheart.orchestra.model.TaskComment;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.data.rest.core.annotation.RestResource;
+import org.springframework.data.r2dbc.repository.query.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 
 /**
  * @author Roman Chigvintsev
  */
-@RepositoryRestResource
-public interface TaskCommentRepository extends CrudRepository<TaskComment, Long> {
-    @RestResource(path = "findByTaskId")
-    Page<TaskComment> findByTaskIdOrderByCreatedAtDesc(@Param("taskId") Long taskId, Pageable pageable);
+public interface TaskCommentRepository extends ReactiveCrudRepository<TaskComment, Long> {
+    @Query("SELECT * FROM task_comment WHERE task_id = :taskId ORDER BY created_at DESC")
+    Flux<TaskComment> findByTaskIdOrderByCreatedAtDesc(Long taskId);
 }

@@ -1,16 +1,14 @@
 package org.briarheart.orchestra.data;
 
 import org.briarheart.orchestra.model.Task;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.data.r2dbc.repository.query.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 
 /**
  * @author Roman Chigvintsev
  */
-@RepositoryRestResource
-public interface TaskRepository extends JpaRepository<Task, Long> {
-    Page<Task> findByCompleted(@Param("completed") Boolean completed, Pageable pageable);
+public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
+    @Query("SELECT * FROM Task WHERE completed = :completed")
+    Flux<Task> findByCompleted(Boolean completed);
 }

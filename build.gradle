@@ -5,9 +5,9 @@ buildscript {
 }
 
 plugins {
-	id 'org.springframework.boot' version '2.1.4.RELEASE'
-	id "io.freefair.lombok" version "3.2.0"
-	id "org.flywaydb.flyway" version "5.2.4"
+	id 'org.springframework.boot' version '2.2.0.M5'
+	id 'io.freefair.lombok' version '3.2.0'
+	id 'org.flywaydb.flyway' version '5.2.4'
 	id 'java'
 	id 'jacoco'
 }
@@ -15,8 +15,9 @@ plugins {
 apply plugin: 'io.spring.dependency-management'
 
 ext {
-	junitJupiterVersion = '5.4.2'
-	mockitoVersion = '2.28.2'
+	guavaVersion = '28.0-jre'
+	springR2dbcVersion = '0.1.0.BUILD-SNAPSHOT'
+	r2dbcVersion = '0.8.0.M8'
 }
 
 group = 'org.briarheart'
@@ -25,30 +26,28 @@ sourceCompatibility = '11'
 
 repositories {
 	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.postgresql:postgresql:42.2.5'
-	implementation 'org.flywaydb:flyway-core:5.2.4'
-	implementation 'com.google.guava:guava:27.1-jre'
+	implementation "org.springframework.boot.experimental:spring-boot-starter-data-r2dbc:$springR2dbcVersion"
+	implementation 'org.springframework.session:spring-session-core'
+	implementation "io.r2dbc:r2dbc-postgresql:$r2dbcVersion"
+	implementation 'org.flywaydb:flyway-core'
+	implementation "com.google.guava:guava:$guavaVersion"
 	
 	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
 	
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 		exclude group: 'junit', module: 'junit'
 	}
+	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation "org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion"
-	testImplementation "org.mockito:mockito-core:$mockitoVersion"
-	testImplementation "org.mockito:mockito-junit-jupiter:$mockitoVersion"
-
-	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion"
-	testRuntimeOnly 'org.junit.platform:junit-platform-commons:1.4.2'
 }
 
 test {

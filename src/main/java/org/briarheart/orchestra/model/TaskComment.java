@@ -2,8 +2,8 @@ package org.briarheart.orchestra.model;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
 
-import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -14,17 +14,13 @@ import java.time.LocalDateTime;
  *
  * @author Roman Chigvintsev
  */
-@Entity
 @Data
 @NoArgsConstructor
 public class TaskComment {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "task_id")
-    private Task task;
+    private Long taskId;
 
     @NotBlank(message = "{javax.validation.constraints.NotBlank.commentText.message}")
     @Size(max = 10_000, message = "{javax.validation.constraints.Size.commentText.message}")
