@@ -22,7 +22,7 @@ public class GlobalExceptionHandlingControllerAdviceTest {
     private WebTestClient testClient;
 
     @Test
-    public void shouldGetBadRequestResponseStatusInCaseOfConstraintViolationException() {
+    void shouldGetBadRequestResponseStatusInCaseOfConstraintViolationException() {
         testClient.mutateWith(csrf())
                 .post()
                 .uri("/constraintViolationException")
@@ -31,7 +31,7 @@ public class GlobalExceptionHandlingControllerAdviceTest {
     }
 
     @Test
-    public void shouldGetErrorMessagesInResponseBodyInCaseOfConstraintViolationException() {
+    void shouldGetErrorMessagesInResponseBodyInCaseOfConstraintViolationException() {
         testClient.mutateWith(csrf())
                 .post()
                 .uri("/constraintViolationException")

@@ -1,7 +1,6 @@
 package org.briarheart.orchestra.model;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 
 import javax.validation.constraints.NotBlank;
@@ -13,6 +12,8 @@ import javax.validation.constraints.Size;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Task {
     @Id
     private Long id;
@@ -25,5 +26,6 @@ public class Task {
     private String description;
 
     @NotNull(message = "{javax.validation.constraints.NotNull.completed.message}")
+    @Builder.Default
     private Boolean completed = false;
 }

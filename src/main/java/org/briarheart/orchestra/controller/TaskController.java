@@ -3,6 +3,7 @@ package org.briarheart.orchestra.controller;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.Task;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,6 +28,7 @@ public class TaskController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Mono<Task> createTask(@RequestBody Task task) {
         return taskRepository.save(task);
     }
