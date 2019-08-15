@@ -3,6 +3,7 @@ package org.briarheart.orchestra.controller;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.data.TaskCommentRepository;
 import org.briarheart.orchestra.model.TaskComment;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,12 +23,14 @@ public class TaskCommentController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Mono<TaskComment> createComment(@RequestBody TaskComment comment) {
         return taskCommentRepository.save(comment);
     }
 
     @DeleteMapping
     @RequestMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteComment(@PathVariable Long id) {
         return taskCommentRepository.deleteById(id);
     }

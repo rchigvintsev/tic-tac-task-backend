@@ -36,6 +36,7 @@ class TaskControllerTest {
         Task task = Task.builder().id(1L).title("Test task").build();
         Flux<Task> taskFlux = Flux.just(task);
         Mockito.when(taskRepository.findByCompleted(false)).thenReturn(taskFlux);
+
         testClient.get().uri("/tasks?completed=false").exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
@@ -46,6 +47,7 @@ class TaskControllerTest {
         Task task = Task.builder().id(1L).title("Test task").completed(true).build();
         Flux<Task> taskFlux = Flux.just(task);
         Mockito.when(taskRepository.findByCompleted(true)).thenReturn(taskFlux);
+
         testClient.get().uri("/tasks?completed=true").exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
@@ -56,6 +58,7 @@ class TaskControllerTest {
         Task task = Task.builder().id(1L).title("Test task").build();
         Mono<Task> taskMono = Mono.just(task);
         Mockito.when(taskRepository.findById(1L)).thenReturn(taskMono);
+
         testClient.get().uri("/tasks/1").exchange()
                 .expectStatus().isOk()
                 .expectBody(Task.class).isEqualTo(task);
@@ -68,6 +71,7 @@ class TaskControllerTest {
         Task savedTask = Task.builder().id(2L).title(taskTitle).build();
         Mono<Task> savedTaskMono = Mono.just(savedTask);
         Mockito.when(taskRepository.save(task)).thenReturn(savedTaskMono);
+
         testClient.mutateWith(csrf()).post()
                 .uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)

@@ -1,7 +1,6 @@
 package org.briarheart.orchestra.model;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 
 import javax.validation.constraints.NotBlank;
@@ -16,6 +15,8 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class TaskComment {
     @Id
     private Long id;
