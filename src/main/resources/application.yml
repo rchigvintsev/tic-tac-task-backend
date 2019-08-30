@@ -1,0 +1,27 @@
+spring:
+  r2dbc:
+      url: r2dbc:postgresql://localhost:5432/orchestra
+      username: postgres
+      password: postgres
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${SECURITY_OAUTH2_GOOLE_CLIENT_ID}
+            client-secret: ${SECURITY_OAUTH2_GOOLE_CLIENT_SECRET}
+
+management:
+  endpoint:
+    health:
+      show-details: when_authorized
+  endpoints:
+    web:
+      exposure:
+        include: info,health,metrics
+
+info:
+  application:
+    name: Orchestra
+    version: 0.0.1-SNAPSHOT
