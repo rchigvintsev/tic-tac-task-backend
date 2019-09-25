@@ -14,6 +14,6 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 public class PermitAllSecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity security) {
-        return  security.authorizeExchange().anyExchange().permitAll().and().build();
+        return security.authorizeExchange().anyExchange().permitAll().and().build();
     }
 }
