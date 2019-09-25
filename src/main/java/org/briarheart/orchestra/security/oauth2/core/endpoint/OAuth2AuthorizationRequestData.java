@@ -5,6 +5,9 @@ import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.util.Assert;
 
@@ -58,7 +61,7 @@ public class OAuth2AuthorizationRequestData {
      *
      * @return new instance of {@link OAuth2AuthorizationRequest}
      *
-     * @throws IllegalStateException if current grant type is unsupported
+     * @throws OAuth2AuthenticationException if current grant type is not supported
      */
     public OAuth2AuthorizationRequest toAuthorizationRequest() {
         OAuth2AuthorizationRequest.Builder requestBuilder;
@@ -66,8 +69,11 @@ public class OAuth2AuthorizationRequestData {
             requestBuilder = OAuth2AuthorizationRequest.authorizationCode();
         else if (AuthorizationGrantType.IMPLICIT.getValue().equals(grantType))
             requestBuilder = OAuth2AuthorizationRequest.implicit();
-        else
-            throw new IllegalStateException("Unsupported grant type: " + grantType);
+        else {
+            OAuth2Error oAuth2Error = new OAuth2Error(OAuth2ErrorCodes.INVALID_GRANT,
+                    "Unsupported grant type: " + grantType, null);
+            throw new OAuth2AuthenticationException(oAuth2Error);
+        }
         return requestBuilder
                 .authorizationUri(authorizationUri)
                 .clientId(clientId)

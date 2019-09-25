@@ -10,6 +10,9 @@ import org.springframework.http.HttpCookie;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.util.Assert;
 import org.springframework.util.MultiValueMap;
@@ -131,7 +134,9 @@ public class CookieOAuth2ServerAuthorizationRequestRepository
             byte[] bytes = objectMapper.writeValueAsBytes(requestData);
             return Base64.getUrlEncoder().encodeToString(bytes);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize OAuth2 authorization request to JSON", e);
+            OAuth2Error oAuth2Error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
+                    "Failed to serialize OAuth2 authorization request to JSON", null);
+            throw new OAuth2AuthenticationException(oAuth2Error, e);
         }
     }
 
