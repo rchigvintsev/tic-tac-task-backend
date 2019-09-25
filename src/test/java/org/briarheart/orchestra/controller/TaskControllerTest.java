@@ -75,7 +75,7 @@ class TaskControllerTest {
         testClient.mutateWith(csrf()).post()
                 .uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(task)
+                .bodyValue(task)
                 .exchange()
 
                 .expectStatus().isCreated()

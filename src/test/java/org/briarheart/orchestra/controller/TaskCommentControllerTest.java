@@ -72,7 +72,7 @@ class TaskCommentControllerTest {
         testClient.mutateWith(csrf()).post()
                 .uri("/taskComments")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(comment)
+                .bodyValue(comment)
                 .exchange()
 
                 .expectStatus().isCreated()
