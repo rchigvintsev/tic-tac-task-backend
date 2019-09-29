@@ -9,8 +9,8 @@ spring:
       client:
         registration:
           google:
-            client-id: ${SECURITY_OAUTH2_GOOLE_CLIENT_ID}
-            client-secret: ${SECURITY_OAUTH2_GOOLE_CLIENT_SECRET}
+            client-id: ${SECURITY_OAUTH2_GOOGLE_CLIENT_ID}
+            client-secret: ${SECURITY_OAUTH2_GOOGLE_CLIENT_SECRET}
 
 management:
   endpoint:
