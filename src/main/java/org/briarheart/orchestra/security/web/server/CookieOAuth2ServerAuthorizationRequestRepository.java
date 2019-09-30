@@ -47,7 +47,9 @@ public class CookieOAuth2ServerAuthorizationRequestRepository
     private final String clientRedirectUriParameterName;
 
     private String authorizationRequestCookieName = DEFAULT_AUTHORIZATION_REQUEST_COOKIE_NAME;
-    @Setter private int cookieMaxAge = DEFAULT_COOKIE_MAX_AGE;
+
+    @Setter
+    private int cookieMaxAge = DEFAULT_COOKIE_MAX_AGE;
 
     /**
      * Creates new instance of this class with the given client redirect URI parameter name.
