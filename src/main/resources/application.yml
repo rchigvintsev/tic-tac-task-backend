@@ -25,3 +25,10 @@ info:
   application:
     name: Orchestra
     version: 0.0.1-SNAPSHOT
+
+application:
+  security:
+    authentication:
+      access-token:
+        validity-seconds: 864000000
+        signing-key: ${SECURITY_ACCESS_TOKEN_SIGNING_KEY}
