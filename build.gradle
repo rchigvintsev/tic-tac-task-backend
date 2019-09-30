@@ -20,6 +20,7 @@ ext {
 	r2dbcVersion = '0.8.0.BUILD-SNAPSHOT'
 	nettyVersion = '4.1.39.Final'
 	jjwtVersion = '0.9.1'
+	jaxbApiVersion = '2.3.1'
 }
 
 group = 'org.briarheart'
@@ -43,6 +44,7 @@ dependencies {
 	implementation "io.netty:netty-codec-http:$nettyVersion"
 	implementation "io.netty:netty-codec-http2:$nettyVersion"
 	implementation "io.jsonwebtoken:jjwt:$jjwtVersion"
+	implementation "javax.xml.bind:jaxb-api:$jaxbApiVersion"
 
 	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
 	
