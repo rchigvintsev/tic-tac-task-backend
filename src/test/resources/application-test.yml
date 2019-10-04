@@ -1,0 +1,5 @@
+application:
+  security:
+    authentication:
+      access-token:
+        signing-key: secret
