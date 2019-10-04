@@ -1,8 +1,7 @@
 package org.briarheart.orchestra.security.web.server.authentication;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
@@ -24,59 +23,28 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 import java.net.URI;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 
 /**
- * This handler issues an access token and then performs a redirect on authentication success passing token in query
- * string. Location to redirect is taken from the saved OAuth2 authorization request. Particularly from request's
- * additional parameters.
+ * This handler issues an access token and then performs a redirect passing token in query string. Location to redirect
+ * is taken from the saved OAuth2 authorization request. Particularly from request's additional parameters.
  *
  * @author Roman Chigvintsev
  *
  * @see OAuth2AuthorizationRequest
  */
-public class ClientRedirectServerAuthenticationSuccessHandler implements ServerAuthenticationSuccessHandler {
+@RequiredArgsConstructor
+public class AccessTokenServerAuthenticationSuccessHandler implements ServerAuthenticationSuccessHandler {
     public static final String DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME = "client-redirect-uri";
-
-    private static final long DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 300;
 
     private final ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository;
     private final UserRepository userRepository;
-    private final String accessTokenSigningKey;
+    private final AccessTokenService accessTokenService;
 
     private String clientRedirectUriParameterName = DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 
     @Setter
-    private long accessTokenValiditySeconds = DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS;
-
-    @Setter
     @NonNull
     private ServerRedirectStrategy redirectStrategy = new DefaultServerRedirectStrategy();
-
-    /**
-     * Creates new instance of this class with the given authorization request repository, user repository and
-     * access token signing key.
-     *
-     * @param authorizationRequestRepository given authorization request repository (must not be {@code null})
-     * @param userRepository user repository (must not be {@code null})
-     * @param accessTokenSigningKey access token signing key (must not be {@code null} or empty)
-     */
-    public ClientRedirectServerAuthenticationSuccessHandler(
-            ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
-            UserRepository userRepository,
-            String accessTokenSigningKey
-    ) {
-        Assert.notNull(authorizationRequestRepository, "Authorization request repository must not be null");
-        Assert.notNull(userRepository, "User repository must not be null");
-        Assert.hasText(accessTokenSigningKey, "Access token signing key must not be null or empty");
-
-        this.authorizationRequestRepository = authorizationRequestRepository;
-        this.userRepository = userRepository;
-        this.accessTokenSigningKey = accessTokenSigningKey;
-    }
 
     @Override
     public Mono<Void> onAuthenticationSuccess(WebFilterExchange webFilterExchange, Authentication authentication) {
@@ -122,21 +90,11 @@ public class ClientRedirectServerAuthenticationSuccessHandler implements ServerA
 
     private Mono<? extends Void> sendRedirect(ServerWebExchange exchange,
                                               Tuple2<? extends String, ? extends User> locationAndUser) {
+        AccessToken accessToken = accessTokenService.createAccessToken(locationAndUser.getT2());
         URI redirectUri = UriComponentsBuilder.fromUriString(locationAndUser.getT1())
-                .queryParam("access-token", buildAccessToken(locationAndUser.getT2()))
+                .queryParam("access-token", accessToken.getTokenValue())
                 .build()
                 .toUri();
         return redirectStrategy.sendRedirect(exchange, redirectUri);
-    }
-
-    private String buildAccessToken(User user) {
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-        LocalDateTime expiration = now.plus(accessTokenValiditySeconds, ChronoUnit.SECONDS);
-        return Jwts.builder()
-                .setSubject(user.getEmail())
-                .setIssuedAt(Date.from(now.toInstant(ZoneOffset.UTC)))
-                .setExpiration(Date.from(expiration.toInstant(ZoneOffset.UTC)))
-                .signWith(SignatureAlgorithm.HS512, accessTokenSigningKey)
-                .compact();
     }
 }

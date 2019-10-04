@@ -1,4 +1,4 @@
-package org.briarheart.orchestra.security.web.server;
+package org.briarheart.orchestra.security.oauth2.client.web.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

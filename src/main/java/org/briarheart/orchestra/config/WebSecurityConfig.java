@@ -2,8 +2,12 @@ package org.briarheart.orchestra.config;
 
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.security.oauth2.client.oidc.userinfo.DatabaseOidcReactiveOAuth2UserService;
-import org.briarheart.orchestra.security.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
-import org.briarheart.orchestra.security.web.server.authentication.ClientRedirectServerAuthenticationSuccessHandler;
+import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
+import org.briarheart.orchestra.security.web.server.authentication.AccessTokenReactiveAuthenticationManager;
+import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationConverter;
+import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationSuccessHandler;
+import org.briarheart.orchestra.security.web.server.authentication.AccessTokenService;
+import org.briarheart.orchestra.security.web.server.authentication.jwt.JwtService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesRegistrationAdapter;
@@ -11,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -23,6 +28,7 @@ import org.springframework.security.oauth2.client.web.server.ServerOAuth2Authori
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
 import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
@@ -33,7 +39,10 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.WebFilter;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import static org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 
 /**
  * @author Roman Chigvintsev
@@ -49,7 +58,8 @@ public class WebSecurityConfig {
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
                                                             ServerAuthenticationConverter authenticationConverter,
-                                                            ServerAuthenticationSuccessHandler authenticationSuccessHandler) {
+                                                            ServerAuthenticationSuccessHandler authenticationSuccessHandler,
+                                                            AuthenticationWebFilter accessTokenAuthenticationWebFilter) {
         SecurityWebFilterChain filterChain = http.cors().configurationSource(createCorsConfigurationSource())
                 .and()
                     .authorizeExchange().anyExchange().authenticated()
@@ -62,6 +72,7 @@ public class WebSecurityConfig {
                         .authenticationConverter(authenticationConverter)
                         .authenticationSuccessHandler(authenticationSuccessHandler)
                 .and()
+                    .addFilterBefore(accessTokenAuthenticationWebFilter, SecurityWebFiltersOrder.HTTP_BASIC)
                     .build();
         configureOAuth2AuthorizationRequestRedirectWebFilter(filterChain);
         return filterChain;
@@ -86,29 +97,39 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
-        return new CookieOAuth2ServerAuthorizationRequestRepository(
-                ClientRedirectServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME
-        );
-    }
-
-    @Bean
     public ServerAuthenticationSuccessHandler authenticationSuccessHandler(
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            AccessTokenService accessTokenService
     ) {
-        ClientRedirectServerAuthenticationSuccessHandler handler = new ClientRedirectServerAuthenticationSuccessHandler(
-                authorizationRequestRepository,
-                userRepository,
-                accessTokenSigningKey
-        );
-        handler.setAccessTokenValiditySeconds(accessTokenValiditySeconds);
-        return handler;
+        return new AccessTokenServerAuthenticationSuccessHandler(authorizationRequestRepository, userRepository,
+                accessTokenService);
     }
 
     @Bean
-    public ReactiveOAuth2UserService<OidcUserRequest, OidcUser> oAuth2UserService(UserRepository userRepository) {
+    public ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
+        return new CookieOAuth2ServerAuthorizationRequestRepository(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME);
+    }
+
+    @Bean
+    public ReactiveOAuth2UserService<OidcUserRequest, OidcUser> oidcOAuth2UserService(UserRepository userRepository) {
         return new DatabaseOidcReactiveOAuth2UserService(userRepository);
+    }
+
+    @Bean
+    public AuthenticationWebFilter accessTokenAuthenticationWebFilter(AccessTokenService accessTokenService) {
+        AccessTokenReactiveAuthenticationManager authenticationManager
+                = new AccessTokenReactiveAuthenticationManager(accessTokenService);
+        AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
+        filter.setServerAuthenticationConverter(new AccessTokenServerAuthenticationConverter());
+        return filter;
+    }
+
+    @Bean
+    public AccessTokenService accessTokenService() {
+        JwtService tokenService = new JwtService(accessTokenSigningKey.getBytes(StandardCharsets.UTF_8));
+        tokenService.setAccessTokenValiditySeconds(accessTokenValiditySeconds);
+        return tokenService;
     }
 
     private CorsConfigurationSource createCorsConfigurationSource() {
