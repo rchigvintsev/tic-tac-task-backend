@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.util.Assert;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -37,12 +38,12 @@ import java.util.Base64;
  */
 public class CookieOAuth2ServerAuthorizationRequestRepository
         implements ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> {
+    public static final String DEFAULT_AUTHORIZATION_REQUEST_COOKIE_NAME = "oauth2-authorization-request";
+
     private static final Logger log = LoggerFactory.getLogger(CookieOAuth2ServerAuthorizationRequestRepository.class);
-
-    private static final String DEFAULT_AUTHORIZATION_REQUEST_COOKIE_NAME = "oauth2-authorization-request";
-    private static final int DEFAULT_COOKIE_MAX_AGE = 180;
-
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final int DEFAULT_COOKIE_MAX_AGE = 180;
 
     private final String clientRedirectUriParameterName;
 
@@ -72,7 +73,10 @@ public class CookieOAuth2ServerAuthorizationRequestRepository
                                                ServerWebExchange exchange) {
         Assert.notNull(authorizationRequest, "Authorization request cannot be null");
         String clientRedirectUri = getClientRedirectUri(exchange);
-        Assert.hasText(clientRedirectUri, "Client redirect URI must be specified");
+        if (!StringUtils.hasText(clientRedirectUri)) {
+            String message = "Parameter \"" + clientRedirectUriParameterName + "\" is not provided";
+            return Mono.error(new ClientRedirectUriMissingException(message));
+        }
         return Mono.fromRunnable(() ->
                 saveAuthorizationRequestToCookie(authorizationRequest, clientRedirectUri, exchange));
     }
