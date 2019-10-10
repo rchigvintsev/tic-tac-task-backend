@@ -2,6 +2,7 @@ package org.briarheart.orchestra.security.oauth2.client.web.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.Setter;
 import org.briarheart.orchestra.security.oauth2.core.endpoint.OAuth2AuthorizationRequestData;
 import org.slf4j.Logger;
@@ -45,8 +46,10 @@ public class CookieOAuth2ServerAuthorizationRequestRepository
 
     private static final int DEFAULT_COOKIE_MAX_AGE = 180;
 
+    @Getter
     private final String clientRedirectUriParameterName;
 
+    @Getter
     private String authorizationRequestCookieName = DEFAULT_AUTHORIZATION_REQUEST_COOKIE_NAME;
 
     @Setter
@@ -68,6 +71,17 @@ public class CookieOAuth2ServerAuthorizationRequestRepository
         return Mono.fromCallable(() -> loadAuthorizationRequestFromCookies(exchange));
     }
 
+    /**
+     * Persists given OAuth2 authorization request to cookies. Name of cookie can be changed from default
+     * {@link #DEFAULT_AUTHORIZATION_REQUEST_COOKIE_NAME} with method
+     * {@link #setAuthorizationRequestCookieName(String)}.
+     *
+     * @param authorizationRequest OAuth2 authorization request to be saved (must not be {@code null})
+     * @param exchange web exchange (must not be {@code null})
+     *
+     * @throws ClientRedirectUriMissingException if client redirect URI is not specified in HTTP request
+     * query parameters
+     */
     @Override
     public Mono<Void> saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest,
                                                ServerWebExchange exchange) {
