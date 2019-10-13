@@ -19,7 +19,7 @@ ext {
 	springR2dbcVersion = '0.1.0.BUILD-SNAPSHOT'
 	r2dbcVersion = '0.8.0.BUILD-SNAPSHOT'
 	nettyVersion = '4.1.39.Final'
-	jjwtVersion = '0.9.1'
+	jjwtVersion = '0.10.7'
 	jaxbApiVersion = '2.3.1'
 }
 
@@ -43,10 +43,13 @@ dependencies {
 	implementation "com.google.guava:guava:$guavaVersion"
 	implementation "io.netty:netty-codec-http:$nettyVersion"
 	implementation "io.netty:netty-codec-http2:$nettyVersion"
-	implementation "io.jsonwebtoken:jjwt:$jjwtVersion"
+	implementation "io.netty:netty-handler-proxy:$nettyVersion"
+	implementation "io.jsonwebtoken:jjwt-api:$jjwtVersion"
 	implementation "javax.xml.bind:jaxb-api:$jaxbApiVersion"
 
 	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:$jjwtVersion"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:$jjwtVersion"
 	
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
