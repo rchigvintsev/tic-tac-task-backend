@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.security.web.server.authentication.jwt;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import lombok.Setter;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.security.web.server.authentication.AccessToken;
@@ -8,9 +9,11 @@ import org.briarheart.orchestra.security.web.server.authentication.AccessTokenSe
 import org.briarheart.orchestra.security.web.server.authentication.InvalidAccessTokenException;
 import org.springframework.util.Assert;
 
+import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Date;
 
 /**
@@ -24,7 +27,7 @@ import java.util.Date;
 public class JwtService implements AccessTokenService {
     private static final long DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 300;
 
-    private final byte[] accessTokenSigningKey;
+    private final SecretKey accessTokenSigningKey;
 
     @Setter
     private long accessTokenValiditySeconds = DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS;
@@ -32,13 +35,11 @@ public class JwtService implements AccessTokenService {
     /**
      * Creates new instance of this class with the given token signing key.
      *
-     * @param accessTokenSigningKey JWT signing key (must not be {@code null} or empty)
+     * @param accessTokenSigningKey BASE64-encoded JWT signing key (must not be {@code null} or empty)
      */
-    public JwtService(byte[] accessTokenSigningKey) {
-        if (accessTokenSigningKey == null || accessTokenSigningKey.length == 0) {
-            throw new IllegalArgumentException("Access token signing key must not be null or empty");
-        }
-        this.accessTokenSigningKey = accessTokenSigningKey;
+    public JwtService(String accessTokenSigningKey) {
+        Assert.hasText(accessTokenSigningKey, "Access token signing key must not be null or empty");
+        this.accessTokenSigningKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(accessTokenSigningKey));
     }
 
     @Override
@@ -56,7 +57,7 @@ public class JwtService implements AccessTokenService {
 
         String tokenValue = Jwts.builder()
                 .setClaims(claims)
-                .signWith(SignatureAlgorithm.HS512, accessTokenSigningKey)
+                .signWith(accessTokenSigningKey, SignatureAlgorithm.HS512)
                 .compact();
         return new Jwt.Builder(tokenValue).claims(claims).build();
     }

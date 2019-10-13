@@ -39,7 +39,6 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.WebFilter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
@@ -127,7 +126,7 @@ public class WebSecurityConfig {
 
     @Bean
     public AccessTokenService accessTokenService() {
-        JwtService tokenService = new JwtService(accessTokenSigningKey.getBytes(StandardCharsets.UTF_8));
+        JwtService tokenService = new JwtService(accessTokenSigningKey);
         tokenService.setAccessTokenValiditySeconds(accessTokenValiditySeconds);
         return tokenService;
     }
