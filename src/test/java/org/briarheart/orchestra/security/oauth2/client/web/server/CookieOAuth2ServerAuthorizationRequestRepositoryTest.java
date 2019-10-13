@@ -2,29 +2,34 @@ package org.briarheart.orchestra.security.oauth2.client.web.server;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.ResponseCookie;
-import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
+import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.server.ServerWebExchange;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Roman Chigvintsev
  */
 class CookieOAuth2ServerAuthorizationRequestRepositoryTest {
+    private static final String VALID_AUTHORIZATION_REQUEST_COOKIE_VALUE = "eyJhdXRob3JpemF0aW9uVXJpIjoiaHR0cDovL2F1d" +
+            "Ghvcml6ZS5tZSIsImdyYW50VHlwZSI6ImF1dGhvcml6YXRpb25fY29kZSIsImNsaWVudElkIjoidGVzdC1jbGllbnQiLCJyZWRpcmVjd" +
+            "FVyaSI6bnVsbCwic2NvcGVzIjpbXSwic3RhdGUiOm51bGwsImFkZGl0aW9uYWxQYXJhbWV0ZXJzIjp7ImNsaWVudC1yZWRpcmVjdC11c" +
+            "mkiOiJodHRwOi8vY2FsbGJhY2subWUifSwiYXV0aG9yaXphdGlvblJlcXVlc3RVcmkiOiJodHRwOi8vYXV0aG9yaXplLm1lP3Jlc3Bvb" +
+            "nNlX3R5cGU9Y29kZSZjbGllbnRfaWQ9dGVzdC1jbGllbnQiLCJhdHRyaWJ1dGVzIjp7fX0=";
+    private static final String INVALID_AUTHORIZATION_REQUEST_COOKIE_VALUE = "ew==";
+
+    private static final String CLIENT_ID = "test-client";
+    private static final String AUTHORIZATION_URI = "http://authorize.me";
+    private static final String CLIENT_REDIRECT_URI = "http://callback.me";
+
     private CookieOAuth2ServerAuthorizationRequestRepository repository;
 
     @BeforeEach
@@ -36,26 +41,31 @@ class CookieOAuth2ServerAuthorizationRequestRepositoryTest {
     @Test
     void shouldSaveAuthorizationRequestToCookies() {
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
-                .clientId("test-client")
-                .authorizationUri("http://authorize.me")
+                .clientId(CLIENT_ID)
+                .authorizationUri(AUTHORIZATION_URI)
                 .build();
-        ResponseCookie responseCookie = saveAuthorizationRequestToCookies(authorizationRequest);
-        assertNotNull(responseCookie);
-        assertFalse(responseCookie.getValue().isEmpty());
+
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
+                .queryParam(repository.getClientRedirectUriParameterName(), CLIENT_REDIRECT_URI)
+                .build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
+
+        repository.saveAuthorizationRequest(authorizationRequest, webExchangeMock).block();
+        ResponseCookie saveRequestCookie = webExchangeMock.getResponse().getCookies()
+                .getFirst(repository.getAuthorizationRequestCookieName());
+        assertNotNull(saveRequestCookie);
+        assertFalse(saveRequestCookie.getValue().isEmpty());
     }
 
     @Test
     void shouldThrowExceptionOnAuthorizationRequestSaveWhenClientRedirectUriIsMissing() {
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
-                .clientId("test-client")
-                .authorizationUri("http://authorize.me")
+                .clientId(CLIENT_ID)
+                .authorizationUri(AUTHORIZATION_URI)
                 .build();
 
-        ServerHttpRequest requestMock = mock(ServerHttpRequest.class);
-        when(requestMock.getQueryParams()).thenReturn(new LinkedMultiValueMap<>());
-
-        ServerWebExchange webExchangeMock = mock(ServerWebExchange.class);
-        when(webExchangeMock.getRequest()).thenReturn(requestMock);
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
         assertThrows(ClientRedirectUriMissingException.class, () ->
                 repository.saveAuthorizationRequest(authorizationRequest, webExchangeMock).block());
@@ -67,19 +77,15 @@ class CookieOAuth2ServerAuthorizationRequestRepositoryTest {
         when(badAttributeValue.toString()).thenThrow(RuntimeException.class);
 
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
-                .clientId("test-client")
-                .authorizationUri("http://authorize.me")
+                .clientId(CLIENT_ID)
+                .authorizationUri(AUTHORIZATION_URI)
                 .attributes(Map.of("bad-attribute", badAttributeValue))
                 .build();
 
-        MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
-        queryParams.put(repository.getClientRedirectUriParameterName(), List.of("http://callback.me"));
-
-        ServerHttpRequest requestMock = mock(ServerHttpRequest.class);
-        when(requestMock.getQueryParams()).thenReturn(queryParams);
-
-        ServerWebExchange webExchangeMock = mock(ServerWebExchange.class);
-        when(webExchangeMock.getRequest()).thenReturn(requestMock);
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
+                .queryParam(repository.getClientRedirectUriParameterName(), CLIENT_REDIRECT_URI)
+                .build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
         assertThrows(OAuth2AuthenticationException.class, () ->
                 repository.saveAuthorizationRequest(authorizationRequest, webExchangeMock).block());
@@ -87,46 +93,23 @@ class CookieOAuth2ServerAuthorizationRequestRepositoryTest {
 
     @Test
     void shouldLoadAuthorizationRequestFromCookies() {
-        OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
-                .clientId("test-client")
-                .authorizationUri("http://authorize.me")
-                .build();
-
-        ResponseCookie responseCookie = saveAuthorizationRequestToCookies(authorizationRequest);
-
-        MultiValueMap<String, HttpCookie> cookies = new LinkedMultiValueMap<>();
         HttpCookie requestCookie = new HttpCookie(repository.getAuthorizationRequestCookieName(),
-                responseCookie.getValue());
-        cookies.put(repository.getAuthorizationRequestCookieName(), List.of(requestCookie));
-
-        ServerHttpRequest requestMock = mock(ServerHttpRequest.class);
-        when(requestMock.getCookies()).thenReturn(cookies);
-
-        ServerHttpResponse responseMock = mock(ServerHttpResponse.class);
-
-        ServerWebExchange webExchangeMock = mock(ServerWebExchange.class);
-        when(webExchangeMock.getRequest()).thenReturn(requestMock);
-        when(webExchangeMock.getResponse()).thenReturn(responseMock);
+                VALID_AUTHORIZATION_REQUEST_COOKIE_VALUE);
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").cookie(requestCookie).build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
         OAuth2AuthorizationRequest loadedRequest = repository.loadAuthorizationRequest(webExchangeMock).block();
         assertNotNull(loadedRequest);
-        assertEquals(authorizationRequest.getClientId(), loadedRequest.getClientId());
-        assertEquals(authorizationRequest.getAuthorizationUri(), loadedRequest.getAuthorizationUri());
+        assertEquals(CLIENT_ID, loadedRequest.getClientId());
+        assertEquals(AUTHORIZATION_URI, loadedRequest.getAuthorizationUri());
     }
 
     @Test
     void shouldReturnNullOnAuthorizationRequestLoadWhenDeserializationErrorOccurs() {
-        String requestCookieValue = Base64.getUrlEncoder().encodeToString("{".getBytes(StandardCharsets.UTF_8));
-        HttpCookie requestCookie = new HttpCookie(repository.getAuthorizationRequestCookieName(), requestCookieValue);
-
-        MultiValueMap<String, HttpCookie> cookies = new LinkedMultiValueMap<>();
-        cookies.put(repository.getAuthorizationRequestCookieName(), List.of(requestCookie));
-
-        ServerHttpRequest requestMock = mock(ServerHttpRequest.class);
-        when(requestMock.getCookies()).thenReturn(cookies);
-
-        ServerWebExchange webExchangeMock = mock(ServerWebExchange.class);
-        when(webExchangeMock.getRequest()).thenReturn(requestMock);
+        HttpCookie requestCookie = new HttpCookie(repository.getAuthorizationRequestCookieName(),
+                INVALID_AUTHORIZATION_REQUEST_COOKIE_VALUE);
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").cookie(requestCookie).build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
         OAuth2AuthorizationRequest loadedRequest = repository.loadAuthorizationRequest(webExchangeMock).block();
         assertNull(loadedRequest);
@@ -134,113 +117,44 @@ class CookieOAuth2ServerAuthorizationRequestRepositoryTest {
 
     @Test
     void shouldReturnNullOnAuthorizationRequestLoadWhenCorrespondingCookieIsNotFound() {
-        ServerHttpRequest requestMock = mock(ServerHttpRequest.class);
-        when(requestMock.getCookies()).thenReturn(new LinkedMultiValueMap<>());
-
-        ServerWebExchange webExchangeMock = mock(ServerWebExchange.class);
-        when(webExchangeMock.getRequest()).thenReturn(requestMock);
-
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
         OAuth2AuthorizationRequest loadedRequest = repository.loadAuthorizationRequest(webExchangeMock).block();
         assertNull(loadedRequest);
     }
 
     @Test
     void shouldRemoveAuthorizationRequestFromCookies() {
-        OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
-                .clientId("test-client")
-                .authorizationUri("http://authorize.me")
-                .build();
-
-        ResponseCookie responseCookie = saveAuthorizationRequestToCookies(authorizationRequest);
-
-        MultiValueMap<String, HttpCookie> cookies = new LinkedMultiValueMap<>();
         HttpCookie requestCookie = new HttpCookie(repository.getAuthorizationRequestCookieName(),
-                responseCookie.getValue());
-        cookies.put(repository.getAuthorizationRequestCookieName(), List.of(requestCookie));
-
-        ServerHttpRequest requestMock = mock(ServerHttpRequest.class);
-        when(requestMock.getCookies()).thenReturn(cookies);
-
-        ServerHttpResponse responseMock = mock(ServerHttpResponse.class);
-
-        ServerWebExchange webExchangeMock = mock(ServerWebExchange.class);
-        when(webExchangeMock.getRequest()).thenReturn(requestMock);
-        when(webExchangeMock.getResponse()).thenReturn(responseMock);
+                VALID_AUTHORIZATION_REQUEST_COOKIE_VALUE);
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").cookie(requestCookie).build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
         repository.removeAuthorizationRequest(webExchangeMock).block();
-
-        ResponseCookie removeRequestCookie = getAuthorizationRequestResponseCookie(responseMock);
+        ResponseCookie removeRequestCookie = webExchangeMock.getResponse().getCookies()
+                .getFirst(repository.getAuthorizationRequestCookieName());
         assertNotNull(removeRequestCookie);
         assertTrue(removeRequestCookie.getValue().isEmpty());
     }
 
     @Test
     void shouldReturnRemovedAuthorizationRequest() {
-        OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
-                .clientId("test-client")
-                .authorizationUri("http://authorize.me")
-                .build();
-
-        ResponseCookie responseCookie = saveAuthorizationRequestToCookies(authorizationRequest);
-
-        MultiValueMap<String, HttpCookie> cookies = new LinkedMultiValueMap<>();
         HttpCookie requestCookie = new HttpCookie(repository.getAuthorizationRequestCookieName(),
-                responseCookie.getValue());
-        cookies.put(repository.getAuthorizationRequestCookieName(), List.of(requestCookie));
-
-        ServerHttpRequest requestMock = mock(ServerHttpRequest.class);
-        when(requestMock.getCookies()).thenReturn(cookies);
-
-        ServerHttpResponse responseMock = mock(ServerHttpResponse.class);
-
-        ServerWebExchange webExchangeMock = mock(ServerWebExchange.class);
-        when(webExchangeMock.getRequest()).thenReturn(requestMock);
-        when(webExchangeMock.getResponse()).thenReturn(responseMock);
+                VALID_AUTHORIZATION_REQUEST_COOKIE_VALUE);
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").cookie(requestCookie).build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
         OAuth2AuthorizationRequest removedRequest = repository.removeAuthorizationRequest(webExchangeMock).block();
         assertNotNull(removedRequest);
-        assertEquals(authorizationRequest.getClientId(), removedRequest.getClientId());
-        assertEquals(authorizationRequest.getAuthorizationUri(), removedRequest.getAuthorizationUri());
+        assertEquals(CLIENT_ID, removedRequest.getClientId());
+        assertEquals(AUTHORIZATION_URI, removedRequest.getAuthorizationUri());
     }
 
     @Test
     void shouldReturnNullOnAuthorizationRequestRemoveWhenCorrespondingCookieIsNotFound() {
-        ServerHttpRequest requestMock = mock(ServerHttpRequest.class);
-        when(requestMock.getCookies()).thenReturn(new LinkedMultiValueMap<>());
-
-        ServerWebExchange webExchangeMock = mock(ServerWebExchange.class);
-        when(webExchangeMock.getRequest()).thenReturn(requestMock);
-
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
         OAuth2AuthorizationRequest loadedRequest = repository.removeAuthorizationRequest(webExchangeMock).block();
         assertNull(loadedRequest);
-    }
-
-    private ResponseCookie saveAuthorizationRequestToCookies(OAuth2AuthorizationRequest authorizationRequest) {
-        MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
-        queryParams.put(repository.getClientRedirectUriParameterName(), List.of("http://callback.me"));
-
-        ServerHttpRequest requestMock = mock(ServerHttpRequest.class);
-        when(requestMock.getQueryParams()).thenReturn(queryParams);
-
-        ServerHttpResponse responseMock = mock(ServerHttpResponse.class);
-
-        ServerWebExchange webExchangeMock = mock(ServerWebExchange.class);
-        when(webExchangeMock.getRequest()).thenReturn(requestMock);
-        when(webExchangeMock.getResponse()).thenReturn(responseMock);
-
-        repository.saveAuthorizationRequest(authorizationRequest, webExchangeMock).block();
-        ResponseCookie responseCookie = getAuthorizationRequestResponseCookie(responseMock);
-        assertNotNull(responseCookie);
-        return responseCookie;
-    }
-
-    private ResponseCookie getAuthorizationRequestResponseCookie(ServerHttpResponse responseMock) {
-        ArgumentCaptor<ResponseCookie> cookieCaptor = ArgumentCaptor.forClass(ResponseCookie.class);
-        verify(responseMock).addCookie(cookieCaptor.capture());
-        ResponseCookie responseCookie = cookieCaptor.getValue();
-        if (repository.getAuthorizationRequestCookieName().equals(responseCookie.getName())) {
-            return responseCookie;
-        }
-        return null;
     }
 }
