@@ -2,6 +2,7 @@ package org.briarheart.orchestra.security.web.server.authentication.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.Setter;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.security.web.server.authentication.AccessToken;
