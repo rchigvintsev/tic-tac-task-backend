@@ -6,7 +6,6 @@ import org.briarheart.orchestra.model.User;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -29,19 +28,18 @@ public class DatabaseOidcReactiveOAuth2UserService extends OidcReactiveOAuth2Use
     public Mono<OidcUser> loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
         Mono<OidcUser> oidcUserMono = super.loadUser(userRequest);
         return oidcUserMono.zipWhen(oidcUser -> {
-            OidcUserInfo userInfo = oidcUser.getUserInfo();
-            if (userInfo != null) {
+            if (oidcUser.getUserInfo() != null) {
                 return userRepository.findById(oidcUser.getEmail())
-                        .switchIfEmpty(Mono.defer(() -> createNewUser(userInfo)))
+                        .switchIfEmpty(Mono.defer(() -> createNewUser(oidcUser)))
                         .flatMap(u -> updateUserIfNecessary(oidcUser, u));
             }
             return Mono.just(User.EMPTY);
         }).map(Tuple2::getT1);
     }
 
-    private Mono<? extends User> createNewUser(OidcUserInfo userInfo) {
-        String picture = userInfo.getClaimAsString("picture");
-        User newUser = new User(userInfo.getEmail(), 0L, userInfo.getFullName(), picture);
+    private Mono<? extends User> createNewUser(OidcUser oidcUser) {
+        String picture = oidcUser.getClaimAsString("picture");
+        User newUser = new User(oidcUser.getEmail(), 0L, oidcUser.getFullName(), picture);
         return userRepository.save(newUser);
     }
 
