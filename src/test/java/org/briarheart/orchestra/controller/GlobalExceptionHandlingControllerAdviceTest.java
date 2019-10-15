@@ -15,7 +15,7 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
  * @author Roman Chigvintsev
  */
 @ExtendWith(SpringExtension.class)
-@WebFluxTest(value = TestController.class)
+@WebFluxTest(TestController.class)
 @Import(PermitAllSecurityConfig.class)
 public class GlobalExceptionHandlingControllerAdviceTest {
     @Autowired
