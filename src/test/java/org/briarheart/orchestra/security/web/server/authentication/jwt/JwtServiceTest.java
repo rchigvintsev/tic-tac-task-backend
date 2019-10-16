@@ -27,6 +27,7 @@ class JwtServiceTest {
     private static final String VALID_ACCESS_TOKEN_VALUE = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ3aGl0ZS5yYWJiaXRAbWFpbC5j" +
             "b20iLCJpYXQiOjE1NzA5NjkyMzIsImV4cCI6OTIxNDE1OTQ0OTk0NTAzMn0.GM-rTmJzgHEkOAYemY591p2DaB4Z5ueb1xiB8fq8FJ2z" +
             "xDUvKcHOHKIJhAbQdl3wsipT2NDYyDE6eDnvIWz0vw";
+    private static final String EMPTY_CLAIMS_ACCESS_TOKEN_VALUE = "eyJhbGciOiJIUzUxMiJ9.e30.MtKmKZuyC8pbmLny-pEbCdB4dzSELEZZ4-ALnZxnGtjmIZPzkkqWwbDkadOSi04j288oTkKQF2uU7RgpAYdMng";
     private static final String EXPIRED_ACCESS_TOKEN_VALUE = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ3aGl0ZS5yYWJiaXRAbWFpbC" +
             "5jb20iLCJpYXQiOjE1NzA5NzA5ODQsImV4cCI6MTU3MDk3MDk4NX0.0xyLLqtl74jHlxWWFF7SqRzc9zJVHcm5HMJKcRwdMGOFN1Isie" +
             "3Py-LrGk9pgQJnLTftv8cKv4hCBjrzX7eLjA";
@@ -69,6 +70,13 @@ class JwtServiceTest {
         AccessToken accessToken = service.parseAccessToken(VALID_ACCESS_TOKEN_VALUE);
         assertNotNull(accessToken);
         assertEquals(USER_EMAIL, accessToken.getSubject());
+    }
+
+    @Test
+    void shouldParseAccessTokenWithEmptyClaims() {
+        AccessToken accessToken = service.parseAccessToken(EMPTY_CLAIMS_ACCESS_TOKEN_VALUE);
+        assertNotNull(accessToken);
+        assertNull(accessToken.getSubject());
     }
 
     @Test
