@@ -1,7 +1,10 @@
 package org.briarheart.orchestra.config;
 
 import org.briarheart.orchestra.data.UserRepository;
-import org.briarheart.orchestra.security.oauth2.client.oidc.userinfo.DatabaseOidcReactiveOAuth2UserService;
+import org.briarheart.orchestra.security.oauth2.client.userinfo.FacebookReactiveOAuth2UserLoader;
+import org.briarheart.orchestra.security.oauth2.client.userinfo.GoogleReactiveOAuth2UserLoader;
+import org.briarheart.orchestra.security.oauth2.client.userinfo.ReactiveOAuth2UserLoader;
+import org.briarheart.orchestra.security.oauth2.client.userinfo.ReactiveOAuth2UserLoaderManager;
 import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenReactiveAuthenticationManager;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationConverter;
@@ -17,16 +20,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.InMemoryReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.client.userinfo.DefaultReactiveOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.web.server.OAuth2AuthorizationRequestRedirectWebFilter;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizationCodeAuthenticationTokenConverter;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
@@ -112,7 +119,16 @@ public class WebSecurityConfig {
 
     @Bean
     public ReactiveOAuth2UserService<OidcUserRequest, OidcUser> oidcOAuth2UserService(UserRepository userRepository) {
-        return new DatabaseOidcReactiveOAuth2UserService(userRepository);
+        List<ReactiveOAuth2UserLoader<OidcUserRequest, OidcUser>> userLoaders;
+        userLoaders = List.of(new GoogleReactiveOAuth2UserLoader(new OidcReactiveOAuth2UserService()));
+        return new ReactiveOAuth2UserLoaderManager<>(userLoaders, userRepository);
+    }
+
+    @Bean
+    public ReactiveOAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService(UserRepository userRepository) {
+        List<ReactiveOAuth2UserLoader<OAuth2UserRequest, OAuth2User>> userLoaders;
+        userLoaders = List.of(new FacebookReactiveOAuth2UserLoader(new DefaultReactiveOAuth2UserService()));
+        return new ReactiveOAuth2UserLoaderManager<>(userLoaders, userRepository);
     }
 
     @Bean

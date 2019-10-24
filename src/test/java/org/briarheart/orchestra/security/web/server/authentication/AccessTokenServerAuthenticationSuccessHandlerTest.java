@@ -2,6 +2,7 @@ package org.briarheart.orchestra.security.web.server.authentication;
 
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
+import org.briarheart.orchestra.security.oauth2.core.user.OAuth2UserAttributeAccessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
@@ -10,7 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.server.WebFilterExchange;
 import reactor.core.publisher.Mono;
 
@@ -68,10 +68,11 @@ class AccessTokenServerAuthenticationSuccessHandlerTest {
         WebFilterExchange webFilterExchangeMock = mock(WebFilterExchange.class);
         when(webFilterExchangeMock.getExchange()).thenReturn(webExchangeMock);
 
-        OidcUser oidcUserMock = mock(OidcUser.class);
-        when(oidcUserMock.getEmail()).thenReturn("white.rabbit@mail.com");
+        OAuth2UserAttributeAccessor attrAccessorMock = mock(OAuth2UserAttributeAccessor.class);
+        when(attrAccessorMock.getEmail()).thenReturn("white.rabbit@mail.com");
+
         Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getPrincipal()).thenReturn(oidcUserMock);
+        when(authenticationMock.getPrincipal()).thenReturn(attrAccessorMock);
 
         handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block();
         URI location = webExchangeMock.getResponse().getHeaders().getLocation();
@@ -132,10 +133,11 @@ class AccessTokenServerAuthenticationSuccessHandlerTest {
         WebFilterExchange webFilterExchangeMock = mock(WebFilterExchange.class);
         when(webFilterExchangeMock.getExchange()).thenReturn(webExchangeMock);
 
-        OidcUser oidcUserMock = mock(OidcUser.class);
-        when(oidcUserMock.getEmail()).thenReturn("white.rabbit@mail.com");
+        OAuth2UserAttributeAccessor attrAccessorMock = mock(OAuth2UserAttributeAccessor.class);
+        when(attrAccessorMock.getEmail()).thenReturn("white.rabbit@mail.com");
+
         Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getPrincipal()).thenReturn(oidcUserMock);
+        when(authenticationMock.getPrincipal()).thenReturn(attrAccessorMock);
 
         OAuth2AuthenticationException e = assertThrows(OAuth2AuthenticationException.class, () ->
                 handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block());

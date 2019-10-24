@@ -5,13 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
+import org.briarheart.orchestra.security.oauth2.core.user.OAuth2UserAttributeAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.server.DefaultServerRedirectStrategy;
 import org.springframework.security.web.server.ServerRedirectStrategy;
 import org.springframework.security.web.server.WebFilterExchange;
@@ -63,9 +63,10 @@ public class AccessTokenServerAuthenticationSuccessHandler implements ServerAuth
                 }))
                 .zipWhen(location -> findUser(authentication))
                 .switchIfEmpty(Mono.error(() -> {
-                    OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
-                    OAuth2Error oAuth2Error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
-                            "User is not found by email '" + oidcUser.getEmail() + "'", null);
+                    OAuth2UserAttributeAccessor attrAccessor;
+                    attrAccessor = (OAuth2UserAttributeAccessor) authentication.getPrincipal();
+                    String errorMessage = "User is not found by email \"" + attrAccessor.getEmail() + "\"";
+                    OAuth2Error oAuth2Error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR, errorMessage, null);
                     return new OAuth2AuthenticationException(oAuth2Error);
                 }))
                 .flatMap(locationAndUser -> sendRedirect(exchange, locationAndUser));
@@ -84,8 +85,7 @@ public class AccessTokenServerAuthenticationSuccessHandler implements ServerAuth
     }
 
     private Mono<? extends User> findUser(Authentication authentication) {
-        OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
-        return userRepository.findById(oidcUser.getEmail());
+        return userRepository.findById(((OAuth2UserAttributeAccessor) authentication.getPrincipal()).getEmail());
     }
 
     private Mono<? extends Void> sendRedirect(ServerWebExchange exchange,
