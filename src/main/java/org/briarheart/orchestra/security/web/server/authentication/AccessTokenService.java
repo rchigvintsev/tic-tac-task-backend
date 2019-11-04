@@ -29,4 +29,15 @@ public interface AccessTokenService {
      * @throws InvalidAccessTokenException if error occurred while parsing access token value
      */
     AccessToken parseAccessToken(String tokenValue) throws InvalidAccessTokenException;
+
+    /**
+     * Composes complete access token value from three parts: header, payload and signature. Two of those parts -
+     * header and payload - are necessary.
+     *
+     * @param header access token header (must not be {@code null} or empty)
+     * @param payload access token payload (must not be {@code null} or empty)
+     * @param signature access token signature
+     * @return complete access token value
+     */
+    String composeAccessTokenValue(String header, String payload, String signature);
 }

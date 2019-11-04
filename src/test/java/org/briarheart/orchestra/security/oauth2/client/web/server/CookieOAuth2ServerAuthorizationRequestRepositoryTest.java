@@ -20,21 +20,21 @@ import static org.mockito.Mockito.when;
  * @author Roman Chigvintsev
  */
 class CookieOAuth2ServerAuthorizationRequestRepositoryTest {
-    private static final String VALID_AUTHORIZATION_REQUEST_AUTHORIZATION_CODE_COOKIE_VALUE = "eyJhdXRob3JpemF0aW9uVX" +
-            "JpIjoiaHR0cDovL2F1dGhvcml6ZS5tZSIsImdyYW50VHlwZSI6ImF1dGhvcml6YXRpb25fY29kZSIsImNsaWVudElkIjoidGVzdC1jbG" +
-            "llbnQiLCJyZWRpcmVjdFVyaSI6bnVsbCwic2NvcGVzIjpbXSwic3RhdGUiOm51bGwsImFkZGl0aW9uYWxQYXJhbWV0ZXJzIjp7ImNsaW" +
-            "VudC1yZWRpcmVjdC11cmkiOiJodHRwOi8vY2FsbGJhY2subWUifSwiYXV0aG9yaXphdGlvblJlcXVlc3RVcmkiOiJodHRwOi8vYXV0aG" +
-            "9yaXplLm1lP3Jlc3BvbnNlX3R5cGU9Y29kZSZjbGllbnRfaWQ9dGVzdC1jbGllbnQiLCJhdHRyaWJ1dGVzIjp7fX0=";
-    private static final String VALID_AUTHORIZATION_REQUEST_IMPLICIT_COOKIE_VALUE = "eyJhdXRob3JpemF0aW9uVXJpIjoiaHR0" +
-            "cDovL2F1dGhvcml6ZS5tZSIsImdyYW50VHlwZSI6ImltcGxpY2l0IiwiY2xpZW50SWQiOiJ0ZXN0LWNsaWVudCIsInJlZGlyZWN0VXJp" +
-            "IjoiaHR0cDovL2V4YW1wbGUuY29tIiwic2NvcGVzIjpbXSwic3RhdGUiOm51bGwsImFkZGl0aW9uYWxQYXJhbWV0ZXJzIjp7ImNsaWVu" +
-            "dC1yZWRpcmVjdC11cmkiOiJodHRwOi8vY2FsbGJhY2subWUifSwiYXV0aG9yaXphdGlvblJlcXVlc3RVcmkiOiJodHRwOi8vYXV0aG9y" +
-            "aXplLm1lP3Jlc3BvbnNlX3R5cGU9dG9rZW4mY2xpZW50X2lkPXRlc3QtY2xpZW50IiwiYXR0cmlidXRlcyI6e319";
-    private static final String VALID_AUTHORIZATION_REQUEST_PASSWORD_COOKIE_VALUE = "eyJhdXRob3JpemF0aW9uVXJpIjoiaHR0" +
-            "cDovL2F1dGhvcml6ZS5tZSIsImdyYW50VHlwZSI6InBhc3N3b3JkIiwiY2xpZW50SWQiOiJ0ZXN0LWNsaWVudCIsInJlZGlyZWN0VXJp" +
-            "IjpudWxsLCJzY29wZXMiOltdLCJzdGF0ZSI6bnVsbCwiYWRkaXRpb25hbFBhcmFtZXRlcnMiOnsiY2xpZW50LXJlZGlyZWN0LXVyaSI6" +
-            "Imh0dHA6Ly9jYWxsYmFjay5tZSJ9LCJhdXRob3JpemF0aW9uUmVxdWVzdFVyaSI6Imh0dHA6Ly9hdXRob3JpemUubWU_cmVzcG9uc2Vf" +
-            "dHlwZT10b2tlbiZjbGllbnRfaWQ9dGVzdC1jbGllbnQiLCJhdHRyaWJ1dGVzIjp7fX0";
+    private static final String VALID_AUTHORIZATION_REQUEST_AUTHORIZATION_CODE_COOKIE_VALUE = "eyJhdXRob3JpemF0aW9uVX"
+            + "JpIjoiaHR0cDovL2F1dGhvcml6ZS5tZSIsImdyYW50VHlwZSI6ImF1dGhvcml6YXRpb25fY29kZSIsImNsaWVudElkIjoidGVzdC1j"
+            + "bGllbnQiLCJyZWRpcmVjdFVyaSI6bnVsbCwic2NvcGVzIjpbXSwic3RhdGUiOm51bGwsImFkZGl0aW9uYWxQYXJhbWV0ZXJzIjp7Im"
+            + "NsaWVudC1yZWRpcmVjdC11cmkiOiJodHRwOi8vY2FsbGJhY2subWUifSwiYXV0aG9yaXphdGlvblJlcXVlc3RVcmkiOiJodHRwOi8v"
+            + "YXV0aG9yaXplLm1lP3Jlc3BvbnNlX3R5cGU9Y29kZSZjbGllbnRfaWQ9dGVzdC1jbGllbnQiLCJhdHRyaWJ1dGVzIjp7fX0=";
+    private static final String VALID_AUTHORIZATION_REQUEST_IMPLICIT_COOKIE_VALUE = "eyJhdXRob3JpemF0aW9uVXJpIjoiaHR0"
+            + "cDovL2F1dGhvcml6ZS5tZSIsImdyYW50VHlwZSI6ImltcGxpY2l0IiwiY2xpZW50SWQiOiJ0ZXN0LWNsaWVudCIsInJlZGlyZWN0VX"
+            + "JpIjoiaHR0cDovL2V4YW1wbGUuY29tIiwic2NvcGVzIjpbXSwic3RhdGUiOm51bGwsImFkZGl0aW9uYWxQYXJhbWV0ZXJzIjp7ImNs"
+            + "aWVudC1yZWRpcmVjdC11cmkiOiJodHRwOi8vY2FsbGJhY2subWUifSwiYXV0aG9yaXphdGlvblJlcXVlc3RVcmkiOiJodHRwOi8vYX"
+            + "V0aG9yaXplLm1lP3Jlc3BvbnNlX3R5cGU9dG9rZW4mY2xpZW50X2lkPXRlc3QtY2xpZW50IiwiYXR0cmlidXRlcyI6e319";
+    private static final String VALID_AUTHORIZATION_REQUEST_PASSWORD_COOKIE_VALUE = "eyJhdXRob3JpemF0aW9uVXJpIjoiaHR0"
+            + "cDovL2F1dGhvcml6ZS5tZSIsImdyYW50VHlwZSI6InBhc3N3b3JkIiwiY2xpZW50SWQiOiJ0ZXN0LWNsaWVudCIsInJlZGlyZWN0VX"
+            + "JpIjpudWxsLCJzY29wZXMiOltdLCJzdGF0ZSI6bnVsbCwiYWRkaXRpb25hbFBhcmFtZXRlcnMiOnsiY2xpZW50LXJlZGlyZWN0LXVy"
+            + "aSI6Imh0dHA6Ly9jYWxsYmFjay5tZSJ9LCJhdXRob3JpemF0aW9uUmVxdWVzdFVyaSI6Imh0dHA6Ly9hdXRob3JpemUubWU_cmVzcG"
+            + "9uc2VfdHlwZT10b2tlbiZjbGllbnRfaWQ9dGVzdC1jbGllbnQiLCJhdHRyaWJ1dGVzIjp7fX0";
     private static final String INVALID_AUTHORIZATION_REQUEST_COOKIE_VALUE = "ew==";
 
     private static final String CLIENT_ID = "test-client";

@@ -57,14 +57,17 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
                                     "OAuth2 user \"" + user.getName() + "\" does not have an email", null);
                             throw new OAuth2AuthenticationException(oauth2Error);
                         }
+                        // TODO: compare current authentication provider with the one saved in the database since
+                        //  user may at first sign up with Facebook and then sign up again with Google while using
+                        //  the same email.
                         return userRepository.findById(attrAccessor.getEmail())
                                 .switchIfEmpty(Mono.defer(() -> createNewUser(attrAccessor)))
                                 .flatMap(u -> updateUserIfNecessary(attrAccessor, u));
                     }).map(Tuple2::getT1);
                 }).orElseThrow(() -> {
                     String clientRegId = userRequest.getClientRegistration().getRegistrationId();
-                    OAuth2Error oauth2Error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR, "OAuth2 user loader that" +
-                            " supports client registration with id \"" + clientRegId + "\" is not found", null);
+                    OAuth2Error oauth2Error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR, "OAuth2 user loader that"
+                            + " supports client registration with id \"" + clientRegId + "\" is not found", null);
                     throw new OAuth2AuthenticationException(oauth2Error);
                 });
     }

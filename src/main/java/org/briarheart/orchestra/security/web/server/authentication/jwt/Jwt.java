@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.security.web.server.authentication.AccessToken;
 import org.springframework.util.Assert;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,8 +25,46 @@ public class Jwt implements AccessToken {
     private final Map<String, Object> claims = new HashMap<>();
 
     @Override
+    public String getHeader() {
+        int dotIdx = tokenValue.indexOf('.');
+        if (dotIdx > 0) {
+            return tokenValue.substring(0, dotIdx);
+        }
+        return null;
+    }
+
+    @Override
+    public String getPayload() {
+        int firstDotIdx = tokenValue.indexOf('.');
+        int secondDotIdx = tokenValue.lastIndexOf('.');
+        if (firstDotIdx > 0 && secondDotIdx > firstDotIdx) {
+            return tokenValue.substring(firstDotIdx + 1, secondDotIdx);
+        }
+        return null;
+    }
+
+    @Override
+    public String getSignature() {
+        int dotIdx = tokenValue.lastIndexOf('.');
+        if (dotIdx > 0) {
+            return tokenValue.substring(dotIdx + 1);
+        }
+        return null;
+    }
+
+    @Override
     public String getSubject() {
         return (String) claims.get(Claims.SUBJECT);
+    }
+
+    @Override
+    public Instant getIssuedAt() {
+        return Instant.ofEpochSecond((Long) claims.get(Claims.ISSUED_AT));
+    }
+
+    @Override
+    public Instant getExpiration() {
+        return Instant.ofEpochSecond((Long) claims.get(Claims.EXPIRATION));
     }
 
     public static class Builder {

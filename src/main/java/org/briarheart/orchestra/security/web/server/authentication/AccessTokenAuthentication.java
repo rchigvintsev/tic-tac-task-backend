@@ -76,8 +76,8 @@ public final class AccessTokenAuthentication extends AbstractAuthenticationToken
     @Override
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
         if (isAuthenticated) {
-            throw new IllegalArgumentException("Cannot set this token to trusted - use constructor which takes " +
-                    "an authentication token instead");
+            throw new IllegalArgumentException("Cannot set this token to trusted - use constructor which takes "
+                    + "an authentication token instead");
         }
         super.setAuthenticated(false);
     }

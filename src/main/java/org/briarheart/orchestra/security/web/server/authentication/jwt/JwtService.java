@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.security.web.server.authentication.jwt;
 
+import com.google.common.base.Strings;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
@@ -82,5 +83,12 @@ public class JwtService implements AccessTokenService {
         } catch (SignatureException e) {
             throw new InvalidAccessTokenException("Access token signature is not valid", e);
         }
+    }
+
+    @Override
+    public String composeAccessTokenValue(String header, String payload, String signature) {
+        Assert.hasText(header, "Access token header must not be null or empty");
+        Assert.hasText(payload, "Access token payload must not be null or empty");
+        return header + "." + payload + "." + Strings.nullToEmpty(signature);
     }
 }

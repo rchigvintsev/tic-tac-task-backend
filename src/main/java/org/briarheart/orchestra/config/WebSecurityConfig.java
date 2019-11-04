@@ -136,7 +136,7 @@ public class WebSecurityConfig {
         AccessTokenReactiveAuthenticationManager authenticationManager
                 = new AccessTokenReactiveAuthenticationManager(accessTokenService);
         AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
-        filter.setServerAuthenticationConverter(new AccessTokenServerAuthenticationConverter());
+        filter.setServerAuthenticationConverter(new AccessTokenServerAuthenticationConverter(accessTokenService));
         return filter;
     }
 
