@@ -67,6 +67,26 @@ class JwtServiceTest {
     }
 
     @Test
+    void shouldIncludeUserFullNameInToken() {
+        final String FULL_NAME = "White Rabbit";
+        User user = new User();
+        user.setFullName(FULL_NAME);
+        Jwt accessToken = service.createAccessToken(user);
+        assertNotNull(accessToken);
+        assertEquals(FULL_NAME, accessToken.getClaims().get(JwtClaimNames.NAME.getName()));
+    }
+
+    @Test
+    void shouldIncludeUserImageUrlInToken() {
+        final String IMAGE_URL = "http://example.com/picture";
+        User user = new User();
+        user.setImageUrl(IMAGE_URL);
+        Jwt accessToken = service.createAccessToken(user);
+        assertNotNull(accessToken);
+        assertEquals(IMAGE_URL, accessToken.getClaims().get(JwtClaimNames.PICTURE.getName()));
+    }
+
+    @Test
     void shouldParseAccessToken() {
         AccessToken accessToken = service.parseAccessToken(VALID_ACCESS_TOKEN_VALUE);
         assertNotNull(accessToken);

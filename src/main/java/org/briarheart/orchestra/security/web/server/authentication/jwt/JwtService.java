@@ -6,7 +6,6 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.Setter;
 import org.briarheart.orchestra.model.User;
-import org.briarheart.orchestra.security.web.server.authentication.AccessToken;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenService;
 import org.briarheart.orchestra.security.web.server.authentication.InvalidAccessTokenException;
 import org.springframework.util.Assert;
@@ -45,11 +44,13 @@ public class JwtService implements AccessTokenService {
     }
 
     @Override
-    public AccessToken createAccessToken(User user) {
+    public Jwt createAccessToken(User user) {
         Assert.notNull(user, "User must not be null");
 
         Claims claims = Jwts.claims();
         claims.setSubject(user.getEmail());
+        claims.put(JwtClaimNames.NAME.getName(), user.getFullName());
+        claims.put(JwtClaimNames.PICTURE.getName(), user.getImageUrl());
 
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
         LocalDateTime expiration = now.plus(accessTokenValiditySeconds, ChronoUnit.SECONDS);
@@ -65,7 +66,7 @@ public class JwtService implements AccessTokenService {
     }
 
     @Override
-    public AccessToken parseAccessToken(String tokenValue) throws InvalidAccessTokenException {
+    public Jwt parseAccessToken(String tokenValue) throws InvalidAccessTokenException {
         Assert.hasText(tokenValue, "Access token value must not be null or empty");
 
         try {
