@@ -1,8 +1,8 @@
 package org.briarheart.orchestra.security.web.server.authentication.jwt;
 
 import org.briarheart.orchestra.model.User;
-import org.briarheart.orchestra.security.web.server.authentication.AccessToken;
-import org.briarheart.orchestra.security.web.server.authentication.InvalidAccessTokenException;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.InvalidAccessTokenException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,7 +73,7 @@ class JwtServiceTest {
         user.setFullName(FULL_NAME);
         Jwt accessToken = service.createAccessToken(user);
         assertNotNull(accessToken);
-        assertEquals(FULL_NAME, accessToken.getClaims().get(JwtClaimNames.NAME.getName()));
+        assertEquals(FULL_NAME, accessToken.getClaims().get(JwtClaim.FULL_NAME.getName()));
     }
 
     @Test
@@ -83,7 +83,7 @@ class JwtServiceTest {
         user.setImageUrl(IMAGE_URL);
         Jwt accessToken = service.createAccessToken(user);
         assertNotNull(accessToken);
-        assertEquals(IMAGE_URL, accessToken.getClaims().get(JwtClaimNames.PICTURE.getName()));
+        assertEquals(IMAGE_URL, accessToken.getClaims().get(JwtClaim.PROFILE_PICTURE_URL.getName()));
     }
 
     @Test
@@ -126,24 +126,6 @@ class JwtServiceTest {
         InvalidAccessTokenException e = assertThrows(InvalidAccessTokenException.class, () ->
                 service.parseAccessToken(INVALID_SIGNATURE_ACCESS_TOKEN_VALUE));
         assertEquals("Access token signature is not valid", e.getMessage());
-    }
-
-    @Test
-    void shouldComposeTokenValue() {
-        final String HEADER = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9";
-        final String PAYLOAD = "eyJzdWIiOiJKb2huIERvZSJ9";
-        final String SIGNATURE = "U1bAs3wp14vdUsh1FE_yMEfKXa69W65i9IFV9AYxUUMTRv65L8CrwvXQU6-"
-                + "jL2n0hydWm43ps9BWvHwDj3z0BQ";
-        String tokenValue = service.composeAccessTokenValue(HEADER, PAYLOAD, SIGNATURE);
-        assertEquals(HEADER + "." + PAYLOAD + "." + SIGNATURE, tokenValue);
-    }
-
-    @Test
-    void shouldComposeUnsignedTokenValue() {
-        final String HEADER = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9";
-        final String PAYLOAD = "eyJzdWIiOiJKb2huIERvZSJ9";
-        String tokenValue = service.composeAccessTokenValue(HEADER, PAYLOAD, null);
-        assertEquals(HEADER + "." + PAYLOAD + ".", tokenValue);
     }
 
     @Configuration

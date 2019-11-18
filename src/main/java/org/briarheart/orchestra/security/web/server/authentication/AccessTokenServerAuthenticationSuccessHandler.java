@@ -6,8 +6,9 @@ import lombok.Setter;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.security.oauth2.core.user.OAuth2UserAttributeAccessor;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.ServerAccessTokenRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -24,17 +25,9 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 import java.net.URI;
-import java.time.Duration;
-
-import static org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationConverter.*;
 
 /**
  * This handler issues an access token and then performs a redirect passing token value in the response.
- * <p>
- * Handler splits token value into three parts - header, payload and signature - and stores those parts in cookies with
- * names {@link #accessTokenHeaderCookieName}, {@link #accessTokenPayloadCookieName} and
- * {@link #accessTokenSignatureCookieName} correspondingly. Each cookie except payload cookie has {@code httpOnly} flag
- * being set to {@code true} and age of each cookie is limited by expiration timeout of an access token.
  * <p>
  * Location to redirect is taken from the saved OAuth2 authorization request. Particularly from request's additional
  * parameters.
@@ -50,10 +43,7 @@ public class AccessTokenServerAuthenticationSuccessHandler implements ServerAuth
     private final ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository;
     private final UserRepository userRepository;
     private final AccessTokenService accessTokenService;
-
-    private String accessTokenHeaderCookieName = DEFAULT_ACCESS_TOKEN_HEADER_COOKIE_NAME;
-    private String accessTokenPayloadCookieName = DEFAULT_ACCESS_TOKEN_PAYLOAD_COOKIE_NAME;
-    private String accessTokenSignatureCookieName = DEFAULT_ACCESS_TOKEN_SIGNATURE_COOKIE_NAME;
+    private final ServerAccessTokenRepository accessTokenRepository;
 
     private String clientRedirectUriParameterName = DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 
@@ -84,27 +74,12 @@ public class AccessTokenServerAuthenticationSuccessHandler implements ServerAuth
                     OAuth2Error oAuth2Error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR, errorMessage, null);
                     return new OAuth2AuthenticationException(oAuth2Error);
                 }))
-                .flatMap(locationAndUser -> sendRedirect(exchange, locationAndUser));
+                .flatMap(locationAndUser -> saveAccessTokenAndSendRedirect(exchange, locationAndUser));
     }
 
     public void setClientRedirectUriParameterName(String clientRedirectUriParameterName) {
         Assert.hasText(clientRedirectUriParameterName, "Client redirect URI parameter name must not be null or empty");
         this.clientRedirectUriParameterName = clientRedirectUriParameterName;
-    }
-
-    public void setAccessTokenHeaderCookieName(String accessTokenHeaderCookieName) {
-        Assert.hasText(accessTokenHeaderCookieName, "Access token header cookie name must not be null or empty");
-        this.accessTokenHeaderCookieName = accessTokenHeaderCookieName;
-    }
-
-    public void setAccessTokenPayloadCookieName(String accessTokenPayloadCookieName) {
-        Assert.hasText(accessTokenPayloadCookieName, "Access token payload cookie name must not be null or empty");
-        this.accessTokenPayloadCookieName = accessTokenPayloadCookieName;
-    }
-
-    public void setAccessTokenSignatureCookieName(String accessTokenSignatureCookieName) {
-        Assert.hasText(accessTokenSignatureCookieName, "Access token signature cookie name must not be null or empty");
-        this.accessTokenSignatureCookieName = accessTokenSignatureCookieName;
     }
 
     private Mono<? extends String> getRedirectLocation(OAuth2AuthorizationRequest authorizationRequest) {
@@ -118,28 +93,12 @@ public class AccessTokenServerAuthenticationSuccessHandler implements ServerAuth
         return userRepository.findById(((OAuth2UserAttributeAccessor) authentication.getPrincipal()).getEmail());
     }
 
-    private Mono<? extends Void> sendRedirect(ServerWebExchange exchange,
-                                              Tuple2<? extends String, ? extends User> locationAndUser) {
-        ServerHttpResponse response = exchange.getResponse();
+    private Mono<? extends Void> saveAccessTokenAndSendRedirect(
+            ServerWebExchange exchange,
+            Tuple2<? extends String, ? extends User> locationAndUser
+    ) {
         AccessToken accessToken = accessTokenService.createAccessToken(locationAndUser.getT2());
-        Duration maxAge = Duration.between(accessToken.getIssuedAt(), accessToken.getExpiration());
-        ResponseCookie headerCookie = ResponseCookie.from(accessTokenHeaderCookieName, accessToken.getHeader())
-                .path("/")
-                .httpOnly(true)
-                .maxAge(maxAge)
-                .build();
-        response.addCookie(headerCookie);
-        ResponseCookie payloadCookie = ResponseCookie.from(accessTokenPayloadCookieName, accessToken.getPayload())
-                .path("/")
-                .maxAge(maxAge)
-                .build();
-        response.addCookie(payloadCookie);
-        ResponseCookie signatureCookie = ResponseCookie.from(accessTokenSignatureCookieName, accessToken.getSignature())
-                .path("/")
-                .httpOnly(true)
-                .maxAge(maxAge)
-                .build();
-        response.addCookie(signatureCookie);
-        return redirectStrategy.sendRedirect(exchange, URI.create(locationAndUser.getT1()));
+        return accessTokenRepository.saveAccessToken(accessToken, exchange)
+                .then(redirectStrategy.sendRedirect(exchange, URI.create(locationAndUser.getT1())));
     }
 }

@@ -9,8 +9,11 @@ import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2Se
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenReactiveAuthenticationManager;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationConverter;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationSuccessHandler;
-import org.briarheart.orchestra.security.web.server.authentication.AccessTokenService;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.ServerAccessTokenRepository;
+import org.briarheart.orchestra.security.web.server.authentication.jwt.CookieJwtRepository;
 import org.briarheart.orchestra.security.web.server.authentication.jwt.JwtService;
+import org.briarheart.orchestra.security.web.server.authentication.logout.AccessTokenLogoutHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesRegistrationAdapter;
@@ -39,6 +42,8 @@ import org.springframework.security.web.server.authentication.AuthenticationWebF
 import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
 import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
+import org.springframework.security.web.server.authentication.logout.HttpStatusReturningServerLogoutSuccessHandler;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
 import org.springframework.web.cors.CorsConfiguration;
@@ -65,9 +70,11 @@ public class WebSecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
                                                             ServerAuthenticationConverter authenticationConverter,
                                                             ServerAuthenticationSuccessHandler authenticationSuccessHandler,
+                                                            ServerLogoutHandler logoutHandler,
                                                             AuthenticationWebFilter accessTokenAuthenticationWebFilter) {
         SecurityWebFilterChain filterChain = http.cors().configurationSource(createCorsConfigurationSource())
                 .and()
+                    .csrf().disable()
                     .authorizeExchange().anyExchange().authenticated()
                 .and()
                     .exceptionHandling()
@@ -77,6 +84,10 @@ public class WebSecurityConfig {
                         .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                         .authenticationConverter(authenticationConverter)
                         .authenticationSuccessHandler(authenticationSuccessHandler)
+                .and()
+                    .logout()
+                        .logoutHandler(logoutHandler)
+                        .logoutSuccessHandler(new HttpStatusReturningServerLogoutSuccessHandler(HttpStatus.OK))
                 .and()
                     .addFilterBefore(accessTokenAuthenticationWebFilter, SecurityWebFiltersOrder.HTTP_BASIC)
                     .build();
@@ -106,10 +117,11 @@ public class WebSecurityConfig {
     public ServerAuthenticationSuccessHandler authenticationSuccessHandler(
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
             UserRepository userRepository,
-            AccessTokenService accessTokenService
+            AccessTokenService accessTokenService,
+            ServerAccessTokenRepository accessTokenRepository
     ) {
         return new AccessTokenServerAuthenticationSuccessHandler(authorizationRequestRepository, userRepository,
-                accessTokenService);
+                accessTokenService, accessTokenRepository);
     }
 
     @Bean
@@ -132,12 +144,25 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public AuthenticationWebFilter accessTokenAuthenticationWebFilter(AccessTokenService accessTokenService) {
+    public AuthenticationWebFilter accessTokenAuthenticationWebFilter(
+            AccessTokenService accessTokenService,
+            ServerAccessTokenRepository accessTokenRepository
+    ) {
         AccessTokenReactiveAuthenticationManager authenticationManager
                 = new AccessTokenReactiveAuthenticationManager(accessTokenService);
         AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
-        filter.setServerAuthenticationConverter(new AccessTokenServerAuthenticationConverter(accessTokenService));
+        filter.setServerAuthenticationConverter(new AccessTokenServerAuthenticationConverter(accessTokenRepository));
         return filter;
+    }
+
+    @Bean
+    public AccessTokenLogoutHandler accessTokenLogoutHandler(ServerAccessTokenRepository accessTokenRepository) {
+        return new AccessTokenLogoutHandler(accessTokenRepository);
+    }
+
+    @Bean
+    public ServerAccessTokenRepository accessTokenRepository() {
+        return new CookieJwtRepository();
     }
 
     @Bean

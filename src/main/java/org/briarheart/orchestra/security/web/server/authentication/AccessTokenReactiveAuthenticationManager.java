@@ -1,6 +1,8 @@
 package org.briarheart.orchestra.security.web.server.authentication;
 
 import lombok.RequiredArgsConstructor;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.core.Authentication;
 import reactor.core.publisher.Mono;
@@ -20,12 +22,10 @@ public class AccessTokenReactiveAuthenticationManager implements ReactiveAuthent
 
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
-        String accessTokenValue = ((AccessTokenAuthentication) authentication).getTokenValue();
-        try {
+        return Mono.fromCallable(() -> {
+            String accessTokenValue = ((AccessTokenAuthentication) authentication).getTokenValue();
             AccessToken accessToken = accessTokenService.parseAccessToken(accessTokenValue);
-            return Mono.just(new AccessTokenAuthentication(accessToken));
-        } catch (InvalidAccessTokenException e) {
-            return Mono.error(e);
-        }
+            return new AccessTokenAuthentication(accessToken);
+        });
     }
 }

@@ -1,13 +1,12 @@
 package org.briarheart.orchestra.security.web.server.authentication.jwt;
 
-import com.google.common.base.Strings;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.Setter;
 import org.briarheart.orchestra.model.User;
-import org.briarheart.orchestra.security.web.server.authentication.AccessTokenService;
-import org.briarheart.orchestra.security.web.server.authentication.InvalidAccessTokenException;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.InvalidAccessTokenException;
 import org.springframework.util.Assert;
 
 import javax.crypto.SecretKey;
@@ -49,8 +48,8 @@ public class JwtService implements AccessTokenService {
 
         Claims claims = Jwts.claims();
         claims.setSubject(user.getEmail());
-        claims.put(JwtClaimNames.NAME.getName(), user.getFullName());
-        claims.put(JwtClaimNames.PICTURE.getName(), user.getImageUrl());
+        claims.put(JwtClaim.FULL_NAME.getName(), user.getFullName());
+        claims.put(JwtClaim.PROFILE_PICTURE_URL.getName(), user.getImageUrl());
 
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
         LocalDateTime expiration = now.plus(accessTokenValiditySeconds, ChronoUnit.SECONDS);
@@ -84,12 +83,5 @@ public class JwtService implements AccessTokenService {
         } catch (SignatureException e) {
             throw new InvalidAccessTokenException("Access token signature is not valid", e);
         }
-    }
-
-    @Override
-    public String composeAccessTokenValue(String header, String payload, String signature) {
-        Assert.hasText(header, "Access token header must not be null or empty");
-        Assert.hasText(payload, "Access token payload must not be null or empty");
-        return header + "." + payload + "." + Strings.nullToEmpty(signature);
     }
 }

@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.security.web.server.authentication;
 
 import lombok.Getter;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.util.Assert;
 

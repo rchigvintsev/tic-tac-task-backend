@@ -1,13 +1,15 @@
 package org.briarheart.orchestra.security.web.server.authentication.jwt;
 
 /**
- * Registered claim names defined by the JSON Web Token (JWT) specification.
+ * Registered claims defined by the JSON Web Token (JWT) specification.
  *
  * @author Roman Chigvintsev
  */
-public enum JwtClaimNames {
-    NAME("name"),
-    PICTURE("picture");
+public enum JwtClaim {
+    ISSUED_AT("iat"),
+    EXPIRATION_TIME("exp"),
+    FULL_NAME("name"),
+    PROFILE_PICTURE_URL("picture");
 
     private final String name;
 
@@ -16,7 +18,7 @@ public enum JwtClaimNames {
      *
      * @param name claim name (must not be {@code null} or empty)
      */
-    JwtClaimNames(String name) {
+    JwtClaim(String name) {
         this.name = name;
     }
 

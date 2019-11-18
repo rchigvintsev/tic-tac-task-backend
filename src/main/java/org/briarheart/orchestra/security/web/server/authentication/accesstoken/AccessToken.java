@@ -1,4 +1,4 @@
-package org.briarheart.orchestra.security.web.server.authentication;
+package org.briarheart.orchestra.security.web.server.authentication.accesstoken;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -10,12 +10,6 @@ import java.time.Instant;
  */
 public interface AccessToken extends Serializable {
     String getTokenValue();
-
-    String getHeader();
-
-    String getPayload();
-
-    String getSignature();
 
     String getSubject();
 

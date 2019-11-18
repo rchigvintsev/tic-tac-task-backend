@@ -1,86 +1,61 @@
 package org.briarheart.orchestra.security.web.server.authentication;
 
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.ServerAccessTokenRepository;
+import org.briarheart.orchestra.security.web.server.authentication.jwt.MockJwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.security.core.Authentication;
+import reactor.core.publisher.Mono;
 
-import static org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationConverter.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Roman Chigvintsev
  */
 class AccessTokenServerAuthenticationConverterTest {
-    private static final String ACCESS_TOKEN_HEADER = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9";
-    private static final String ACCESS_TOKEN_PAYLOAD = "eyJzdWIiOiJKb2huIERvZSJ9";
-    private static final String ACCESS_TOKEN_SIGNATURE = "U1bAs3wp14vdUsh1FE_yMEfKXa69W65i9IFV9AYxUUMTRv65L8CrwvXQU6-"
-            + "jL2n0hydWm43ps9BWvHwDj3z0BQ";
-    private static final String ACCESS_TOKEN_VALUE = ACCESS_TOKEN_HEADER + "." + ACCESS_TOKEN_PAYLOAD + "."
-            + ACCESS_TOKEN_SIGNATURE;
-
-    private static final String ACCESS_TOKEN_HEADER_COOKIE_NAME = DEFAULT_ACCESS_TOKEN_HEADER_COOKIE_NAME;
-    private static final String ACCESS_TOKEN_PAYLOAD_COOKIE_NAME = DEFAULT_ACCESS_TOKEN_PAYLOAD_COOKIE_NAME;
-    private static final String ACCESS_TOKEN_SIGNATURE_COOKIE_NAME = DEFAULT_ACCESS_TOKEN_SIGNATURE_COOKIE_NAME;
-
     private AccessTokenServerAuthenticationConverter converter;
+    private ServerAccessTokenRepository accessTokenRepositoryMock;
 
     @BeforeEach
     void setUp() {
-        AccessTokenService accessTokenServiceMock = mock(AccessTokenService.class);
-        when(accessTokenServiceMock.composeAccessTokenValue(anyString(), anyString(), any()))
-                .thenReturn(ACCESS_TOKEN_VALUE);
-
-        converter = new AccessTokenServerAuthenticationConverter(accessTokenServiceMock);
-        converter.setAccessTokenHeaderCookieName(ACCESS_TOKEN_HEADER_COOKIE_NAME);
-        converter.setAccessTokenPayloadCookieName(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME);
-        converter.setAccessTokenSignatureCookieName(ACCESS_TOKEN_SIGNATURE_COOKIE_NAME);
+        accessTokenRepositoryMock = mock(ServerAccessTokenRepository.class);
+        converter = new AccessTokenServerAuthenticationConverter(accessTokenRepositoryMock);
     }
 
     @Test
-    void shouldConvertAuthorizationHeaderToAuthentication() {
+    void shouldConvertConsideringAuthorizationHeaderFirst() {
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ACCESS_TOKEN_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_VALUE)
                 .build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Authentication authentication = converter.convert(serverWebExchangeMock).block();
         assertTrue(authentication instanceof AccessTokenAuthentication);
-        assertEquals(ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
+        assertEquals(MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
     }
 
+    @SuppressWarnings("UnassignedFluxMonoInstance")
     @Test
-    void shouldConvertAccessTokenCookieToAuthentication() {
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .cookie(new HttpCookie(ACCESS_TOKEN_HEADER_COOKIE_NAME, ACCESS_TOKEN_HEADER))
-                .cookie(new HttpCookie(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME, ACCESS_TOKEN_PAYLOAD))
-                .cookie(new HttpCookie(ACCESS_TOKEN_SIGNATURE_COOKIE_NAME, ACCESS_TOKEN_SIGNATURE))
-                .build();
+    void shouldConvertUsingServerAccessTokenRepository() {
+        AccessToken accessTokenMock = MockJwts.createMock();
+        doReturn(Mono.just(accessTokenMock)).when(accessTokenRepositoryMock).loadAccessToken(any());
+
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
+
         Authentication authentication = converter.convert(serverWebExchangeMock).block();
         assertTrue(authentication instanceof AccessTokenAuthentication);
-        assertEquals(ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
+        assertEquals(MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
     }
 
     @Test
-    void shouldConvertUnsignedAccessTokenCookieToAuthentication() {
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .cookie(new HttpCookie(ACCESS_TOKEN_HEADER_COOKIE_NAME, ACCESS_TOKEN_HEADER))
-                .cookie(new HttpCookie(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME, ACCESS_TOKEN_PAYLOAD))
-                .build();
-        MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
-        Authentication authentication = converter.convert(serverWebExchangeMock).block();
-        assertTrue(authentication instanceof AccessTokenAuthentication);
-    }
-
-    @Test
-    void shouldReturnNullWhenNeitherAuthorizationHeaderNorAccessTokenCookieIsProvided() {
+    void shouldReturnNullWhenAccessTokenValueIsNotProvided() {
+        when(accessTokenRepositoryMock.loadAccessToken(any())).thenReturn(Mono.empty());
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Authentication authentication = converter.convert(serverWebExchangeMock).block();
@@ -89,8 +64,9 @@ class AccessTokenServerAuthenticationConverterTest {
 
     @Test
     void shouldReturnNullWhenAuthorizationHeaderValueDoesNotStartWithBearer() {
+        when(accessTokenRepositoryMock.loadAccessToken(any())).thenReturn(Mono.empty());
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .header(HttpHeaders.AUTHORIZATION, ACCESS_TOKEN_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_VALUE)
                 .build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Authentication authentication = converter.convert(serverWebExchangeMock).block();
@@ -99,28 +75,9 @@ class AccessTokenServerAuthenticationConverterTest {
 
     @Test
     void shouldReturnNullWhenAuthorizationHeaderValueIsInvalid() {
+        when(accessTokenRepositoryMock.loadAccessToken(any())).thenReturn(Mono.empty());
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer ")
-                .build();
-        MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
-        Authentication authentication = converter.convert(serverWebExchangeMock).block();
-        assertNull(authentication);
-    }
-
-    @Test
-    void shouldReturnNullWhenAccessTokenHeaderCookieIsMissing() {
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .cookie(new HttpCookie(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME, ACCESS_TOKEN_PAYLOAD))
-                .build();
-        MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
-        Authentication authentication = converter.convert(serverWebExchangeMock).block();
-        assertNull(authentication);
-    }
-
-    @Test
-    void shouldReturnNullWhenAccessTokenPayloadCookieIsMissing() {
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .cookie(new HttpCookie(ACCESS_TOKEN_HEADER_COOKIE_NAME, ACCESS_TOKEN_HEADER))
                 .build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Authentication authentication = converter.convert(serverWebExchangeMock).block();

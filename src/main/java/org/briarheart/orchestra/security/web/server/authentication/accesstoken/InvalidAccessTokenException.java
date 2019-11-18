@@ -1,4 +1,4 @@
-package org.briarheart.orchestra.security.web.server.authentication;
+package org.briarheart.orchestra.security.web.server.authentication.accesstoken;
 
 import org.springframework.security.authentication.BadCredentialsException;
 

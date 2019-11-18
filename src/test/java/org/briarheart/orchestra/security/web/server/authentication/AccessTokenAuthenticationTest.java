@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.security.web.server.authentication;
 
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

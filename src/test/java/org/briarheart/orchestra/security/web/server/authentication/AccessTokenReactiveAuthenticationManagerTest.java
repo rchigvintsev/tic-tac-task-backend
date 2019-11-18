@@ -1,5 +1,8 @@
 package org.briarheart.orchestra.security.web.server.authentication;
 
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
+import org.briarheart.orchestra.security.web.server.authentication.accesstoken.InvalidAccessTokenException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
