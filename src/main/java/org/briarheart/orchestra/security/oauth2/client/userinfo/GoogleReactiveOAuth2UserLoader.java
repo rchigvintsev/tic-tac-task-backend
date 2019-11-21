@@ -1,6 +1,5 @@
 package org.briarheart.orchestra.security.oauth2.client.userinfo;
 
-import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.security.oauth2.core.user.GoogleOAuth2User;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -17,9 +16,15 @@ import reactor.core.publisher.Mono;
  *
  * @author Roman Chigvintsev
  */
-@RequiredArgsConstructor
-public class GoogleReactiveOAuth2UserLoader implements ReactiveOAuth2UserLoader<OidcUserRequest, OidcUser> {
-    private final ReactiveOAuth2UserService<OidcUserRequest, OidcUser> userService;
+public class GoogleReactiveOAuth2UserLoader extends AbstractReactiveOAuth2UserLoader<OidcUserRequest, OidcUser> {
+    /**
+     * Creates new instance of this class with the given implementation of {@link ReactiveOAuth2UserService}.
+     *
+     * @param userService OAuth 2 user service (must not be {@code null})
+     */
+    public GoogleReactiveOAuth2UserLoader(ReactiveOAuth2UserService<OidcUserRequest, OidcUser> userService) {
+        super(userService);
+    }
 
     @Override
     public boolean supports(ClientRegistration clientRegistration) {
@@ -28,7 +33,7 @@ public class GoogleReactiveOAuth2UserLoader implements ReactiveOAuth2UserLoader<
 
     @Override
     public Mono<OidcUser> loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
-        return userService.loadUser(userRequest).map(user -> {
+        return super.loadUser(userRequest).map(user -> {
             ClientRegistration clientRegistration = userRequest.getClientRegistration();
             ProviderDetails providerDetails = clientRegistration.getProviderDetails();
             String userNameAttributeName = providerDetails.getUserInfoEndpoint().getUserNameAttributeName();

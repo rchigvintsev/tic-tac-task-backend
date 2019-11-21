@@ -14,6 +14,9 @@ spring:
           facebook:
             client-id: ${SECURITY_OAUTH2_FACEBOOK_CLIENT_ID}
             client-secret: ${SECURITY_OAUTH2_FACEBOOK_CLIENT_SECRET}
+          github:
+            client-id: ${SECURITY_OAUTH2_GITHUB_CLIENT_ID}
+            client-secret: ${SECURITY_OAUTH2_GITHUB_CLIENT_SECRET}
 
 management:
   endpoint:

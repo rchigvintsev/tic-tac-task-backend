@@ -1,6 +1,5 @@
 package org.briarheart.orchestra.security.oauth2.client.userinfo;
 
-import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.security.oauth2.core.user.FacebookOAuth2User;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistration.ProviderDetails;
@@ -19,11 +18,17 @@ import java.util.Map;
  *
  * @author Roman Chigvintsev
  */
-@RequiredArgsConstructor
-public class FacebookReactiveOAuth2UserLoader implements ReactiveOAuth2UserLoader<OAuth2UserRequest, OAuth2User> {
+public class FacebookReactiveOAuth2UserLoader extends AbstractReactiveOAuth2UserLoader<OAuth2UserRequest, OAuth2User> {
     private static final String PICTURE_URI_TEMPLATE = "http://graph.facebook.com/{user-id}/picture?type=normal";
 
-    private final ReactiveOAuth2UserService<OAuth2UserRequest, OAuth2User> userService;
+    /**
+     * Creates new instance of this class with the given implementation of {@link ReactiveOAuth2UserService}.
+     *
+     * @param userService OAuth 2 user service (must not be {@code null})
+     */
+    public FacebookReactiveOAuth2UserLoader(ReactiveOAuth2UserService<OAuth2UserRequest, OAuth2User> userService) {
+        super(userService);
+    }
 
     @Override
     public boolean supports(ClientRegistration clientRegistration) {
@@ -32,7 +37,7 @@ public class FacebookReactiveOAuth2UserLoader implements ReactiveOAuth2UserLoade
 
     @Override
     public Mono<OAuth2User> loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        return userService.loadUser(userRequest).map(user -> {
+        return super.loadUser(userRequest).map(user -> {
             Map<String, Object> userAttrs = user.getAttributes();
             if (userAttrs.get("picture") == null) {
                 String pictureUri = UriComponentsBuilder.fromUriString(PICTURE_URI_TEMPLATE)

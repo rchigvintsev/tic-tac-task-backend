@@ -1,10 +1,7 @@
 package org.briarheart.orchestra.config;
 
 import org.briarheart.orchestra.data.UserRepository;
-import org.briarheart.orchestra.security.oauth2.client.userinfo.FacebookReactiveOAuth2UserLoader;
-import org.briarheart.orchestra.security.oauth2.client.userinfo.GoogleReactiveOAuth2UserLoader;
-import org.briarheart.orchestra.security.oauth2.client.userinfo.ReactiveOAuth2UserLoader;
-import org.briarheart.orchestra.security.oauth2.client.userinfo.ReactiveOAuth2UserLoaderManager;
+import org.briarheart.orchestra.security.oauth2.client.userinfo.*;
 import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenReactiveAuthenticationManager;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationConverter;
@@ -138,8 +135,11 @@ public class WebSecurityConfig {
 
     @Bean
     public ReactiveOAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService(UserRepository userRepository) {
-        List<ReactiveOAuth2UserLoader<OAuth2UserRequest, OAuth2User>> userLoaders;
-        userLoaders = List.of(new FacebookReactiveOAuth2UserLoader(new DefaultReactiveOAuth2UserService()));
+        DefaultReactiveOAuth2UserService userService = new DefaultReactiveOAuth2UserService();
+        List<ReactiveOAuth2UserLoader<OAuth2UserRequest, OAuth2User>> userLoaders = List.of(
+                new FacebookReactiveOAuth2UserLoader(userService),
+                new GithubReactiveOAuth2UserLoader(userService)
+        );
         return new ReactiveOAuth2UserLoaderManager<>(userLoaders, userRepository);
     }
 
