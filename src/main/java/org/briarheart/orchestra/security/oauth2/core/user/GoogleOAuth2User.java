@@ -17,9 +17,9 @@ public class GoogleOAuth2User extends DefaultOidcUser implements OAuth2UserAttri
      * Creates new instance of this class with the given authorities, OIDC ID token, OIDC user information and
      * name attribute key.
      *
-     * @param authorities authorities granted to the user
-     * @param idToken OpenID Connect Core 1.0 ID token containing claims about the user
-     * @param userInfo OpenID Connect Core 1.0 user information containing claims about the user
+     * @param authorities      authorities granted to the user
+     * @param idToken          OpenID Connect Core 1.0 ID token containing claims about the user
+     * @param userInfo         OpenID Connect Core 1.0 user information containing claims about the user
      * @param nameAttributeKey key used to access the user's &quot;name&quot; from {@link #getAttributes()}
      */
     public GoogleOAuth2User(Collection<? extends GrantedAuthority> authorities,

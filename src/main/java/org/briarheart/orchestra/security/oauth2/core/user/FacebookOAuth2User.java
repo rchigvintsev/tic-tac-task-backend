@@ -16,8 +16,8 @@ public class FacebookOAuth2User extends DefaultOAuth2User implements OAuth2UserA
     /**
      * Creates new instance of this class with the given authorities, attributes and name attribute key.
      *
-     * @param authorities authorities granted to the user
-     * @param attributes attributes about the user
+     * @param authorities      authorities granted to the user
+     * @param attributes       attributes about the user
      * @param nameAttributeKey key used to access the user's &quot;name&quot; from {@link #getAttributes()}
      */
     public FacebookOAuth2User(Collection<? extends GrantedAuthority> authorities,
