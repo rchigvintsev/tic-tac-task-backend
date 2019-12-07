@@ -17,6 +17,20 @@ spring:
           github:
             client-id: ${SECURITY_OAUTH2_GITHUB_CLIENT_ID}
             client-secret: ${SECURITY_OAUTH2_GITHUB_CLIENT_SECRET}
+          vk:
+            clientName: VK
+            client-id: ${SECURITY_OAUTH2_VK_CLIENT_ID}
+            client-secret: ${SECURITY_OAUTH2_VK_CLIENT_SECRET}
+            authorizationGrantType: authorization_code
+            clientAuthenticationMethod: post
+            scope: email
+            redirectUri: '{baseUrl}/{action}/oauth2/code/{registrationId}'
+        provider:
+          vk:
+            authorizationUri: https://oauth.vk.com/authorize
+            tokenUri: https://oauth.vk.com/access_token
+            userInfoUri: https://api.vk.com/method/users.get
+            userNameAttribute: id
 
 management:
   endpoint:

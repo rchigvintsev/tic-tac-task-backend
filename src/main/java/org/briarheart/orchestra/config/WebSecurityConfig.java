@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.config;
 
 import org.briarheart.orchestra.data.UserRepository;
+import org.briarheart.orchestra.security.oauth2.client.endpoint.ReactiveAccessTokenTypeWebClientFilter;
 import org.briarheart.orchestra.security.oauth2.client.userinfo.*;
 import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenReactiveAuthenticationManager;
@@ -20,6 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.endpoint.ReactiveOAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.WebClientReactiveAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -46,6 +50,7 @@ import org.springframework.security.web.server.savedrequest.NoOpServerRequestCac
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.WebFilter;
 
 import java.util.*;
@@ -138,7 +143,8 @@ public class WebSecurityConfig {
         DefaultReactiveOAuth2UserService userService = new DefaultReactiveOAuth2UserService();
         List<ReactiveOAuth2UserLoader<OAuth2UserRequest, OAuth2User>> userLoaders = List.of(
                 new FacebookReactiveOAuth2UserLoader(userService),
-                new GithubReactiveOAuth2UserLoader(userService)
+                new GithubReactiveOAuth2UserLoader(userService),
+                new VkReactiveOAuth2UserLoader(new VkReactiveOAuth2UserService())
         );
         return new ReactiveOAuth2UserLoaderManager<>(userLoaders, userRepository);
     }
@@ -170,6 +176,16 @@ public class WebSecurityConfig {
         JwtService tokenService = new JwtService(accessTokenSigningKey);
         tokenService.setAccessTokenValiditySeconds(accessTokenValiditySeconds);
         return tokenService;
+    }
+
+    @Bean
+    public ReactiveOAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> oAuth2AccessTokenResponseClient() {
+        WebClientReactiveAuthorizationCodeTokenResponseClient client;
+        client = new WebClientReactiveAuthorizationCodeTokenResponseClient();
+        client.setWebClient(WebClient.builder()
+                .filter(new ReactiveAccessTokenTypeWebClientFilter())
+                .build());
+        return client;
     }
 
     private CorsConfigurationSource createCorsConfigurationSource() {

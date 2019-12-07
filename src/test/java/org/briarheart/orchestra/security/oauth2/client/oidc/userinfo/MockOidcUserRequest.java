@@ -27,6 +27,20 @@ public class MockOidcUserRequest extends OidcUserRequest {
                 new MockOidcIdToken(claims));
     }
 
+    /**
+     * Creates new instance of this class with the given client registration, claims and additional parameters
+     *
+     * @param clientRegistration client registration (must not be {@code null})
+     * @param claims claims (must not be {@code null})
+     * @param additionalParameters additional parameters
+     */
+    public MockOidcUserRequest(ClientRegistration clientRegistration,
+                               Map<String, Object> claims,
+                               Map<String, Object> additionalParameters) {
+        super(clientRegistration, new MockOAuth2AccessToken(clientRegistration.getScopes()),
+                new MockOidcIdToken(claims), additionalParameters);
+    }
+
     private static class MockOAuth2AccessToken extends OAuth2AccessToken {
         private static final String TOKEN_VALUE = "Qk45NG5PY2V0TERYOHRoeXlDNzQ=";
 
