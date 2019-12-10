@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.util.Map;
 
-import static org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
+import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -28,13 +28,13 @@ import static org.mockito.Mockito.*;
 /**
  * @author Roman Chigvintsev
  */
-class AccessTokenServerAuthenticationSuccessHandlerTest {
+class ClientRedirectUriServerAuthenticationSuccessHandlerTest {
     private ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepositoryMock;
     private UserRepository userRepositoryMock;
     private AccessToken accessTokenMock;
     private ServerAccessTokenRepository accessTokenRepositoryMock;
 
-    private AccessTokenServerAuthenticationSuccessHandler handler;
+    private ClientRedirectUriServerAuthenticationSuccessHandler handler;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
@@ -50,9 +50,9 @@ class AccessTokenServerAuthenticationSuccessHandlerTest {
         accessTokenRepositoryMock = mock(ServerAccessTokenRepository.class);
         when(accessTokenRepositoryMock.saveAccessToken(eq(accessTokenMock), any())).thenReturn(Mono.empty());
 
-        handler = new AccessTokenServerAuthenticationSuccessHandler(authorizationRequestRepositoryMock,
+        handler = new ClientRedirectUriServerAuthenticationSuccessHandler(authorizationRequestRepositoryMock,
                 userRepositoryMock, accessTokenServiceMock, accessTokenRepositoryMock);
-        handler.setClientRedirectUriParameterName("client-redirect-uri");
+        handler.setClientRedirectUriParameterName(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME);
     }
 
     @Test

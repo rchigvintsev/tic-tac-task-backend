@@ -6,7 +6,8 @@ import org.briarheart.orchestra.security.oauth2.client.userinfo.*;
 import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenReactiveAuthenticationManager;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationConverter;
-import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationSuccessHandler;
+import org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationFailureHandler;
+import org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationSuccessHandler;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.ServerAccessTokenRepository;
 import org.briarheart.orchestra.security.web.server.authentication.jwt.CookieJwtRepository;
@@ -38,11 +39,10 @@ import org.springframework.security.oauth2.client.web.server.ServerOAuth2Authori
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.server.DefaultServerRedirectStrategy;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
-import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
-import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
-import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
+import org.springframework.security.web.server.ServerRedirectStrategy;
+import org.springframework.security.web.server.authentication.*;
 import org.springframework.security.web.server.authentication.logout.HttpStatusReturningServerLogoutSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
@@ -55,7 +55,7 @@ import org.springframework.web.server.WebFilter;
 
 import java.util.*;
 
-import static org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
+import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 
 /**
  * @author Roman Chigvintsev
@@ -69,11 +69,14 @@ public class WebSecurityConfig {
     private long accessTokenValiditySeconds;
 
     @Bean
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
-                                                            ServerAuthenticationConverter authenticationConverter,
-                                                            ServerAuthenticationSuccessHandler authenticationSuccessHandler,
-                                                            ServerLogoutHandler logoutHandler,
-                                                            AuthenticationWebFilter accessTokenAuthenticationWebFilter) {
+    public SecurityWebFilterChain springSecurityFilterChain(
+            ServerHttpSecurity http,
+            ServerAuthenticationConverter authenticationConverter,
+            ServerAuthenticationSuccessHandler authenticationSuccessHandler,
+            ServerAuthenticationFailureHandler authenticationFailureHandler,
+            ServerLogoutHandler logoutHandler,
+            AuthenticationWebFilter accessTokenAuthenticationWebFilter
+    ) {
         SecurityWebFilterChain filterChain = http.cors().configurationSource(createCorsConfigurationSource())
                 .and()
                     .csrf().disable()
@@ -86,6 +89,7 @@ public class WebSecurityConfig {
                         .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                         .authenticationConverter(authenticationConverter)
                         .authenticationSuccessHandler(authenticationSuccessHandler)
+                        .authenticationFailureHandler(authenticationFailureHandler)
                 .and()
                     .logout()
                         .logoutHandler(logoutHandler)
@@ -120,10 +124,25 @@ public class WebSecurityConfig {
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
             UserRepository userRepository,
             AccessTokenService accessTokenService,
-            ServerAccessTokenRepository accessTokenRepository
+            ServerAccessTokenRepository accessTokenRepository,
+            ServerRedirectStrategy redirectStrategy
     ) {
-        return new AccessTokenServerAuthenticationSuccessHandler(authorizationRequestRepository, userRepository,
-                accessTokenService, accessTokenRepository);
+        ClientRedirectUriServerAuthenticationSuccessHandler handler;
+        handler = new ClientRedirectUriServerAuthenticationSuccessHandler(authorizationRequestRepository,
+                userRepository, accessTokenService, accessTokenRepository);
+        handler.setRedirectStrategy(redirectStrategy);
+        return handler;
+    }
+
+    @Bean
+    public ServerAuthenticationFailureHandler authenticationFailureHandler(
+            ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
+            ServerRedirectStrategy redirectStrategy
+    ) {
+        ClientRedirectUriServerAuthenticationFailureHandler handler;
+        handler = new ClientRedirectUriServerAuthenticationFailureHandler(authorizationRequestRepository);
+        handler.setRedirectStrategy(redirectStrategy);
+        return handler;
     }
 
     @Bean
@@ -186,6 +205,11 @@ public class WebSecurityConfig {
                 .filter(new ReactiveAccessTokenTypeWebClientFilter())
                 .build());
         return client;
+    }
+
+    @Bean
+    public ServerRedirectStrategy redirectStrategy() {
+        return new DefaultServerRedirectStrategy();
     }
 
     private CorsConfigurationSource createCorsConfigurationSource() {
