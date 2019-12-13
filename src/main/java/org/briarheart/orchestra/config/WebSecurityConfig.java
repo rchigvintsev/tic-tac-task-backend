@@ -33,7 +33,6 @@ import org.springframework.security.oauth2.client.registration.ReactiveClientReg
 import org.springframework.security.oauth2.client.userinfo.DefaultReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserService;
-import org.springframework.security.oauth2.client.web.server.OAuth2AuthorizationRequestRedirectWebFilter;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizationCodeAuthenticationTokenConverter;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -46,14 +45,14 @@ import org.springframework.security.web.server.authentication.*;
 import org.springframework.security.web.server.authentication.logout.HttpStatusReturningServerLogoutSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
-import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.server.WebFilter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 
@@ -77,8 +76,9 @@ public class WebSecurityConfig {
             ServerLogoutHandler logoutHandler,
             AuthenticationWebFilter accessTokenAuthenticationWebFilter
     ) {
-        SecurityWebFilterChain filterChain = http.cors().configurationSource(createCorsConfigurationSource())
+        return http.cors().configurationSource(createCorsConfigurationSource())
                 .and()
+                    .requestCache().disable()
                     .csrf().disable()
                     .authorizeExchange().anyExchange().authenticated()
                 .and()
@@ -90,6 +90,7 @@ public class WebSecurityConfig {
                         .authenticationConverter(authenticationConverter)
                         .authenticationSuccessHandler(authenticationSuccessHandler)
                         .authenticationFailureHandler(authenticationFailureHandler)
+                        .authorizationRequestRepository(authorizationRequestRepository())
                 .and()
                     .logout()
                         .logoutHandler(logoutHandler)
@@ -97,8 +98,6 @@ public class WebSecurityConfig {
                 .and()
                     .addFilterBefore(accessTokenAuthenticationWebFilter, SecurityWebFiltersOrder.HTTP_BASIC)
                     .build();
-        configureOAuth2AuthorizationRequestRedirectWebFilter(filterChain);
-        return filterChain;
     }
 
     @Bean
@@ -230,21 +229,5 @@ public class WebSecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
-    }
-
-    private void configureOAuth2AuthorizationRequestRedirectWebFilter(SecurityWebFilterChain filterChain) {
-        getWebFilter(filterChain, OAuth2AuthorizationRequestRedirectWebFilter.class).ifPresent(filter -> {
-            filter.setAuthorizationRequestRepository(authorizationRequestRepository());
-            filter.setRequestCache(NoOpServerRequestCache.getInstance());
-        });
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T extends WebFilter> Optional<T> getWebFilter(SecurityWebFilterChain filterChain, Class<T> filterClass) {
-        return (Optional<T>) filterChain.getWebFilters()
-                .filter(Objects::nonNull)
-                .filter(filter -> filter.getClass().isAssignableFrom(filterClass))
-                .singleOrEmpty()
-                .blockOptional();
     }
 }
