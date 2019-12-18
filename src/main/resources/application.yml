@@ -50,5 +50,6 @@ application:
   security:
     authentication:
       access-token:
+        # seven days
         validity-seconds: 604800
         signing-key: ${SECURITY_ACCESS_TOKEN_SIGNING_KEY}
