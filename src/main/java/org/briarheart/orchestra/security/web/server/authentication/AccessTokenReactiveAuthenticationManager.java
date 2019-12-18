@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.Authentication;
 import reactor.core.publisher.Mono;
 
@@ -25,7 +26,8 @@ public class AccessTokenReactiveAuthenticationManager implements ReactiveAuthent
         return Mono.fromCallable(() -> {
             String accessTokenValue = ((AccessTokenAuthentication) authentication).getTokenValue();
             AccessToken accessToken = accessTokenService.parseAccessToken(accessTokenValue);
-            return new AccessTokenAuthentication(accessToken);
+            AuthenticatedPrincipal principal = new AccessTokenAuthenticatedPrincipal(accessToken);
+            return new AccessTokenAuthentication(accessToken, principal);
         });
     }
 }

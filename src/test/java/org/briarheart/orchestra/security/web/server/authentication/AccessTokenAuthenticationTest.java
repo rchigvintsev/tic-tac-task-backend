@@ -20,7 +20,7 @@ class AccessTokenAuthenticationTest {
     @Test
     void shouldMakeTokenUnauthenticated() {
         AccessToken accessTokenMock = mock(AccessToken.class);
-        AccessTokenAuthentication token = new AccessTokenAuthentication(accessTokenMock);
+        AccessTokenAuthentication token = new AccessTokenAuthentication(accessTokenMock, null);
         assertTrue(token.isAuthenticated());
         token.setAuthenticated(false);
         assertFalse(token.isAuthenticated());
