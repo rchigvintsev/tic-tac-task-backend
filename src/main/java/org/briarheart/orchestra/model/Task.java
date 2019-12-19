@@ -28,4 +28,8 @@ public class Task {
     @NotNull(message = "{javax.validation.constraints.NotNull.completed.message}")
     @Builder.Default
     private Boolean completed = false;
+
+    @NotNull(message = "{javax.validation.constraints.NotNull.author.message}")
+    @Size(max = 254, message = "{javax.validation.constraints.Size.author.message}")
+    private String author;
 }
