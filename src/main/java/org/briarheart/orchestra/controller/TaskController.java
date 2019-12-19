@@ -1,12 +1,15 @@
 package org.briarheart.orchestra.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.Task;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.security.Principal;
 
 /**
  * @author Roman Chigvintsev
@@ -18,13 +21,15 @@ public class TaskController {
     private final TaskRepository taskRepository;
 
     @GetMapping
-    public Flux<Task> getTasks(@RequestParam(name = "completed", defaultValue = "false") Boolean completed) {
-        return taskRepository.findByCompleted(completed);
+    public Flux<Task> getTasks(@RequestParam(name = "completed", defaultValue = "false") Boolean completed,
+                               Principal user) {
+        return taskRepository.findByCompletedAndAuthor(completed, user.getName());
     }
 
     @GetMapping("/{id}")
-    public Mono<Task> getTask(@PathVariable("id") Long id) {
-        return taskRepository.findById(id);
+    public Mono<Task> getTask(@PathVariable("id") Long id, Principal user) {
+        return taskRepository.findByIdAndAuthor(id, user.getName())
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")));
     }
 
     @PostMapping

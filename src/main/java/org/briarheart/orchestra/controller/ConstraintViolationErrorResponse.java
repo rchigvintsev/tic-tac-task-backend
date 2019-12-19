@@ -15,7 +15,7 @@ import static java.util.stream.Collectors.toList;
  *
  * @author Roman Chigvintsev
  */
-public class ConstraintViolationErrorResponse {
+public class ConstraintViolationErrorResponse extends ErrorResponse {
     @Getter
     private final List<String> messages;
 
