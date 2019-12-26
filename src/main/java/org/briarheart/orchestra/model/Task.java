@@ -32,4 +32,18 @@ public class Task {
     @NotNull(message = "{javax.validation.constraints.NotNull.author.message}")
     @Size(max = 254, message = "{javax.validation.constraints.Size.author.message}")
     private String author;
+
+    /**
+     * Creates copy of this task including all attributes except primary key.
+     *
+     * @return copy of this task
+     */
+    public Task copy() {
+        Task copy = new Task();
+        copy.setTitle(title);
+        copy.setDescription(description);
+        copy.setCompleted(completed);
+        copy.setAuthor(author);
+        return copy;
+    }
 }

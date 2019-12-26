@@ -1,8 +1,9 @@
 package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
-import org.briarheart.orchestra.data.TaskRepository;
+import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Task;
+import org.briarheart.orchestra.service.TaskService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
@@ -33,17 +35,15 @@ class TaskControllerTest {
     private WebTestClient testClient;
 
     @MockBean
-    private TaskRepository taskRepository;
+    private TaskService taskService;
 
     @Test
-    void shouldGetAllUncompletedTasks() {
-        String username = "alice";
-
+    void shouldReturnAllUncompletedTasks() {
         Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        when(authenticationMock.getName()).thenReturn("alice");
 
-        Task task = Task.builder().id(1L).title("Test task").author(username).build();
-        when(taskRepository.findByCompletedAndAuthor(false, username)).thenReturn(Flux.just(task));
+        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
+        when(taskService.getUncompletedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks?completed=false").exchange()
@@ -52,14 +52,17 @@ class TaskControllerTest {
     }
 
     @Test
-    void shouldGetAllCompletedTasks() {
-        String username = "alice";
-
+    void shouldReturnAllCompletedTasks() {
         Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        when(authenticationMock.getName()).thenReturn("alice");
 
-        Task task = Task.builder().id(1L).title("Test task").author(username).completed(true).build();
-        when(taskRepository.findByCompletedAndAuthor(true, username)).thenReturn(Flux.just(task));
+        Task task = Task.builder()
+                .id(1L)
+                .title("Test task")
+                .author(authenticationMock.getName())
+                .completed(true)
+                .build();
+        when(taskService.getCompletedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks?completed=true").exchange()
@@ -68,14 +71,12 @@ class TaskControllerTest {
     }
 
     @Test
-    void shouldGetTaskById() {
-        String username = "alice";
-
+    void shouldReturnTaskById() {
         Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        when(authenticationMock.getName()).thenReturn("alice");
 
-        Task task = Task.builder().id(1L).title("Test task").author(username).build();
-        when(taskRepository.findByIdAndAuthor(1L, username)).thenReturn(Mono.just(task));
+        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
+        when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/1").exchange()
@@ -84,16 +85,36 @@ class TaskControllerTest {
     }
 
     @Test
+    void shouldReturnNotFoundStatusCodeWhenTaskIsNotFoundById() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        String errorMessage = "Task is not found";
+
+        when(taskService.getTask(anyLong(), anyString()))
+                .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
+
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setMessage(errorMessage);
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/1").exchange()
+                .expectStatus().isNotFound()
+                .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
+    }
+
+    @Test
     void shouldCreateTask() {
-        String taskTitle = "New task";
-        String taskAuthor = "alice";
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
 
-        Task task = Task.builder().title(taskTitle).author(taskAuthor).build();
-        Task savedTask = Task.builder().id(2L).title(taskTitle).author(taskAuthor).build();
+        Task task = Task.builder().title("New task").build();
+        Task savedTask = Task.builder().id(2L).title(task.getTitle()).author(authenticationMock.getName()).build();
 
-        when(taskRepository.save(task)).thenReturn(Mono.just(savedTask));
+        when(taskService.createTask(task, authenticationMock.getName())).thenReturn(Mono.just(savedTask));
 
-        testClient.mutateWith(csrf()).post()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).post()
                 .uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(task)
@@ -104,52 +125,25 @@ class TaskControllerTest {
     }
 
     @Test
-    void shouldNotGetTasksBelongingToOtherUsers() {
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
-
-        Task expectedTask = Task.builder().id(1L).title("Expected task").author(username).build();
-        Task unexpectedTask = Task.builder().id(1L).title("Unexpected task").author("bob").build();
-
-        when(taskRepository.findByCompletedAndAuthor(anyBoolean(), any())).thenAnswer(invocation -> {
-            String author = invocation.getArgument(1, String.class);
-            if (expectedTask.getAuthor().equals(author)) {
-                return Flux.just(expectedTask);
-            }
-            if (unexpectedTask.getAuthor().equals(author)) {
-                return Flux.just(unexpectedTask);
-            }
-            return Flux.empty();
-        });
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks").exchange()
-                .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[] {expectedTask});
-    }
-
-    @Test
-    void shouldNotGetTaskByIdBelongingToOtherUser() {
+    void shouldUpdateTask() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
 
-        Task task = Task.builder().id(1L).title("Test task").author("bob").build();
-        when(taskRepository.findByIdAndAuthor(anyLong(), any())).thenAnswer(invocation -> {
-            String author = invocation.getArgument(1, String.class);
-            if (task.getAuthor().equals(author)) {
-                return Mono.just(task);
-            }
-            return Mono.empty();
-        });
+        Task task = Task.builder().id(2L).title("Test task").author(authenticationMock.getName()).build();
+        Task updatedTask = Task.builder().title("Updated test task").build();
+        when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
+        when(taskService.updateTask(updatedTask, task.getId(), authenticationMock.getName()))
+                .thenReturn(Mono.just(updatedTask));
 
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setMessage("Task with id " + task.getId() + " is not found");
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/1").exchange()
-                .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class)
-                .isEqualTo(errorResponse);
+        testClient.mutateWith(csrf())
+                .mutateWith(mockAuthentication(authenticationMock))
+                .put()
+                .uri("/tasks/2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(updatedTask)
+                .exchange()
+
+                .expectStatus().isOk()
+                .expectBody(Task.class).isEqualTo(updatedTask);
     }
 }
