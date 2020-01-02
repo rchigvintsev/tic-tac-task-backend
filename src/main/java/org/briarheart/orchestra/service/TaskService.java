@@ -39,7 +39,7 @@ public interface TaskService {
     Mono<Task> getTask(Long id, String author) throws EntityNotFoundException;
 
     /**
-     * Creates new task associated with the given author.
+     * Creates new task belonging to the given author.
      *
      * @param task task to be created (must not be {@code null})
      * @param author task author (must not be {@code null} or empty)

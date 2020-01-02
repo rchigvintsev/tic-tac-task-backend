@@ -11,6 +11,8 @@ import reactor.core.publisher.Mono;
 import java.security.Principal;
 
 /**
+ * REST-controller for task managing.
+ *
  * @author Roman Chigvintsev
  */
 @RestController
@@ -40,7 +42,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public Mono<Task> updateTask(@RequestBody Task task, @PathVariable("id") Long id, Principal user) {
+    public Mono<Task> updateTask(@RequestBody Task task, @PathVariable Long id, Principal user) {
         return taskService.updateTask(task, id, user.getName());
     }
 }

@@ -4,6 +4,7 @@ import org.briarheart.orchestra.model.TaskComment;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * @author Roman Chigvintsev
@@ -11,4 +12,10 @@ import reactor.core.publisher.Flux;
 public interface TaskCommentRepository extends ReactiveCrudRepository<TaskComment, Long> {
     @Query("SELECT * FROM task_comment WHERE task_id = :taskId ORDER BY created_at DESC")
     Flux<TaskComment> findByTaskIdOrderByCreatedAtDesc(Long taskId);
+
+    @Query("SELECT * FROM task_comment WHERE id= :id AND author = :author")
+    Mono<TaskComment> findByIdAndAuthor(Long id, String author);
+
+    @Query("DELETE FROM task_comment WHERE id= :id AND author = :author")
+    Mono<Void> deleteByIdAndAuthor(Long id, String author);
 }

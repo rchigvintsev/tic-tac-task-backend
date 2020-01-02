@@ -38,11 +38,12 @@ public class DefaultTaskService implements TaskService {
     @Override
     public Mono<Task> createTask(Task task, String author) {
         Assert.notNull(task, "Task must not be null");
-        Assert.hasText(author, "Author must not be null or empty");
-
-        Task newTask = task.copy();
-        newTask.setAuthor(author);
-        return taskRepository.save(newTask);
+        Assert.hasText(author, "Task author must not be null or empty");
+        return Mono.defer(() -> {
+            Task newTask = task.copy();
+            newTask.setAuthor(author);
+            return taskRepository.save(newTask);
+        });
     }
 
     @Override

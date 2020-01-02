@@ -30,7 +30,7 @@ class DefaultTaskServiceTest {
         String author = "alice";
         when(taskRepositoryMock.findByCompletedAndAuthor(true, author)).thenReturn(Flux.empty());
 
-        taskService.getCompletedTasks(author);
+        taskService.getCompletedTasks(author).blockFirst();
         verify(taskRepositoryMock, times(1)).findByCompletedAndAuthor(true, author);
     }
 
@@ -39,7 +39,7 @@ class DefaultTaskServiceTest {
         String author = "alice";
         when(taskRepositoryMock.findByCompletedAndAuthor(false, author)).thenReturn(Flux.empty());
 
-        taskService.getUncompletedTasks(author);
+        taskService.getUncompletedTasks(author).blockFirst();
         verify(taskRepositoryMock, times(1)).findByCompletedAndAuthor(false, author);
     }
 
@@ -74,6 +74,16 @@ class DefaultTaskServiceTest {
         assertNotNull(result);
         assertEquals(expectedTaskId, result.getId());
         assertEquals(task.getTitle(), result.getTitle());
+    }
+
+    @Test
+    void shouldSetAuthorFieldOnTaskCreate() {
+        Task task = Task.builder().title("New task").build();
+        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
+
+        String author = "alice";
+        Task result = taskService.createTask(task, author).block();
+        assertNotNull(result);
         assertEquals(author, result.getAuthor());
     }
 
@@ -85,20 +95,6 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldNotCreateTaskForOtherUser() {
-        Task task = Task.builder().title("New task").author("bob").build();
-        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> {
-            Task savedTask = invocation.getArgument(0, Task.class);
-            return Mono.just(savedTask);
-        });
-
-        String author = "alice";
-        Task result = taskService.createTask(task, author).block();
-        assertNotNull(result);
-        assertEquals(author, result.getAuthor());
-    }
-
-    @Test
     void shouldUpdateTask() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
@@ -107,8 +103,30 @@ class DefaultTaskServiceTest {
         Task updatedTask = Task.builder().title("Updated test task").build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
         assertNotNull(result);
-        assertEquals(task.getId(), result.getId());
         assertEquals(updatedTask.getTitle(), result.getTitle());
+    }
+
+    @Test
+    void shouldSetIdFieldOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
+
+        Task updatedTask = Task.builder().title("Updated test task").build();
+        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        assertEquals(task.getId(), result.getId());
+    }
+
+    @Test
+    void shouldSetAuthorFieldOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
+
+        Task updatedTask = Task.builder().title("Updated test task").build();
+        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
         assertEquals(task.getAuthor(), result.getAuthor());
     }
 
@@ -117,22 +135,5 @@ class DefaultTaskServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> taskService.updateTask(null, null, null));
         assertEquals("Task must not be null", exception.getMessage());
-    }
-
-    @Test
-    void shouldNotUpdateTaskBelongingToOtherUser() {
-        Task task = Task.builder().id(1L).title("Test task").author("bob").build();
-        when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenAnswer(invocation -> {
-            Long id = invocation.getArgument(0, Long.class);
-            String author = invocation.getArgument(1, String.class);
-            if (task.getId().equals(id) && task.getAuthor().equals(author)) {
-                return Mono.just(task);
-            }
-            return Mono.empty();
-        });
-
-        Task updatedTask = Task.builder().title("Updated test task").build();
-        assertThrows(EntityNotFoundException.class,
-                () -> taskService.updateTask(updatedTask, task.getId(), "alice").block());
     }
 }
