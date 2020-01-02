@@ -31,4 +31,23 @@ public class TaskComment {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    @NotNull(message = "{javax.validation.constraints.NotNull.author.message}")
+    @Size(max = 254, message = "{javax.validation.constraints.Size.author.message}")
+    private String author;
+
+    /**
+     * Creates copy of this comment including all attributes except primary key.
+     *
+     * @return copy of this comment
+     */
+    public TaskComment copy() {
+        TaskComment copy = new TaskComment();
+        copy.setTaskId(taskId);
+        copy.setCommentText(commentText);
+        copy.setCreatedAt(createdAt);
+        copy.setUpdatedAt(updatedAt);
+        copy.setAuthor(author);
+        return copy;
+    }
 }
