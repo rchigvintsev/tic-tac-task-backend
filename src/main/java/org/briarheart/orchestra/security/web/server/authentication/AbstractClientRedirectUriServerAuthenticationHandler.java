@@ -15,6 +15,8 @@ import org.springframework.util.Assert;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+
 /**
  * Base class for reactive authentication handlers that perform redirect to URI specified by client.
  * <p>
@@ -61,6 +63,6 @@ public abstract class AbstractClientRedirectUriServerAuthenticationHandler {
     private Mono<String> getRedirectLocation(OAuth2AuthorizationRequest authorizationRequest) {
         Object location = authorizationRequest.getAdditionalParameters().get(clientRedirectUriParameterName);
         // TODO: check that client redirect URI is authorized
-        return location == null ? Mono.empty() : Mono.just(location.toString());
+        return Mono.justOrEmpty(Objects.toString(location, null));
     }
 }
