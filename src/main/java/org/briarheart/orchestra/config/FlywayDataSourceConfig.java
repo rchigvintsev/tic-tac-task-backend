@@ -78,7 +78,7 @@ public class FlywayDataSourceConfig {
                             usernameAndPassword.substring(colonIdx + 1)
                     };
                 }
-                return new String[]{usernameAndPassword, ""};
+                return new String[]{usernameAndPassword, null};
             }
         }
         return new String[2];
