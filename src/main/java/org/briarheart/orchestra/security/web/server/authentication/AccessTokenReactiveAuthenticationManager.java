@@ -13,7 +13,6 @@ import reactor.core.publisher.Mono;
  * This authentication manager expects only instances of {@link AccessTokenAuthentication}.
  *
  * @author Roman Chigvintsev
- *
  * @see AccessToken
  * @see AccessTokenAuthentication
  */
@@ -23,11 +22,11 @@ public class AccessTokenReactiveAuthenticationManager implements ReactiveAuthent
 
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
-        return Mono.fromCallable(() -> {
-            String accessTokenValue = ((AccessTokenAuthentication) authentication).getTokenValue();
-            AccessToken accessToken = accessTokenService.parseAccessToken(accessTokenValue);
-            AuthenticatedPrincipal principal = new AccessTokenAuthenticatedPrincipal(accessToken);
-            return new AccessTokenAuthentication(accessToken, principal);
-        });
+        String accessTokenValue = ((AccessTokenAuthentication) authentication).getTokenValue();
+        return accessTokenService.parseAccessToken(accessTokenValue)
+                .map(accessToken -> {
+                    AuthenticatedPrincipal principal = new AccessTokenAuthenticatedPrincipal(accessToken);
+                    return new AccessTokenAuthentication(accessToken, principal);
+                });
     }
 }

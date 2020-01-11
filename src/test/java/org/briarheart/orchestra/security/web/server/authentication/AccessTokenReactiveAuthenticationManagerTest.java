@@ -7,11 +7,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.security.core.Authentication;
+import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Roman Chigvintsev
@@ -31,7 +31,7 @@ class AccessTokenReactiveAuthenticationManagerTest {
     @Test
     void shouldAuthenticate() {
         AccessToken accessTokenMock = mock(AccessToken.class);
-        when(accessTokenServiceMock.parseAccessToken(anyString())).thenReturn(accessTokenMock);
+        doReturn(Mono.just(accessTokenMock)).when(accessTokenServiceMock).parseAccessToken(anyString());
 
         Authentication authenticationMock = new AccessTokenAuthentication(ACCESS_TOKEN_VALUE);
         Authentication authentication = manager.authenticate(authenticationMock).block();
@@ -42,7 +42,7 @@ class AccessTokenReactiveAuthenticationManagerTest {
     @Test
     void shouldReturnAuthenticationWithAuthenticatedPrincipal() {
         AccessToken accessTokenMock = mock(AccessToken.class);
-        when(accessTokenServiceMock.parseAccessToken(anyString())).thenReturn(accessTokenMock);
+        doReturn(Mono.just(accessTokenMock)).when(accessTokenServiceMock).parseAccessToken(anyString());
 
         Authentication authenticationMock = new AccessTokenAuthentication(ACCESS_TOKEN_VALUE);
         Authentication authentication = manager.authenticate(authenticationMock).block();

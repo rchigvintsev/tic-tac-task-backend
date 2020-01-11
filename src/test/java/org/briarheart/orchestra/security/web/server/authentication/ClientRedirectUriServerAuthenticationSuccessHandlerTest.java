@@ -1,11 +1,14 @@
 package org.briarheart.orchestra.security.web.server.authentication;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.security.oauth2.core.user.OAuth2UserAttributeAccessor;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
-import org.briarheart.orchestra.security.web.server.authentication.accesstoken.ServerAccessTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
@@ -15,6 +18,8 @@ import org.springframework.security.oauth2.client.web.server.ServerAuthorization
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.server.WebFilterExchange;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -22,7 +27,8 @@ import java.util.Map;
 
 import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -31,8 +37,8 @@ import static org.mockito.Mockito.*;
 class ClientRedirectUriServerAuthenticationSuccessHandlerTest {
     private ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepositoryMock;
     private UserRepository userRepositoryMock;
-    private AccessToken accessTokenMock;
-    private ServerAccessTokenRepository accessTokenRepositoryMock;
+    private AccessTokenService accessTokenServiceMock;
+    private ObjectMapper objectMapperMock;
 
     private ClientRedirectUriServerAuthenticationSuccessHandler handler;
 
@@ -41,17 +47,13 @@ class ClientRedirectUriServerAuthenticationSuccessHandlerTest {
     void setUp() {
         authorizationRequestRepositoryMock = mock(ServerAuthorizationRequestRepository.class);
         userRepositoryMock = mock(UserRepository.class);
-
-        accessTokenMock = mock(AccessToken.class);
-
-        AccessTokenService accessTokenServiceMock = mock(AccessTokenService.class);
-        when(accessTokenServiceMock.createAccessToken(any())).thenReturn(accessTokenMock);
-
-        accessTokenRepositoryMock = mock(ServerAccessTokenRepository.class);
-        when(accessTokenRepositoryMock.saveAccessToken(eq(accessTokenMock), any())).thenReturn(Mono.empty());
+        AccessToken accessTokenMock = mock(AccessToken.class);
+        accessTokenServiceMock = mock(AccessTokenService.class);
+        doReturn(Mono.just(accessTokenMock)).when(accessTokenServiceMock).createAccessToken(any(), any());
+        objectMapperMock = spy(ObjectMapper.class);
 
         handler = new ClientRedirectUriServerAuthenticationSuccessHandler(authorizationRequestRepositoryMock,
-                userRepositoryMock, accessTokenServiceMock, accessTokenRepositoryMock);
+                userRepositoryMock, accessTokenServiceMock, objectMapperMock);
         handler.setClientRedirectUriParameterName(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME);
     }
 
@@ -67,26 +69,17 @@ class ClientRedirectUriServerAuthenticationSuccessHandlerTest {
                 .thenReturn(Mono.just(authorizationRequest));
         when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(new User()));
 
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
-        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
-        WebFilterExchange webFilterExchangeMock = mock(WebFilterExchange.class);
-        when(webFilterExchangeMock.getExchange()).thenReturn(webExchangeMock);
-
-        OAuth2UserAttributeAccessor attrAccessorMock = mock(OAuth2UserAttributeAccessor.class);
-        when(attrAccessorMock.getEmail()).thenReturn("white.rabbit@mail.com");
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getPrincipal()).thenReturn(attrAccessorMock);
+        WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
+        Authentication authenticationMock = mockAuthentication();
 
         handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block();
-        URI location = webExchangeMock.getResponse().getHeaders().getLocation();
+        URI location = webFilterExchangeMock.getExchange().getResponse().getHeaders().getLocation();
         assertNotNull(location);
-        assertEquals(CLIENT_REDIRECT_URI, location.toString());
+        assertTrue(location.toString().startsWith(CLIENT_REDIRECT_URI));
     }
 
-    @SuppressWarnings("UnassignedFluxMonoInstance")
     @Test
-    void shouldSaveAccessTokenInServerWebExchange() {
+    void shouldCreateAccessToken() {
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .clientId("test-client")
                 .authorizationUri("http://authorize.me")
@@ -94,35 +87,44 @@ class ClientRedirectUriServerAuthenticationSuccessHandlerTest {
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
-        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(new User()));
+        User user = new User();
+        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(user));
 
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
-        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
-        WebFilterExchange webFilterExchangeMock = mock(WebFilterExchange.class);
-        when(webFilterExchangeMock.getExchange()).thenReturn(webExchangeMock);
-
-        OAuth2UserAttributeAccessor attrAccessorMock = mock(OAuth2UserAttributeAccessor.class);
-        when(attrAccessorMock.getEmail()).thenReturn("white.rabbit@mail.com");
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getPrincipal()).thenReturn(attrAccessorMock);
+        WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
+        Authentication authenticationMock = mockAuthentication();
 
         handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block();
-        verify(accessTokenRepositoryMock).saveAccessToken(accessTokenMock, webExchangeMock);
-        verifyNoMoreInteractions(accessTokenRepositoryMock);
+        URI location = webFilterExchangeMock.getExchange().getResponse().getHeaders().getLocation();
+        assertNotNull(location);
+        MultiValueMap<String, String> queryParams = UriComponentsBuilder.fromUri(location).build().getQueryParams();
+        assertNotNull(queryParams.get("claims"));
+    }
+
+    @Test
+    void shouldIncludeAccessTokenClaimsInRedirectUri() {
+        OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
+                .clientId("test-client")
+                .authorizationUri("http://authorize.me")
+                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, "http://callback.me"))
+                .build();
+        when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
+                .thenReturn(Mono.just(authorizationRequest));
+        User user = new User();
+        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(user));
+
+        WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
+        Authentication authenticationMock = mockAuthentication();
+
+        handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block();
+        verify(accessTokenServiceMock, times(1)).createAccessToken(user, webFilterExchangeMock.getExchange());
+        verifyNoMoreInteractions(accessTokenServiceMock);
     }
 
     @Test
     void shouldThrowExceptionWhenAuthorizationRequestIsNotAvailable() {
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any())).thenReturn(Mono.empty());
-
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
-        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
-        WebFilterExchange webFilterExchangeMock = mock(WebFilterExchange.class);
-        when(webFilterExchangeMock.getExchange()).thenReturn(webExchangeMock);
-
+        WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
         Authentication authenticationMock = mock(Authentication.class);
-
         OAuth2AuthenticationException e = assertThrows(OAuth2AuthenticationException.class, () ->
                 handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block());
         assertEquals("Failed to load authorization request", e.getMessage());
@@ -137,11 +139,7 @@ class ClientRedirectUriServerAuthenticationSuccessHandlerTest {
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
 
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
-        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
-        WebFilterExchange webFilterExchangeMock = mock(WebFilterExchange.class);
-        when(webFilterExchangeMock.getExchange()).thenReturn(webExchangeMock);
-
+        WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
         Authentication authenticationMock = mock(Authentication.class);
 
         OAuth2AuthenticationException e = assertThrows(OAuth2AuthenticationException.class, () ->
@@ -160,19 +158,48 @@ class ClientRedirectUriServerAuthenticationSuccessHandlerTest {
                 .thenReturn(Mono.just(authorizationRequest));
         when(userRepositoryMock.findById(anyString())).thenReturn(Mono.empty());
 
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
-        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
-        WebFilterExchange webFilterExchangeMock = mock(WebFilterExchange.class);
-        when(webFilterExchangeMock.getExchange()).thenReturn(webExchangeMock);
-
-        OAuth2UserAttributeAccessor attrAccessorMock = mock(OAuth2UserAttributeAccessor.class);
-        when(attrAccessorMock.getEmail()).thenReturn("white.rabbit@mail.com");
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getPrincipal()).thenReturn(attrAccessorMock);
+        WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
+        Authentication authenticationMock = mockAuthentication();
 
         OAuth2AuthenticationException e = assertThrows(OAuth2AuthenticationException.class, () ->
                 handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block());
         assertTrue(e.getMessage().startsWith("User is not found by email "));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenClaimsCouldNotBeSerialized() throws JsonProcessingException {
+        OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
+                .clientId("test-client")
+                .authorizationUri("http://authorize.me")
+                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, "http://callback.me"))
+                .build();
+        when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
+                .thenReturn(Mono.just(authorizationRequest));
+        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(new User()));
+        doThrow(new JsonGenerationException("Could not generate JSON", (JsonGenerator) null))
+                .when(objectMapperMock).writeValueAsBytes(any());
+
+        WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
+        Authentication authenticationMock = mockAuthentication();
+
+        OAuth2AuthenticationException e = assertThrows(OAuth2AuthenticationException.class, () ->
+                handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block());
+        assertEquals("Failed to serialize access token claims", e.getError().getDescription());
+    }
+
+    private WebFilterExchange mockWebFilterExchange() {
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
+        WebFilterExchange webFilterExchangeMock = mock(WebFilterExchange.class);
+        when(webFilterExchangeMock.getExchange()).thenReturn(webExchangeMock);
+        return webFilterExchangeMock;
+    }
+
+    private Authentication mockAuthentication() {
+        OAuth2UserAttributeAccessor attrAccessorMock = mock(OAuth2UserAttributeAccessor.class);
+        when(attrAccessorMock.getEmail()).thenReturn("white.rabbit@mail.com");
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getPrincipal()).thenReturn(attrAccessorMock);
+        return authenticationMock;
     }
 }

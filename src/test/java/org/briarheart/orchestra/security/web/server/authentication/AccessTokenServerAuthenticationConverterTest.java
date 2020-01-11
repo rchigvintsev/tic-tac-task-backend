@@ -31,12 +31,12 @@ class AccessTokenServerAuthenticationConverterTest {
     @Test
     void shouldConvertConsideringAuthorizationHeaderFirst() {
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + MockJwts.DEFAULT_ACCESS_TOKEN_VALUE)
                 .build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Authentication authentication = converter.convert(serverWebExchangeMock).block();
         assertTrue(authentication instanceof AccessTokenAuthentication);
-        assertEquals(MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
+        assertEquals(MockJwts.DEFAULT_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
     }
 
     @SuppressWarnings("UnassignedFluxMonoInstance")
@@ -50,7 +50,7 @@ class AccessTokenServerAuthenticationConverterTest {
 
         Authentication authentication = converter.convert(serverWebExchangeMock).block();
         assertTrue(authentication instanceof AccessTokenAuthentication);
-        assertEquals(MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
+        assertEquals(MockJwts.DEFAULT_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
     }
 
     @Test
@@ -66,7 +66,7 @@ class AccessTokenServerAuthenticationConverterTest {
     void shouldReturnNullWhenAuthorizationHeaderValueDoesNotStartWithBearer() {
         when(accessTokenRepositoryMock.loadAccessToken(any())).thenReturn(Mono.empty());
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .header(HttpHeaders.AUTHORIZATION, MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, MockJwts.DEFAULT_ACCESS_TOKEN_VALUE)
                 .build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Authentication authentication = converter.convert(serverWebExchangeMock).block();

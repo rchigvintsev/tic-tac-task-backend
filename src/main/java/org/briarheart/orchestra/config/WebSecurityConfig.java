@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.security.oauth2.client.endpoint.ReactiveAccessTokenTypeWebClientFilter;
 import org.briarheart.orchestra.security.oauth2.client.userinfo.*;
@@ -126,12 +127,12 @@ public class WebSecurityConfig {
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
             UserRepository userRepository,
             AccessTokenService accessTokenService,
-            ServerAccessTokenRepository accessTokenRepository,
+            ObjectMapper objectMapper,
             ServerRedirectStrategy redirectStrategy
     ) {
         ClientRedirectUriServerAuthenticationSuccessHandler handler;
         handler = new ClientRedirectUriServerAuthenticationSuccessHandler(authorizationRequestRepository,
-                userRepository, accessTokenService, accessTokenRepository);
+                userRepository, accessTokenService, objectMapper);
         handler.setRedirectStrategy(redirectStrategy);
         return handler;
     }
@@ -190,20 +191,20 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ServerAccessTokenRepository accessTokenRepository() {
-        return new CookieJwtRepository();
-    }
-
-    @Bean
     public ServerSecurityContextRepository securityContextRepository() {
         return NoOpServerSecurityContextRepository.getInstance();
     }
 
     @Bean
-    public AccessTokenService accessTokenService() {
-        JwtService tokenService = new JwtService(accessTokenSigningKey);
+    public AccessTokenService accessTokenService(ServerAccessTokenRepository accessTokenRepository) {
+        JwtService tokenService = new JwtService(accessTokenRepository, accessTokenSigningKey);
         tokenService.setAccessTokenValiditySeconds(accessTokenValiditySeconds);
         return tokenService;
+    }
+
+    @Bean
+    public ServerAccessTokenRepository accessTokenRepository() {
+        return new CookieJwtRepository();
     }
 
     @Bean

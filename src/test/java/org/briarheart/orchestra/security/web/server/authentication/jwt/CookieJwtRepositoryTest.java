@@ -16,10 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Roman Chigvintsev
  */
 class CookieJwtRepositoryTest {
-    private static final String ACCESS_TOKEN_HEADER_COOKIE_NAME = "ATH";
-    private static final String ACCESS_TOKEN_PAYLOAD_COOKIE_NAME = "ATP";
-    private static final String ACCESS_TOKEN_SIGNATURE_COOKIE_NAME = "ATS";
-
+    private static final String ACCESS_TOKEN_COOKIE_NAME = "access_token";
     private static final Duration ACCESS_TOKEN_TIMEOUT = Duration.ofDays(7);
 
     private CookieJwtRepository repository;
@@ -27,9 +24,7 @@ class CookieJwtRepositoryTest {
     @BeforeEach
     void setUp() {
         repository = new CookieJwtRepository();
-        repository.setAccessTokenHeaderCookieName(ACCESS_TOKEN_HEADER_COOKIE_NAME);
-        repository.setAccessTokenPayloadCookieName(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME);
-        repository.setAccessTokenSignatureCookieName(ACCESS_TOKEN_SIGNATURE_COOKIE_NAME);
+        repository.setAccessTokenCookieName(ACCESS_TOKEN_COOKIE_NAME);
     }
 
     @Test
@@ -40,39 +35,26 @@ class CookieJwtRepositoryTest {
         repository.saveAccessToken(MockJwts.createMock(), webExchangeMock).block();
 
         MultiValueMap<String, ResponseCookie> cookies = webExchangeMock.getResponse().getCookies();
-
-        ResponseCookie headerCookie = cookies.getFirst(ACCESS_TOKEN_HEADER_COOKIE_NAME);
-        assertNotNull(headerCookie);
-        assertEquals(MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_HEADER, headerCookie.getValue());
-
-        ResponseCookie payloadCookie = cookies.getFirst(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME);
-        assertNotNull(payloadCookie);
-        assertEquals(MockJwts.DEFAULT_ACCESS_TOKEN_PAYLOAD, payloadCookie.getValue());
-
-        ResponseCookie signatureCookie = cookies.getFirst(ACCESS_TOKEN_SIGNATURE_COOKIE_NAME);
-        assertNotNull(signatureCookie);
-        assertEquals(MockJwts.DEFAULT_ACCESS_TOKEN_SIGNATURE, signatureCookie.getValue());
+        ResponseCookie accessTokenCookie = cookies.getFirst(ACCESS_TOKEN_COOKIE_NAME);
+        assertNotNull(accessTokenCookie);
+        assertEquals(MockJwts.DEFAULT_ACCESS_TOKEN_VALUE, accessTokenCookie.getValue());
     }
 
     @Test
-    void shouldSaveUnsignedAccessTokenInCookies() {
+    void shouldThrowExceptionOnAccessTokenSaveWhenAccessTokenIsNull() {
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
         MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
-        repository.saveAccessToken(MockJwts.createUnsignedMock(), webExchangeMock).block();
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> repository.saveAccessToken(null, webExchangeMock));
+        assertEquals("Access token must not be null", exception.getMessage());
+    }
 
-        MultiValueMap<String, ResponseCookie> cookies = webExchangeMock.getResponse().getCookies();
-
-        ResponseCookie headerCookie = cookies.getFirst(ACCESS_TOKEN_HEADER_COOKIE_NAME);
-        assertNotNull(headerCookie);
-        assertEquals(MockJwts.DEFAULT_UNSIGNED_ACCESS_TOKEN_HEADER, headerCookie.getValue());
-
-        ResponseCookie payloadCookie = cookies.getFirst(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME);
-        assertNotNull(payloadCookie);
-        assertEquals(MockJwts.DEFAULT_ACCESS_TOKEN_PAYLOAD, payloadCookie.getValue());
-
-        ResponseCookie signatureCookie = cookies.getFirst(ACCESS_TOKEN_SIGNATURE_COOKIE_NAME);
-        assertNull(signatureCookie);
+    @Test
+    void shouldThrowExceptionOnAccessTokenSaveWhenWebExchangeIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> repository.saveAccessToken(MockJwts.createMock(), null));
+        assertEquals("Server web exchange must not be null", exception.getMessage());
     }
 
     @Test
@@ -83,14 +65,9 @@ class CookieJwtRepositoryTest {
         repository.saveAccessToken(MockJwts.createMock(), webExchangeMock).block();
 
         MultiValueMap<String, ResponseCookie> cookies = webExchangeMock.getResponse().getCookies();
-
-        ResponseCookie headerCookie = cookies.getFirst(ACCESS_TOKEN_HEADER_COOKIE_NAME);
-        assertNotNull(headerCookie);
-        assertTrue(headerCookie.isHttpOnly());
-
-        ResponseCookie signatureCookie = cookies.getFirst(ACCESS_TOKEN_SIGNATURE_COOKIE_NAME);
-        assertNotNull(signatureCookie);
-        assertTrue(signatureCookie.isHttpOnly());
+        ResponseCookie accessTokenCookie = cookies.getFirst(ACCESS_TOKEN_COOKIE_NAME);
+        assertNotNull(accessTokenCookie);
+        assertTrue(accessTokenCookie.isHttpOnly());
     }
 
     @Test
@@ -101,70 +78,41 @@ class CookieJwtRepositoryTest {
         repository.saveAccessToken(MockJwts.createMock(), webExchangeMock).block();
 
         MultiValueMap<String, ResponseCookie> cookies = webExchangeMock.getResponse().getCookies();
-
-        ResponseCookie headerCookie = cookies.getFirst(ACCESS_TOKEN_HEADER_COOKIE_NAME);
-        assertNotNull(headerCookie);
-        assertEquals(ACCESS_TOKEN_TIMEOUT, headerCookie.getMaxAge());
-
-        ResponseCookie payloadCookie = cookies.getFirst(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME);
-        assertNotNull(payloadCookie);
-        assertEquals(ACCESS_TOKEN_TIMEOUT, payloadCookie.getMaxAge());
-
-        ResponseCookie signatureCookie = cookies.getFirst(ACCESS_TOKEN_SIGNATURE_COOKIE_NAME);
-        assertNotNull(signatureCookie);
-        assertEquals(ACCESS_TOKEN_TIMEOUT, signatureCookie.getMaxAge());
+        ResponseCookie accessTokenCookie = cookies.getFirst(ACCESS_TOKEN_COOKIE_NAME);
+        assertNotNull(accessTokenCookie);
+        assertEquals(ACCESS_TOKEN_TIMEOUT, accessTokenCookie.getMaxAge());
     }
 
     @Test
     void shouldLoadAccessTokenFromCookies() {
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .cookie(new HttpCookie(ACCESS_TOKEN_HEADER_COOKIE_NAME, MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_HEADER))
-                .cookie(new HttpCookie(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME, MockJwts.DEFAULT_ACCESS_TOKEN_PAYLOAD))
-                .cookie(new HttpCookie(ACCESS_TOKEN_SIGNATURE_COOKIE_NAME, MockJwts.DEFAULT_ACCESS_TOKEN_SIGNATURE))
+                .cookie(new HttpCookie(ACCESS_TOKEN_COOKIE_NAME, MockJwts.DEFAULT_ACCESS_TOKEN_VALUE))
                 .build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Jwt jwt = repository.loadAccessToken(serverWebExchangeMock).block();
         assertNotNull(jwt);
-        assertEquals(MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_VALUE, jwt.getTokenValue());
+        assertEquals(MockJwts.DEFAULT_ACCESS_TOKEN_VALUE, jwt.getTokenValue());
     }
 
     @Test
-    void shouldLoadUnsignedAccessTokenFromCookies() {
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .cookie(new HttpCookie(ACCESS_TOKEN_HEADER_COOKIE_NAME, MockJwts.DEFAULT_UNSIGNED_ACCESS_TOKEN_HEADER))
-                .cookie(new HttpCookie(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME, MockJwts.DEFAULT_ACCESS_TOKEN_PAYLOAD))
-                .build();
-        MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
-        Jwt jwt = repository.loadAccessToken(serverWebExchangeMock).block();
-        assertNotNull(jwt);
-        assertTrue(jwt.getSignature().isEmpty());
-    }
-
-    @Test
-    void shouldReturnNullOnLoadWhenAccessTokenHeaderCookieIsMissing() {
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .cookie(new HttpCookie(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME, MockJwts.DEFAULT_ACCESS_TOKEN_PAYLOAD))
-                .build();
+    void shouldReturnNullOnAccessTokenLoadWhenAccessTokenCookieIsNotFound() {
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Jwt jwt = repository.loadAccessToken(serverWebExchangeMock).block();
         assertNull(jwt);
     }
 
     @Test
-    void shouldReturnNullOnLoadWhenAccessTokenPayloadCookieIsMissing() {
-        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .cookie(new HttpCookie(ACCESS_TOKEN_HEADER_COOKIE_NAME, MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_HEADER))
-                .build();
-        MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
-        Jwt jwt = repository.loadAccessToken(serverWebExchangeMock).block();
-        assertNull(jwt);
+    void shouldThrowExceptionOnAccessTokenLoadWhenWebExchangeIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> repository.loadAccessToken(null));
+        assertEquals("Server web exchange must not be null", exception.getMessage());
     }
 
     @Test
     void shouldRemoveAccessTokenFromCookies() {
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .cookie(new HttpCookie(ACCESS_TOKEN_HEADER_COOKIE_NAME, MockJwts.DEFAULT_SIGNED_ACCESS_TOKEN_HEADER))
-                .cookie(new HttpCookie(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME, MockJwts.DEFAULT_ACCESS_TOKEN_PAYLOAD))
+                .cookie(new HttpCookie(ACCESS_TOKEN_COOKIE_NAME, MockJwts.DEFAULT_ACCESS_TOKEN_VALUE))
                 .build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
 
@@ -172,19 +120,16 @@ class CookieJwtRepositoryTest {
 
         MultiValueMap<String, ResponseCookie> responseCookies = serverWebExchangeMock.getResponse().getCookies();
 
-        ResponseCookie headerCookie = responseCookies.getFirst(ACCESS_TOKEN_HEADER_COOKIE_NAME);
-        assertNotNull(headerCookie);
-        assertTrue(headerCookie.getValue().isEmpty());
-        assertEquals(Duration.ZERO, headerCookie.getMaxAge());
+        ResponseCookie accessTokenCookie = responseCookies.getFirst(ACCESS_TOKEN_COOKIE_NAME);
+        assertNotNull(accessTokenCookie);
+        assertTrue(accessTokenCookie.getValue().isEmpty());
+        assertEquals(Duration.ZERO, accessTokenCookie.getMaxAge());
+    }
 
-        ResponseCookie payloadCookie = responseCookies.getFirst(ACCESS_TOKEN_PAYLOAD_COOKIE_NAME);
-        assertNotNull(payloadCookie);
-        assertTrue(payloadCookie.getValue().isEmpty());
-        assertEquals(Duration.ZERO, payloadCookie.getMaxAge());
-
-        ResponseCookie signatureCookie = responseCookies.getFirst(ACCESS_TOKEN_SIGNATURE_COOKIE_NAME);
-        assertNotNull(signatureCookie);
-        assertTrue(signatureCookie.getValue().isEmpty());
-        assertEquals(Duration.ZERO, signatureCookie.getMaxAge());
+    @Test
+    void shouldThrowExceptionOnAccessTokenRemoveWhenWebExchangeIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> repository.removeAccessToken(null));
+        assertEquals("Server web exchange must not be null", exception.getMessage());
     }
 }

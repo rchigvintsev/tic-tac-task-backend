@@ -11,8 +11,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.common.base.Strings.nullToEmpty;
-
 /**
  * JWT based implementation of {@link AccessToken}.
  *
@@ -41,30 +39,9 @@ public class Jwt implements AccessToken {
         return Instant.ofEpochSecond((Long) claims.get(Claims.EXPIRATION));
     }
 
-    public String getHeader() {
-        int dotIdx = tokenValue.indexOf('.');
-        if (dotIdx > 0) {
-            return tokenValue.substring(0, dotIdx);
-        }
-        return null;
-    }
-
-    public String getPayload() {
-        int firstDotIdx = tokenValue.indexOf('.');
-        int secondDotIdx = tokenValue.lastIndexOf('.');
-        if (firstDotIdx > 0 && secondDotIdx > firstDotIdx) {
-            return tokenValue.substring(firstDotIdx + 1, secondDotIdx);
-        }
-        return null;
-    }
-
-    public String getSignature() {
-        int firstDotIdx = tokenValue.indexOf('.');
-        int secondDotIdx = tokenValue.lastIndexOf('.');
-        if (firstDotIdx > 0 && secondDotIdx > firstDotIdx) {
-            return tokenValue.substring(secondDotIdx + 1);
-        }
-        return null;
+    @Override
+    public Map<String, Object> getClaims() {
+        return claims;
     }
 
     public static class Builder {
@@ -76,15 +53,8 @@ public class Jwt implements AccessToken {
             this.tokenValue = tokenValue;
         }
 
-        public Builder(String header, String payload, String signature) {
-            Assert.hasText(header, "Token header must not be null or empty");
-            Assert.hasText(payload, "Token payload must not be null or empty");
-            this.tokenValue = header + "." + payload + "." + nullToEmpty(signature);
-        }
-
         public Builder claims(Map<String, Object> claims) {
-            if (claims != null && !claims.isEmpty())
-                this.claims.putAll(claims);
+            this.claims.putAll(claims);
             return this;
         }
 
