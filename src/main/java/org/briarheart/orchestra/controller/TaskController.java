@@ -3,11 +3,14 @@ package org.briarheart.orchestra.controller;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.service.TaskService;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.security.Principal;
 
 /**
@@ -36,9 +39,14 @@ public class TaskController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Task> createTask(@RequestBody Task task, Principal user) {
-        return taskService.createTask(task, user.getName());
+    public Mono<ResponseEntity<Task>> createTask(@RequestBody Task task, Principal user, ServerHttpRequest request) {
+        return taskService.createTask(task, user.getName()).map(createdTask -> {
+            URI taskLocation = UriComponentsBuilder.fromHttpRequest(request)
+                    .path("/{id}")
+                    .buildAndExpand(createdTask.getId())
+                    .toUri();
+            return ResponseEntity.created(taskLocation).body(createdTask);
+        });
     }
 
     @PutMapping("/{id}")

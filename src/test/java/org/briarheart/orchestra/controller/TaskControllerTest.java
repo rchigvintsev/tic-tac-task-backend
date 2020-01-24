@@ -121,6 +121,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isCreated()
+                .expectHeader().valueEquals("Location", "/tasks/" + savedTask.getId())
                 .expectBody(Task.class).isEqualTo(savedTask);
     }
 
