@@ -4,10 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.TaskComment;
 import org.briarheart.orchestra.service.TaskCommentService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.security.Principal;
 
 /**
@@ -27,11 +31,18 @@ public class TaskCommentController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Mono<TaskComment> createComment(@RequestBody TaskComment comment,
-                                           @RequestParam(name = "taskId") Long taskId,
-                                           Principal user) {
-        return taskCommentService.createComment(comment, user.getName(), taskId);
+    public Mono<ResponseEntity<TaskComment>> createComment(@RequestBody TaskComment comment,
+                                                           @RequestParam(name = "taskId") Long taskId,
+                                                           Principal user,
+                                                           ServerHttpRequest request) {
+        return taskCommentService.createComment(comment, user.getName(), taskId).map(createdComment -> {
+            URI commentLocation = UriComponentsBuilder.fromHttpRequest(request)
+                    .path("/{id}")
+                    .replaceQueryParams(null)
+                    .buildAndExpand(createdComment.getId())
+                    .toUri();
+            return ResponseEntity.created(commentLocation).body(createdComment);
+        });
     }
 
     @PutMapping("/{id}")

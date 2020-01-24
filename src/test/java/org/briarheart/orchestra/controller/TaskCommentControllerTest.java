@@ -69,6 +69,7 @@ class TaskCommentControllerTest {
                 .exchange()
 
                 .expectStatus().isCreated()
+                .expectHeader().valueEquals("Location", "/taskComments/" + savedComment.getId())
                 .expectBody(TaskComment.class).isEqualTo(savedComment);
     }
 
