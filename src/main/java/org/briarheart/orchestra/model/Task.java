@@ -6,6 +6,7 @@ import org.springframework.data.annotation.Id;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 /**
  * Main entity representing task to be done.
@@ -33,6 +34,8 @@ public class Task {
     @Size(max = 254, message = "{javax.validation.constraints.Size.author.message}")
     private String author;
 
+    private LocalDateTime deadline;
+
     /**
      * Creates copy of this task including all attributes except primary key.
      *
@@ -44,6 +47,7 @@ public class Task {
         copy.setDescription(description);
         copy.setCompleted(completed);
         copy.setAuthor(author);
+        copy.setDeadline(deadline);
         return copy;
     }
 }
