@@ -1,34 +1,40 @@
 package org.briarheart.orchestra.controller;
 
-import com.google.common.collect.ImmutableList;
 import lombok.Getter;
+import lombok.Setter;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.util.Assert;
+import org.springframework.web.bind.support.WebExchangeBindException;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
-import java.util.List;
-
-import static java.util.stream.Collectors.toList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
- * Set of error messages obtained from {@link ConstraintViolationException}.
+ * Error response that is used in case some entity constraints were violated. Provides {@code <field name> ->
+ * <error message>} mapping.
  *
  * @author Roman Chigvintsev
  */
 public class ConstraintViolationErrorResponse extends ErrorResponse {
     @Getter
-    private final List<String> messages;
+    @Setter
+    private Map<String, String> fieldErrors;
 
     /**
-     * Creates new instance of this class with the given {@link ConstraintViolationException}.
+     * Creates new instance of this class with the given {@link WebExchangeBindException}.
      *
      * @param e exception (must not be {@code null})
      */
-    public ConstraintViolationErrorResponse(ConstraintViolationException e) {
+    public ConstraintViolationErrorResponse(WebExchangeBindException e) {
         Assert.notNull(e, "Exception must not be null");
-        List<String> messages = e.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage)
-                .collect(toList());
-        this.messages = ImmutableList.copyOf(messages);
+        setErrors(e.getGlobalErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.toList()));
+        if (e.getFieldErrorCount() > 0) {
+            this.fieldErrors = new HashMap<>();
+            e.getFieldErrors()
+                    .forEach(fieldError -> this.fieldErrors.put(fieldError.getField(), fieldError.getDefaultMessage()));
+        }
     }
 }

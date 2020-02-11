@@ -4,7 +4,6 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
@@ -23,17 +22,12 @@ public class TaskComment {
 
     private Long taskId;
 
-    @NotBlank(message = "{javax.validation.constraints.NotBlank.commentText.message}")
-    @Size(max = 10_000, message = "{javax.validation.constraints.Size.commentText.message}")
+    @NotBlank
+    @Size(max = 10_000)
     private String commentText;
 
-    @NotNull(message = "{javax.validation.constraints.NotNull.createdAt.message}")
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
-
-    @NotNull(message = "{javax.validation.constraints.NotNull.author.message}")
-    @Size(max = 254, message = "{javax.validation.constraints.Size.author.message}")
     private String author;
 
     /**

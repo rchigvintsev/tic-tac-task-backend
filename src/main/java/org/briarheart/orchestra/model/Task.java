@@ -3,6 +3,7 @@ package org.briarheart.orchestra.model;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
+import javax.validation.constraints.Future;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -19,21 +20,20 @@ public class Task {
     @Id
     private Long id;
 
-    @NotBlank(message = "{javax.validation.constraints.NotBlank.title.message}")
-    @Size(max = 255, message = "{javax.validation.constraints.Size.title.message}")
+    @NotBlank
+    @Size(max = 255)
     private String title;
 
-    @Size(max = 10_000, message = "{javax.validation.constraints.Size.description.message}")
+    @Size(max = 10_000)
     private String description;
 
-    @NotNull(message = "{javax.validation.constraints.NotNull.completed.message}")
+    @NotNull
     @Builder.Default
     private Boolean completed = false;
 
-    @NotNull(message = "{javax.validation.constraints.NotNull.author.message}")
-    @Size(max = 254, message = "{javax.validation.constraints.Size.author.message}")
     private String author;
 
+    @Future
     private LocalDateTime deadline;
 
     /**

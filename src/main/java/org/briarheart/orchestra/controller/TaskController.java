@@ -10,6 +10,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
 import java.net.URI;
 import java.security.Principal;
 
@@ -39,7 +40,9 @@ public class TaskController {
     }
 
     @PostMapping
-    public Mono<ResponseEntity<Task>> createTask(@RequestBody Task task, Principal user, ServerHttpRequest request) {
+    public Mono<ResponseEntity<Task>> createTask(@Valid @RequestBody Task task,
+                                                 Principal user,
+                                                 ServerHttpRequest request) {
         return taskService.createTask(task, user.getName()).map(createdTask -> {
             URI taskLocation = UriComponentsBuilder.fromHttpRequest(request)
                     .path("/{id}")
@@ -50,7 +53,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public Mono<Task> updateTask(@RequestBody Task task, @PathVariable Long id, Principal user) {
+    public Mono<Task> updateTask(@Valid @RequestBody Task task, @PathVariable Long id, Principal user) {
         return taskService.updateTask(task, id, user.getName());
     }
 }

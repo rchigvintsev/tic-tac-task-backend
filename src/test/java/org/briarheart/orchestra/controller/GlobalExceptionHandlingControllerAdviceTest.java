@@ -22,20 +22,20 @@ public class GlobalExceptionHandlingControllerAdviceTest {
     private WebTestClient testClient;
 
     @Test
-    void shouldGetBadRequestResponseStatusInCaseOfConstraintViolationException() {
+    void shouldGetBadRequestResponseStatusInCaseOfWebExchangeBindException() {
         testClient.mutateWith(csrf())
                 .post()
-                .uri("/constraintViolationException")
+                .uri("/webExchangeBindException")
                 .exchange()
                 .expectStatus().isBadRequest();
     }
 
     @Test
-    void shouldGetErrorMessagesInResponseBodyInCaseOfConstraintViolationException() {
+    void shouldGetErrorMessagesInResponseBodyInCaseOfWebExchangeBindException() {
         testClient.mutateWith(csrf())
                 .post()
-                .uri("/constraintViolationException")
+                .uri("/webExchangeBindException")
                 .exchange()
-                .expectBody().jsonPath("$.messages").exists();
+                .expectBody().jsonPath("$.fieldErrors").exists();
     }
 }

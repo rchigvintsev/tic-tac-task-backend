@@ -11,6 +11,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
 import java.net.URI;
 import java.security.Principal;
 
@@ -31,7 +32,7 @@ public class TaskCommentController {
     }
 
     @PostMapping
-    public Mono<ResponseEntity<TaskComment>> createComment(@RequestBody TaskComment comment,
+    public Mono<ResponseEntity<TaskComment>> createComment(@Valid @RequestBody TaskComment comment,
                                                            @RequestParam(name = "taskId") Long taskId,
                                                            Principal user,
                                                            ServerHttpRequest request) {
@@ -46,7 +47,9 @@ public class TaskCommentController {
     }
 
     @PutMapping("/{id}")
-    public Mono<TaskComment> updateComment(@RequestBody TaskComment comment, @PathVariable Long id, Principal user) {
+    public Mono<TaskComment> updateComment(@Valid @RequestBody TaskComment comment,
+                                           @PathVariable Long id,
+                                           Principal user) {
         return taskCommentService.updateComment(comment, id, user.getName());
     }
 

@@ -4,8 +4,10 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 /**
- * POJO being used as a response body to inform client about details of some error.
+ * POJO being used as a response body to inform client about details of some errors.
  *
  * @author Roman Chigvintsev
  */
@@ -13,5 +15,5 @@ import lombok.Setter;
 public class ErrorResponse {
     @Getter
     @Setter
-    private String message;
+    private List<String> errors;
 }

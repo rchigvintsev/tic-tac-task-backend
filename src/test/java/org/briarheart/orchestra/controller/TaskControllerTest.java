@@ -17,6 +17,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -95,7 +97,7 @@ class TaskControllerTest {
                 .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
 
         ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setMessage(errorMessage);
+        errorResponse.setErrors(List.of(errorMessage));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/1").exchange()
