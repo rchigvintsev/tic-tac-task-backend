@@ -2,7 +2,7 @@ package org.briarheart.orchestra.controller;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.support.WebExchangeBindException;
@@ -27,11 +27,11 @@ public class TestController {
         when(methodParameterMock.getExecutable()).thenReturn(executableMock);
 
         BindingResult bindingResultMock = mock(BindingResult.class);
-        FieldError fieldError = new FieldError("TestObject", "testField", "Test constraint is violated!");
-        when(bindingResultMock.getFieldErrorCount()).thenReturn(1);
+        ObjectError error = new ObjectError("TestObject", "Web exchange binding error occurred!");
+        when(bindingResultMock.getGlobalErrorCount()).thenReturn(1);
+        when(bindingResultMock.getGlobalErrors()).thenReturn(List.of(error));
         when(bindingResultMock.getErrorCount()).thenReturn(1);
-        when(bindingResultMock.getFieldErrors()).thenReturn(List.of(fieldError));
-        when(bindingResultMock.getAllErrors()).thenReturn(List.of(fieldError));
+        when(bindingResultMock.getAllErrors()).thenReturn(List.of(error));
 
         throw new WebExchangeBindException(methodParameterMock, bindingResultMock);
     }

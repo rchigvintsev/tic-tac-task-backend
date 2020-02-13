@@ -17,6 +17,9 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -125,6 +128,132 @@ class TaskControllerTest {
                 .expectStatus().isCreated()
                 .expectHeader().valueEquals("Location", "/tasks/" + savedTask.getId())
                 .expectBody(Task.class).isEqualTo(savedTask);
+    }
+
+    @Test
+    void shouldRejectTaskCreationWhenTitleIsNull() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder().build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).post()
+                .uri("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(task)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.title").isEqualTo("Значение не может быть пустым");
+    }
+
+    @Test
+    void shouldRejectTaskCreationWhenTitleIsBlank() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder().title("").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).post()
+                .uri("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(task)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.title").isEqualTo("Значение не может быть пустым");
+    }
+
+    @Test
+    void shouldRejectTaskCreationWhenTitleIsTooLong() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder().title("L" + "o".repeat(247) + "ng title").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).post()
+                .uri("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(task)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.title").isEqualTo("Длина значения не должна превышать 255 символов");
+    }
+
+    @Test
+    void shouldRejectTaskCreationWhenDescriptionIsTooLong() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder()
+                .title("Test title")
+                .description("L" + "o".repeat(9986) + "ng description")
+                .build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).post()
+                .uri("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(task)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.description").isEqualTo("Длина значения не должна превышать 10000 символов");
+    }
+
+    @Test
+    void shouldRejectTaskCreationWhenCompletedIsNull() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder().title("Test title").completed(null).build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).post()
+                .uri("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(task)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.completed").isEqualTo("Значение должно быть задано");
+    }
+
+    @Test
+    void shouldRejectTaskCreationWhenDeadlineIsInPast() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder()
+                .title("Test title")
+                .deadline(LocalDateTime.now(ZoneOffset.UTC).minus(1, ChronoUnit.DAYS))
+                .build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).post()
+                .uri("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(task)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.deadline").isEqualTo("Значение должно быть в будущем");
     }
 
     @Test

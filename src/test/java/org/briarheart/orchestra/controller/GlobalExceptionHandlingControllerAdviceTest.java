@@ -17,7 +17,7 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @ExtendWith(SpringExtension.class)
 @WebFluxTest(TestController.class)
 @Import(PermitAllSecurityConfig.class)
-public class GlobalExceptionHandlingControllerAdviceTest {
+class GlobalExceptionHandlingControllerAdviceTest {
     @Autowired
     private WebTestClient testClient;
 
@@ -36,6 +36,6 @@ public class GlobalExceptionHandlingControllerAdviceTest {
                 .post()
                 .uri("/webExchangeBindException")
                 .exchange()
-                .expectBody().jsonPath("$.fieldErrors").exists();
+                .expectBody().jsonPath("$.errors").exists();
     }
 }
