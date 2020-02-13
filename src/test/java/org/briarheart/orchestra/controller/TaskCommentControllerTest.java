@@ -108,4 +108,61 @@ class TaskCommentControllerTest {
                 .uri("/taskComments/" + commentId).exchange()
                 .expectStatus().isNoContent();
     }
+
+    @Test
+    void shouldRejectCommentCreationWhenCommentTextIsNull() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        TaskComment comment = TaskComment.builder().taskId(1L).build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
+                .uri("/taskComments?taskId=" + comment.getTaskId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Значение не может быть пустым");
+    }
+
+    @Test
+    void shouldRejectCommentCreationWhenCommentTextIsBlank() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        TaskComment comment = TaskComment.builder().taskId(1L).commentText("").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
+                .uri("/taskComments?taskId=" + comment.getTaskId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Значение не может быть пустым");
+    }
+
+    @Test
+    void shouldRejectCommentCreationWhenCommentTextIsTooLong() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        TaskComment comment = TaskComment.builder().taskId(1L).commentText("L" + "o".repeat(9993) + "ng text").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
+                .uri("/taskComments?taskId=" + comment.getTaskId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Длина значения не должна превышать 10000 символов");
+    }
 }
