@@ -16,7 +16,8 @@ plugins {
 
 ext {
 	guavaVersion = '28.1-jre'
-	springR2dbcVersion = '0.1.0.BUILD-SNAPSHOT'
+	springBootAutoconfigureR2dbcVersion = '0.1.0.BUILD-SNAPSHOT'
+	springDataR2dbcVersion = '1.0.0.RELEASE'
 	r2dbcVersion = '0.8.0.RELEASE'
 	nettyVersion = '4.1.39.Final'
 	jjwtVersion = '0.10.7'
@@ -39,7 +40,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	implementation "org.springframework.boot.experimental:spring-boot-starter-data-r2dbc:$springR2dbcVersion"
+	implementation("org.springframework.boot.experimental:spring-boot-autoconfigure-r2dbc:$springBootAutoconfigureR2dbcVersion") {
+		exclude group: 'io.r2dbc'
+	}
+	implementation "org.springframework.data:spring-data-r2dbc:$springDataR2dbcVersion"
 	implementation 'org.springframework:spring-jdbc'
 	implementation "com.google.guava:guava:$guavaVersion"
 	implementation "io.netty:netty-codec-http:$nettyVersion"
@@ -51,6 +55,8 @@ dependencies {
 	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.postgresql:postgresql'
 	runtimeOnly "io.r2dbc:r2dbc-postgresql:$r2dbcVersion"
+	runtimeOnly "io.r2dbc:r2dbc-spi:$r2dbcVersion"
+	runtimeOnly "io.r2dbc:r2dbc-pool:$r2dbcVersion"
 	runtimeOnly "org.flywaydb:flyway-core:$flywayVersion"
 	runtimeOnly "io.jsonwebtoken:jjwt-impl:$jjwtVersion"
 	runtimeOnly "io.jsonwebtoken:jjwt-jackson:$jjwtVersion"
