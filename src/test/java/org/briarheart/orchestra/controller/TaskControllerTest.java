@@ -4,6 +4,8 @@ import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.service.TaskService;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -36,11 +39,23 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @WebFluxTest(TaskController.class)
 @Import(PermitAllSecurityConfig.class)
 class TaskControllerTest {
+    private static final Locale DEFAULT_LOCALE = Locale.getDefault();
+
     @Autowired
     private WebTestClient testClient;
 
     @MockBean
     private TaskService taskService;
+
+    @BeforeAll
+    static void beforeAll() {
+        Locale.setDefault(Locale.ENGLISH);
+    }
+
+    @AfterAll
+    static void afterAll() {
+        Locale.setDefault(DEFAULT_LOCALE);
+    }
 
     @Test
     void shouldReturnAllUncompletedTasks() {
@@ -147,7 +162,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.title").isEqualTo("Значение не может быть пустым");
+                .jsonPath("$.fieldErrors.title").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -167,7 +182,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.title").isEqualTo("Значение не может быть пустым");
+                .jsonPath("$.fieldErrors.title").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -187,7 +202,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.title").isEqualTo("Длина значения не должна превышать 255 символов");
+                .jsonPath("$.fieldErrors.title").isEqualTo("Value length must not be greater than 255");
     }
 
     @Test
@@ -210,7 +225,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.description").isEqualTo("Длина значения не должна превышать 10000 символов");
+                .jsonPath("$.fieldErrors.description").isEqualTo("Value length must not be greater than 10000");
     }
 
     @Test
@@ -230,7 +245,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.completed").isEqualTo("Значение должно быть задано");
+                .jsonPath("$.fieldErrors.completed").isEqualTo("Value must not be null");
     }
 
     @Test
@@ -253,7 +268,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.deadline").isEqualTo("Значение должно быть в будущем");
+                .jsonPath("$.fieldErrors.deadline").isEqualTo("Value must be in future");
     }
 
     @Test

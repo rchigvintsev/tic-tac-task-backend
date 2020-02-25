@@ -3,6 +3,8 @@ package org.briarheart.orchestra.controller;
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.model.TaskComment;
 import org.briarheart.orchestra.service.TaskCommentService;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -17,6 +19,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Locale;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
@@ -29,11 +33,23 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @WebFluxTest(TaskCommentController.class)
 @Import(PermitAllSecurityConfig.class)
 class TaskCommentControllerTest {
+    private static final Locale DEFAULT_LOCALE = Locale.getDefault();
+
     @Autowired
     private WebTestClient testClient;
 
     @MockBean
     private TaskCommentService taskCommentService;
+
+    @BeforeAll
+    static void beforeAll() {
+        Locale.setDefault(Locale.ENGLISH);
+    }
+
+    @AfterAll
+    static void afterAll() {
+        Locale.setDefault(DEFAULT_LOCALE);
+    }
 
     @Test
     void shouldGetCommentsForTask() {
@@ -125,7 +141,7 @@ class TaskCommentControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Значение не может быть пустым");
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -144,7 +160,7 @@ class TaskCommentControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Значение не может быть пустым");
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -163,6 +179,6 @@ class TaskCommentControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Длина значения не должна превышать 10000 символов");
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value length must not be greater than 10000");
     }
 }
