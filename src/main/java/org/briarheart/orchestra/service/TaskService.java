@@ -57,4 +57,13 @@ public interface TaskService {
      * @throws EntityNotFoundException if task is not found by id and author
      */
     Mono<Task> updateTask(Task task, Long id, String author) throws EntityNotFoundException;
+
+    /**
+     * Completes task with the given id and belonging to the given author.
+     *
+     * @param id task id
+     * @param author task author
+     * @throws EntityNotFoundException if task is not found by id and author
+     */
+    Mono<Void> completeTask(Long id, String author) throws EntityNotFoundException;
 }

@@ -3,6 +3,7 @@ package org.briarheart.orchestra.controller;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.service.TaskService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
@@ -55,5 +56,11 @@ public class TaskController {
     @PutMapping("/{id}")
     public Mono<Task> updateTask(@Valid @RequestBody Task task, @PathVariable Long id, Principal user) {
         return taskService.updateTask(task, id, user.getName());
+    }
+
+    @PostMapping("/{id}/complete")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> completeTask(@PathVariable Long id, Principal user) {
+        return taskService.completeTask(id, user.getName());
     }
 }

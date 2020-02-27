@@ -136,4 +136,14 @@ class DefaultTaskServiceTest {
                 () -> taskService.updateTask(null, null, null));
         assertEquals("Task must not be null", exception.getMessage());
     }
+
+    @Test
+    void shouldCompleteTask() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
+
+        taskService.completeTask(task.getId(), task.getAuthor()).block();
+        assertEquals(true, task.getCompleted());
+    }
 }

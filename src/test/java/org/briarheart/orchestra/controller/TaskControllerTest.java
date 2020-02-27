@@ -293,4 +293,23 @@ class TaskControllerTest {
                 .expectStatus().isOk()
                 .expectBody(Task.class).isEqualTo(updatedTask);
     }
+
+    @Test
+    void shouldCompleteTask() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
+
+        when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
+        when(taskService.completeTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.empty());
+
+        testClient.mutateWith(csrf())
+                .mutateWith(mockAuthentication(authenticationMock))
+                .post()
+                .uri("/tasks/1/complete")
+                .exchange()
+
+                .expectStatus().isNoContent();
+    }
 }

@@ -53,8 +53,7 @@ public class TaskCommentController {
         return taskCommentService.updateComment(comment, id, user.getName());
     }
 
-    @DeleteMapping
-    @RequestMapping("/{id}")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteComment(@PathVariable Long id, Principal user) {
         return taskCommentService.deleteComment(id, user.getName());

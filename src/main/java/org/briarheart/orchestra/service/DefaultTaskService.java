@@ -55,4 +55,12 @@ public class DefaultTaskService implements TaskService {
             return taskRepository.save(task);
         });
     }
+
+    @Override
+    public Mono<Void> completeTask(Long id, String author) throws EntityNotFoundException {
+        return getTask(id, author).flatMap(task -> {
+            task.setCompleted(true);
+            return taskRepository.save(task);
+        }).then();
+    }
 }
