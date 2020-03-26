@@ -5,7 +5,6 @@ import org.springframework.data.annotation.Id;
 
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
@@ -27,9 +26,8 @@ public class Task {
     @Size(max = 10_000)
     private String description;
 
-    @NotNull
     @Builder.Default
-    private Boolean completed = false;
+    private TaskStatus status = TaskStatus.UNPROCESSED;
 
     private String author;
 
@@ -45,7 +43,7 @@ public class Task {
         Task copy = new Task();
         copy.setTitle(title);
         copy.setDescription(description);
-        copy.setCompleted(completed);
+        copy.setStatus(status);
         copy.setAuthor(author);
         copy.setDeadline(deadline);
         return copy;

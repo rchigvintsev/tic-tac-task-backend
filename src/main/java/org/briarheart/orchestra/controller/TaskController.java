@@ -26,13 +26,9 @@ import java.security.Principal;
 public class TaskController {
     private final TaskService taskService;
 
-    @GetMapping
-    public Flux<Task> getTasks(@RequestParam(name = "completed", defaultValue = "false") Boolean completed,
-                               Principal user) {
-        if (completed) {
-            return taskService.getCompletedTasks(user.getName());
-        }
-        return taskService.getUncompletedTasks(user.getName());
+    @GetMapping("/unprocessed")
+    public Flux<Task> getTasks(Principal user) {
+        return taskService.getUnprocessedTasks(user.getName());
     }
 
     @GetMapping("/{id}")

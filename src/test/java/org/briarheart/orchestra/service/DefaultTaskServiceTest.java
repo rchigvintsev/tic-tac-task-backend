@@ -3,6 +3,7 @@ package org.briarheart.orchestra.service;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.Task;
+import org.briarheart.orchestra.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -22,25 +23,18 @@ class DefaultTaskServiceTest {
     @BeforeEach
     void setUp() {
         taskRepositoryMock = mock(TaskRepository.class);
+        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
+
         taskService = new DefaultTaskService(taskRepositoryMock);
     }
 
     @Test
-    void shouldReturnAllCompletedTasks() {
+    void shouldReturnAllUnprocessedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.findByCompletedAndAuthor(true, author)).thenReturn(Flux.empty());
+        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author)).thenReturn(Flux.empty());
 
-        taskService.getCompletedTasks(author).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByCompletedAndAuthor(true, author);
-    }
-
-    @Test
-    void shouldReturnAllUncompletedTasks() {
-        String author = "alice";
-        when(taskRepositoryMock.findByCompletedAndAuthor(false, author)).thenReturn(Flux.empty());
-
-        taskService.getUncompletedTasks(author).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByCompletedAndAuthor(false, author);
+        taskService.getUnprocessedTasks(author).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
     }
 
     @Test
@@ -62,29 +56,27 @@ class DefaultTaskServiceTest {
     @Test
     void shouldCreateTask() {
         Task task = Task.builder().title("New task").build();
-        long expectedTaskId = 2L;
-        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> {
-            Task savedTask = invocation.getArgument(0, Task.class);
-            savedTask.setId(expectedTaskId);
-            return Mono.just(savedTask);
-        });
-
-        String author = "alice";
-        Task result = taskService.createTask(task, author).block();
+        Task result = taskService.createTask(task, "alice").block();
         assertNotNull(result);
-        assertEquals(expectedTaskId, result.getId());
         assertEquals(task.getTitle(), result.getTitle());
+        verify(taskRepositoryMock, times(1)).save(any());
     }
 
     @Test
     void shouldSetAuthorFieldOnTaskCreate() {
         Task task = Task.builder().title("New task").build();
-        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
-
         String author = "alice";
         Task result = taskService.createTask(task, author).block();
         assertNotNull(result);
         assertEquals(author, result.getAuthor());
+    }
+
+    @Test
+    void shouldSetTaskStatusToUnprocessedOnTaskCreate() {
+        Task task = Task.builder().title("New task").status(null).build();
+        Task result = taskService.createTask(task, "alice").block();
+        assertNotNull(result);
+        assertSame(TaskStatus.UNPROCESSED, result.getStatus());
     }
 
     @Test
@@ -98,7 +90,6 @@ class DefaultTaskServiceTest {
     void shouldUpdateTask() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
 
         Task updatedTask = Task.builder().title("Updated test task").build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
@@ -110,7 +101,6 @@ class DefaultTaskServiceTest {
     void shouldSetIdFieldOnTaskUpdate() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
 
         Task updatedTask = Task.builder().title("Updated test task").build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
@@ -122,12 +112,22 @@ class DefaultTaskServiceTest {
     void shouldSetAuthorFieldOnTaskUpdate() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
 
         Task updatedTask = Task.builder().title("Updated test task").build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
         assertNotNull(result);
         assertEquals(task.getAuthor(), result.getAuthor());
+    }
+
+    @Test
+    void shouldSetStatusFieldOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Task updatedTask = Task.builder().title("Updated test task").status(null).build();
+        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        assertSame(task.getStatus(), result.getStatus());
     }
 
     @Test
@@ -141,9 +141,8 @@ class DefaultTaskServiceTest {
     void shouldCompleteTask() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
 
         taskService.completeTask(task.getId(), task.getAuthor()).block();
-        assertEquals(true, task.getCompleted());
+        assertSame(TaskStatus.COMPLETED, task.getStatus());
     }
 }

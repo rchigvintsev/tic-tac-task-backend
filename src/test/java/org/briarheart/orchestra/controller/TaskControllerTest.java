@@ -58,34 +58,15 @@ class TaskControllerTest {
     }
 
     @Test
-    void shouldReturnAllUncompletedTasks() {
+    void shouldReturnAllUnprocessedTasks() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
 
         Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
-        when(taskService.getUncompletedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
+        when(taskService.getUnprocessedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks?completed=false").exchange()
-                .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[] {task});
-    }
-
-    @Test
-    void shouldReturnAllCompletedTasks() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        Task task = Task.builder()
-                .id(1L)
-                .title("Test task")
-                .author(authenticationMock.getName())
-                .completed(true)
-                .build();
-        when(taskService.getCompletedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks?completed=true").exchange()
+                .uri("/tasks/unprocessed").exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
     }
@@ -226,26 +207,6 @@ class TaskControllerTest {
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
                 .jsonPath("$.fieldErrors.description").isEqualTo("Value length must not be greater than 10000");
-    }
-
-    @Test
-    void shouldRejectTaskCreationWhenCompletedIsNull() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        Task task = Task.builder().title("Test title").completed(null).build();
-
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/tasks")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
-                .exchange()
-
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.completed").isEqualTo("Value must not be null");
     }
 
     @Test

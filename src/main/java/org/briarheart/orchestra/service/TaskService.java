@@ -13,20 +13,12 @@ import reactor.core.publisher.Mono;
  */
 public interface TaskService {
     /**
-     * Returns all completed tasks belonging to the given author.
+     * Returns all unprocessed tasks belonging to the given author.
      *
      * @param author task author
-     * @return completed tasks or empty stream when there is no task meeting the given criteria
+     * @return unprocessed tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getCompletedTasks(String author);
-
-    /**
-     * Returns all uncompleted tasks belonging to the given author.
-     *
-     * @param author task author
-     * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
-     */
-    Flux<Task> getUncompletedTasks(String author);
+    Flux<Task> getUnprocessedTasks(String author);
 
     /**
      * Returns task with the given id and belonging to the given author.
