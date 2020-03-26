@@ -45,21 +45,21 @@ dependencies {
 	}
 	implementation "org.springframework.data:spring-data-r2dbc:$springDataR2dbcVersion"
 	implementation 'org.springframework:spring-jdbc'
+	implementation "io.r2dbc:r2dbc-postgresql:$r2dbcVersion"
 	implementation "com.google.guava:guava:$guavaVersion"
-	implementation "io.netty:netty-codec-http:$nettyVersion"
-	implementation "io.netty:netty-codec-http2:$nettyVersion"
-	implementation "io.netty:netty-handler-proxy:$nettyVersion"
 	implementation "io.jsonwebtoken:jjwt-api:$jjwtVersion"
-	implementation "javax.xml.bind:jaxb-api:$jaxbApiVersion"
 
 	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.postgresql:postgresql'
-	runtimeOnly "io.r2dbc:r2dbc-postgresql:$r2dbcVersion"
 	runtimeOnly "io.r2dbc:r2dbc-spi:$r2dbcVersion"
 	runtimeOnly "io.r2dbc:r2dbc-pool:$r2dbcVersion"
 	runtimeOnly "org.flywaydb:flyway-core:$flywayVersion"
+	runtimeOnly "io.netty:netty-codec-http:$nettyVersion"
+	runtimeOnly "io.netty:netty-codec-http2:$nettyVersion"
+	runtimeOnly "io.netty:netty-handler-proxy:$nettyVersion"
 	runtimeOnly "io.jsonwebtoken:jjwt-impl:$jjwtVersion"
 	runtimeOnly "io.jsonwebtoken:jjwt-jackson:$jjwtVersion"
+	runtimeOnly "javax.xml.bind:jaxb-api:$jaxbApiVersion"
 
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
