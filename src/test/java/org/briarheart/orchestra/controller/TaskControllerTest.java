@@ -3,6 +3,7 @@ package org.briarheart.orchestra.controller;
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Task;
+import org.briarheart.orchestra.model.TaskStatus;
 import org.briarheart.orchestra.service.TaskService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
@@ -67,6 +69,72 @@ class TaskControllerTest {
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/unprocessed").exchange()
+                .expectStatus().isOk()
+                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+    }
+
+    @Test
+    void shouldReturnAllProcessedTasks() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder()
+                .id(1L)
+                .title("Test task")
+                .author(authenticationMock.getName())
+                .status(TaskStatus.PROCESSED)
+                .build();
+        when(taskService.getProcessedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/processed").exchange()
+                .expectStatus().isOk()
+                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+    }
+
+    @Test
+    void shouldReturnProcessedTasksWithoutDeadline() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder()
+                .id(1L)
+                .title("Test task")
+                .author(authenticationMock.getName())
+                .status(TaskStatus.PROCESSED)
+                .build();
+        when(taskService.getProcessedTasks(null, null, authenticationMock.getName())).thenReturn(Flux.just(task));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/processed?deadlineFrom=&deadlineTo=").exchange()
+                .expectStatus().isOk()
+                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+    }
+
+    @Test
+    void shouldReturnProcessedTasksWithDeadline() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder()
+                .id(1L)
+                .title("Test task")
+                .author(authenticationMock.getName())
+                .status(TaskStatus.PROCESSED)
+                .deadline(LocalDateTime.parse("2020-01-10T00:00:00.000", DateTimeFormatter.ISO_DATE_TIME))
+                .build();
+
+        String deadlineFrom = "2020-01-01T00:00:00.000";
+        String deadlineTo = "2020-01-31T23:59:59.999";
+
+        when(taskService.getProcessedTasks(
+                LocalDateTime.parse(deadlineFrom, DateTimeFormatter.ISO_DATE_TIME),
+                LocalDateTime.parse(deadlineTo, DateTimeFormatter.ISO_DATE_TIME),
+                authenticationMock.getName())
+        ).thenReturn(Flux.just(task));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/processed?deadlineFrom=" + deadlineFrom  + "&deadlineTo=" + deadlineTo).exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
     }

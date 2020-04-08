@@ -6,6 +6,7 @@ import org.briarheart.orchestra.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -14,6 +15,7 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 import java.net.URI;
 import java.security.Principal;
+import java.time.LocalDateTime;
 
 /**
  * REST-controller for task managing.
@@ -27,8 +29,22 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping("/unprocessed")
-    public Flux<Task> getTasks(Principal user) {
+    public Flux<Task> getUnprocessedTasks(Principal user) {
         return taskService.getUnprocessedTasks(user.getName());
+    }
+
+    @GetMapping("/processed")
+    public Flux<Task> getProcessedTasks(
+            @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
+            @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
+            Principal user,
+            ServerHttpRequest request
+    ) {
+        MultiValueMap<String, String> queryParams = request.getQueryParams();
+        if (!queryParams.containsKey("deadlineFrom") && !queryParams.containsKey("deadlineTo")) {
+            return taskService.getProcessedTasks(user.getName());
+        }
+        return taskService.getProcessedTasks(deadlineFrom, deadlineTo, user.getName());
     }
 
     @GetMapping("/{id}")

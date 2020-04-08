@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -35,6 +38,43 @@ class DefaultTaskServiceTest {
 
         taskService.getUnprocessedTasks(author).blockFirst();
         verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
+    }
+
+    @Test
+    void shouldReturnAllProcessedTasks() {
+        String author = "alice";
+        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.PROCESSED, author)).thenReturn(Flux.empty());
+
+        taskService.getProcessedTasks(author).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author);
+    }
+
+    @Test
+    void shouldReturnProcessedTasksWithDeadline() {
+        LocalDateTime deadlineFrom = LocalDateTime.now();
+        LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
+        String author = "alice";
+
+        when(taskRepositoryMock.findByDeadlineBetweenAndStatusAndAuthor(
+                deadlineFrom,
+                deadlineTo,
+                TaskStatus.PROCESSED,
+                author
+        )).thenReturn(Flux.empty());
+
+        taskService.getProcessedTasks(deadlineFrom, deadlineTo, author).blockFirst();
+        verify(taskRepositoryMock, times(1))
+                .findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo, TaskStatus.PROCESSED, author);
+    }
+
+    @Test
+    void shouldReturnProcessedTasksWithoutDeadline() {
+        String author = "alice";
+        when(taskRepositoryMock.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author))
+                .thenReturn(Flux.empty());
+
+        taskService.getProcessedTasks(null, null, author).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
     }
 
     @Test

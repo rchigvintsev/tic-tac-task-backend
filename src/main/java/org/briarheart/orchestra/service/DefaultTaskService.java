@@ -10,6 +10,8 @@ import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
 /**
  * Default implementation of {@link TaskService}.
  *
@@ -23,6 +25,20 @@ public class DefaultTaskService implements TaskService {
     @Override
     public Flux<Task> getUnprocessedTasks(String author) {
         return taskRepository.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
+    }
+
+    @Override
+    public Flux<Task> getProcessedTasks(String author) {
+        return taskRepository.findByStatusAndAuthor(TaskStatus.PROCESSED, author);
+    }
+
+    @Override
+    public Flux<Task> getProcessedTasks(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, String author) {
+        if (deadlineFrom == null || deadlineTo == null) {
+            return taskRepository.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+        }
+        return taskRepository.findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo, TaskStatus.PROCESSED,
+                author);
     }
 
     @Override

@@ -5,6 +5,8 @@ import org.briarheart.orchestra.model.Task;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
 /**
  * Service for task managing.
  *
@@ -19,6 +21,25 @@ public interface TaskService {
      * @return unprocessed tasks or empty stream when there is no task meeting the given criteria
      */
     Flux<Task> getUnprocessedTasks(String author);
+
+    /**
+     * Returns processed tasks without deadline and belonging to the given author.
+     *
+     * @param author task author
+     * @return processed tasks or empty stream when there is no task meeting the given criteria
+     */
+    Flux<Task> getProcessedTasks(String author);
+
+    /**
+     * Returns processed tasks optionally falling within the given deadline bounds and belonging to the given author.
+     * If deadline bounds are not specified this method returns processed tasks without deadline.
+     *
+     * @param deadlineFrom optional deadline from bound
+     * @param deadlineTo optional deadline to bound
+     * @param author task author
+     * @return processed tasks or empty stream when there is no task meeting the given criteria
+     */
+    Flux<Task> getProcessedTasks(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, String author);
 
     /**
      * Returns task with the given id and belonging to the given author.

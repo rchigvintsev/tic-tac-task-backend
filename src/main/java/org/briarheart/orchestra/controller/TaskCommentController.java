@@ -27,13 +27,13 @@ public class TaskCommentController {
     private final TaskCommentService taskCommentService;
 
     @GetMapping
-    public Flux<TaskComment> getComments(@RequestParam(name = "taskId") Long taskId, Principal user) {
+    public Flux<TaskComment> getComments(@RequestParam("taskId") Long taskId, Principal user) {
         return taskCommentService.getComments(taskId, user.getName());
     }
 
     @PostMapping
     public Mono<ResponseEntity<TaskComment>> createComment(@Valid @RequestBody TaskComment comment,
-                                                           @RequestParam(name = "taskId") Long taskId,
+                                                           @RequestParam("taskId") Long taskId,
                                                            Principal user,
                                                            ServerHttpRequest request) {
         return taskCommentService.createComment(comment, user.getName(), taskId).map(createdComment -> {
