@@ -22,6 +22,17 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
     @Query("SELECT * FROM task WHERE deadline IS NULL AND status = :status AND author = :author")
     Flux<Task> findByDeadlineIsNullAndStatusAndAuthor(TaskStatus status, String author);
 
+    @Query("SELECT * FROM task WHERE deadline <= :deadline AND status = :status AND author = :author")
+    Flux<Task> findByDeadlineLessThanEqualAndStatusAndAuthor(LocalDateTime deadlineTo,
+                                                             TaskStatus status,
+                                                             String author);
+
+
+    @Query("SELECT * FROM task WHERE deadline >= :deadline AND status = :status AND author = :author")
+    Flux<Task> findByDeadlineGreaterThanEqualAndStatusAndAuthor(LocalDateTime deadlineFrom,
+                                                                TaskStatus status,
+                                                                String author);
+
     @Query("SELECT * "
             + "FROM task "
             + "WHERE (deadline BETWEEN :deadlineFrom AND :deadlineTo) AND status = :status AND author = :author")

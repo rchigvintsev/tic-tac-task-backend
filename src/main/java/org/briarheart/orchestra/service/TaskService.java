@@ -23,7 +23,7 @@ public interface TaskService {
     Flux<Task> getUnprocessedTasks(String author);
 
     /**
-     * Returns processed tasks without deadline and belonging to the given author.
+     * Returns all processed tasks belonging to the given author.
      *
      * @param author task author
      * @return processed tasks or empty stream when there is no task meeting the given criteria

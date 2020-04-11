@@ -50,7 +50,7 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadline() {
+    void shouldReturnProcessedTasksWithDeadlineBetween() {
         LocalDateTime deadlineFrom = LocalDateTime.now();
         LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
         String author = "alice";
@@ -65,6 +65,38 @@ class DefaultTaskServiceTest {
         taskService.getProcessedTasks(deadlineFrom, deadlineTo, author).blockFirst();
         verify(taskRepositoryMock, times(1))
                 .findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo, TaskStatus.PROCESSED, author);
+    }
+
+    @Test
+    void shouldReturnProcessedTasksWithDeadlineLessThanOrEqual() {
+        LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
+        String author = "alice";
+
+        when(taskRepositoryMock.findByDeadlineLessThanEqualAndStatusAndAuthor(
+                deadlineTo,
+                TaskStatus.PROCESSED,
+                author
+        )).thenReturn(Flux.empty());
+
+        taskService.getProcessedTasks(null, deadlineTo, author).blockFirst();
+        verify(taskRepositoryMock, times(1))
+                .findByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo, TaskStatus.PROCESSED, author);
+    }
+
+    @Test
+    void shouldReturnProcessedTasksWithDeadlineGreaterThanOrEqual() {
+        LocalDateTime deadlineFrom = LocalDateTime.now();
+        String author = "alice";
+
+        when(taskRepositoryMock.findByDeadlineGreaterThanEqualAndStatusAndAuthor(
+                deadlineFrom,
+                TaskStatus.PROCESSED,
+                author
+        )).thenReturn(Flux.empty());
+
+        taskService.getProcessedTasks(deadlineFrom, null, author).blockFirst();
+        verify(taskRepositoryMock, times(1))
+                .findByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom, TaskStatus.PROCESSED, author);
     }
 
     @Test

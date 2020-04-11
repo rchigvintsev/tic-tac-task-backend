@@ -34,8 +34,16 @@ public class DefaultTaskService implements TaskService {
 
     @Override
     public Flux<Task> getProcessedTasks(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, String author) {
-        if (deadlineFrom == null || deadlineTo == null) {
+        if (deadlineFrom == null && deadlineTo == null) {
             return taskRepository.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+        }
+        if (deadlineFrom == null) {
+            return taskRepository.findByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo, TaskStatus.PROCESSED,
+                    author);
+        }
+        if (deadlineTo == null) {
+            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom, TaskStatus.PROCESSED,
+                    author);
         }
         return taskRepository.findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo, TaskStatus.PROCESSED,
                 author);
