@@ -76,6 +76,9 @@ public class DefaultTaskService implements TaskService {
             if (task.getStatus() == null) {
                 task.setStatus(t.getStatus());
             }
+            if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadline() != null) {
+                task.setStatus(TaskStatus.PROCESSED);
+            }
             return taskRepository.save(task);
         });
     }

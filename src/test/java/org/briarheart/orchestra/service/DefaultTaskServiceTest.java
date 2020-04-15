@@ -10,6 +10,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -200,6 +201,20 @@ class DefaultTaskServiceTest {
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
         assertNotNull(result);
         assertSame(task.getStatus(), result.getStatus());
+    }
+
+    @Test
+    void shouldMakeTaskProcessedOnTaskUpdateWhenDeadlineIsNotNull() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Task updatedTask = Task.builder()
+                .title("Updated test task")
+                .deadline(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.DAYS))
+                .build();
+        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        assertSame(TaskStatus.PROCESSED, result.getStatus());
     }
 
     @Test
