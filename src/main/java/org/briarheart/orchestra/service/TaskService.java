@@ -42,6 +42,14 @@ public interface TaskService {
     Flux<Task> getProcessedTasks(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, String author);
 
     /**
+     * Returns all uncompleted tasks (either unprocessed or processed) belonging to the given author.
+     *
+     * @param author task author
+     * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
+     */
+    Flux<Task> getUncompletedTasks(String author);
+
+    /**
      * Returns task with the given id and belonging to the given author.
      *
      * @param id     task id

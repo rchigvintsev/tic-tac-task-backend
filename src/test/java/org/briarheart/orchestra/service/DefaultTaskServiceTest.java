@@ -111,6 +111,15 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldReturnAllUncompletedTasks() {
+        String author = "alice";
+        when(taskRepositoryMock.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author)).thenReturn(Flux.empty());
+
+        taskService.getUncompletedTasks(author).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author);
+    }
+
+    @Test
     void shouldReturnTaskById() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));

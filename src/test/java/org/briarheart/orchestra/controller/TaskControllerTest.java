@@ -140,6 +140,20 @@ class TaskControllerTest {
     }
 
     @Test
+    void shouldReturnAllUncompletedTasks() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
+        when(taskService.getUncompletedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/uncompleted").exchange()
+                .expectStatus().isOk()
+                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+    }
+
+    @Test
     void shouldReturnTaskById() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");

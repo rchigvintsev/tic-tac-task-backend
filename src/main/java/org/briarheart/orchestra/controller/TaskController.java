@@ -47,6 +47,11 @@ public class TaskController {
         return taskService.getProcessedTasks(deadlineFrom, deadlineTo, user.getName());
     }
 
+    @GetMapping("/uncompleted")
+    public Flux<Task> getUncompletedTasks(Principal user) {
+        return taskService.getUncompletedTasks(user.getName());
+    }
+
     @GetMapping("/{id}")
     public Mono<Task> getTask(@PathVariable("id") Long id, Principal user) {
         return taskService.getTask(id, user.getName());

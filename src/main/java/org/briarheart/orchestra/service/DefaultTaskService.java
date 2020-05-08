@@ -50,6 +50,11 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
+    public Flux<Task> getUncompletedTasks(String author) {
+        return taskRepository.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author);
+    }
+
+    @Override
     public Mono<Task> getTask(Long id, String author) throws EntityNotFoundException {
         return taskRepository.findByIdAndAuthor(id, author)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")));
