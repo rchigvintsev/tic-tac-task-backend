@@ -1,12 +1,12 @@
 package org.briarheart.orchestra.model;
 
 import lombok.*;
+import org.briarheart.orchestra.model.validation.constraints.NotPast;
 import org.springframework.data.annotation.Id;
 
-import javax.validation.constraints.Future;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * Main entity representing task to be done.
@@ -31,8 +31,8 @@ public class Task {
 
     private String author;
 
-    @Future
-    private LocalDateTime deadline;
+    @NotPast
+    private LocalDate deadline;
 
     /**
      * Creates copy of this task including all attributes except primary key.

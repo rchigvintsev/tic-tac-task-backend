@@ -20,8 +20,9 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -121,7 +122,7 @@ class TaskControllerTest {
                 .title("Test task")
                 .author(authenticationMock.getName())
                 .status(TaskStatus.PROCESSED)
-                .deadline(LocalDateTime.parse("2020-01-10T00:00:00.000", DateTimeFormatter.ISO_DATE_TIME))
+                .deadline(LocalDate.parse("2020-01-10", DateTimeFormatter.ISO_DATE))
                 .build();
 
         String deadlineFrom = "2020-01-01T00:00:00.000";
@@ -298,7 +299,7 @@ class TaskControllerTest {
 
         Task task = Task.builder()
                 .title("Test title")
-                .deadline(LocalDateTime.now(ZoneOffset.UTC).minus(1, ChronoUnit.DAYS))
+                .deadline(LocalDate.now(Clock.systemUTC()).minus(3, ChronoUnit.DAYS))
                 .build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
@@ -311,7 +312,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.deadline").isEqualTo("Value must be in future");
+                .jsonPath("$.fieldErrors.deadline").isEqualTo("Value must not be in past");
     }
 
     @Test

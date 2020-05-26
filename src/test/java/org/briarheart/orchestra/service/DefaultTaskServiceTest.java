@@ -9,8 +9,9 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -219,7 +220,7 @@ class DefaultTaskServiceTest {
 
         Task updatedTask = Task.builder()
                 .title("Updated test task")
-                .deadline(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.DAYS))
+                .deadline(LocalDate.now(Clock.systemUTC()).plus(3, ChronoUnit.DAYS))
                 .build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
         assertNotNull(result);
