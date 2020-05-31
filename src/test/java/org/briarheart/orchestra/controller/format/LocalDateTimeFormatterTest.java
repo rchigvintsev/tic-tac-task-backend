@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Roman Chigvintsev
  */
 class LocalDateTimeFormatterTest {
-    private LocalDateTimeFormatter formatter = new LocalDateTimeFormatter();
+    private final LocalDateTimeFormatter formatter = new LocalDateTimeFormatter();
 
     @Test
     void shouldParseDateTime() throws ParseException {

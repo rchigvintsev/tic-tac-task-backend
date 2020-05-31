@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.config;
 
+import org.briarheart.orchestra.controller.format.LocalDateFormatter;
 import org.briarheart.orchestra.controller.format.LocalDateTimeFormatter;
 import org.briarheart.orchestra.web.filter.LocaleContextFilter;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +25,7 @@ public class WebConfig implements WebFluxConfigurer {
 
     @Override
     public void addFormatters(FormatterRegistry registry) {
+        registry.addFormatter(new LocalDateFormatter());
         registry.addFormatter(new LocalDateTimeFormatter());
     }
 }
