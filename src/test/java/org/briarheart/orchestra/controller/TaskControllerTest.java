@@ -20,9 +20,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -107,7 +105,7 @@ class TaskControllerTest {
         when(taskService.getProcessedTasks(null, null, authenticationMock.getName())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed?deadlineFrom=&deadlineTo=").exchange()
+                .uri("/tasks/processed?deadlineDateFrom=&deadlineDateTo=").exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
     }
@@ -122,20 +120,21 @@ class TaskControllerTest {
                 .title("Test task")
                 .author(authenticationMock.getName())
                 .status(TaskStatus.PROCESSED)
-                .deadline(LocalDate.parse("2020-01-10", DateTimeFormatter.ISO_DATE))
+                .deadlineDate(LocalDate.parse("2020-01-10", DateTimeFormatter.ISO_DATE))
                 .build();
 
-        String deadlineFrom = "2020-01-01T00:00:00.000";
-        String deadlineTo = "2020-01-31T23:59:59.999";
+        String deadlineDateFrom = "2020-01-01";
+        String deadlineDateTo = "2020-01-31";
 
         when(taskService.getProcessedTasks(
-                LocalDateTime.parse(deadlineFrom, DateTimeFormatter.ISO_DATE_TIME),
-                LocalDateTime.parse(deadlineTo, DateTimeFormatter.ISO_DATE_TIME),
+                LocalDate.parse(deadlineDateFrom, DateTimeFormatter.ISO_DATE),
+                LocalDate.parse(deadlineDateTo, DateTimeFormatter.ISO_DATE),
                 authenticationMock.getName())
         ).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed?deadlineFrom=" + deadlineFrom  + "&deadlineTo=" + deadlineTo).exchange()
+                .uri("/tasks/processed?deadlineDateFrom=" + deadlineDateFrom  + "&deadlineDateTo=" + deadlineDateTo)
+                .exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
     }
@@ -299,7 +298,7 @@ class TaskControllerTest {
 
         Task task = Task.builder()
                 .title("Test title")
-                .deadline(LocalDate.now(Clock.systemUTC()).minus(3, ChronoUnit.DAYS))
+                .deadlineDate(LocalDate.now().minus(3, ChronoUnit.DAYS))
                 .build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
@@ -312,7 +311,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.deadline").isEqualTo("Value must not be in past");
+                .jsonPath("$.fieldErrors.deadlineDate").isEqualTo("Value must not be in past");
     }
 
     @Test

@@ -10,7 +10,7 @@ import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * Default implementation of {@link TaskService}.
@@ -33,20 +33,20 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
-    public Flux<Task> getProcessedTasks(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, String author) {
-        if (deadlineFrom == null && deadlineTo == null) {
-            return taskRepository.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+    public Flux<Task> getProcessedTasks(LocalDate deadlineDateFrom, LocalDate deadlineDateTo, String author) {
+        if (deadlineDateFrom == null && deadlineDateTo == null) {
+            return taskRepository.findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
         }
-        if (deadlineFrom == null) {
-            return taskRepository.findByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo, TaskStatus.PROCESSED,
+        if (deadlineDateFrom == null) {
+            return taskRepository.findByDeadlineDateLessThanEqualAndStatusAndAuthor(deadlineDateTo, TaskStatus.PROCESSED,
                     author);
         }
-        if (deadlineTo == null) {
-            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom, TaskStatus.PROCESSED,
-                    author);
+        if (deadlineDateTo == null) {
+            return taskRepository.findByDeadlineDateGreaterThanEqualAndStatusAndAuthor(deadlineDateFrom,
+                    TaskStatus.PROCESSED, author);
         }
-        return taskRepository.findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo, TaskStatus.PROCESSED,
-                author);
+        return taskRepository.findByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom, deadlineDateTo,
+                TaskStatus.PROCESSED, author);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class DefaultTaskService implements TaskService {
             if (task.getStatus() == null) {
                 task.setStatus(t.getStatus());
             }
-            if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadline() != null) {
+            if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadlineDate() != null) {
                 task.setStatus(TaskStatus.PROCESSED);
             }
             return taskRepository.save(task);

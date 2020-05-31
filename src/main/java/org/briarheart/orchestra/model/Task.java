@@ -32,7 +32,7 @@ public class Task {
     private String author;
 
     @NotPast
-    private LocalDate deadline;
+    private LocalDate deadlineDate;
 
     /**
      * Creates copy of this task including all attributes except primary key.
@@ -45,7 +45,7 @@ public class Task {
         copy.setDescription(description);
         copy.setStatus(status);
         copy.setAuthor(author);
-        copy.setDeadline(deadline);
+        copy.setDeadlineDate(deadlineDate);
         return copy;
     }
 }

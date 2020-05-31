@@ -9,9 +9,7 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,63 +50,63 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadlineBetween() {
-        LocalDateTime deadlineFrom = LocalDateTime.now();
-        LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
+    void shouldReturnProcessedTasksWithDeadlineDateBetween() {
+        LocalDate deadlineDateFrom = LocalDate.now();
+        LocalDate deadlineDateTo = deadlineDateFrom.plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
-        when(taskRepositoryMock.findByDeadlineBetweenAndStatusAndAuthor(
-                deadlineFrom,
-                deadlineTo,
+        when(taskRepositoryMock.findByDeadlineDateBetweenAndStatusAndAuthor(
+                deadlineDateFrom,
+                deadlineDateTo,
                 TaskStatus.PROCESSED,
                 author
         )).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(deadlineFrom, deadlineTo, author).blockFirst();
+        taskService.getProcessedTasks(deadlineDateFrom, deadlineDateTo, author).blockFirst();
         verify(taskRepositoryMock, times(1))
-                .findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo, TaskStatus.PROCESSED, author);
+                .findByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom, deadlineDateTo, TaskStatus.PROCESSED, author);
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadlineLessThanOrEqual() {
-        LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
+    void shouldReturnProcessedTasksWithDeadlineDateLessThanOrEqual() {
+        LocalDate deadlineDateTo = LocalDate.now().plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
-        when(taskRepositoryMock.findByDeadlineLessThanEqualAndStatusAndAuthor(
-                deadlineTo,
+        when(taskRepositoryMock.findByDeadlineDateLessThanEqualAndStatusAndAuthor(
+                deadlineDateTo,
                 TaskStatus.PROCESSED,
                 author
         )).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(null, deadlineTo, author).blockFirst();
+        taskService.getProcessedTasks(null, deadlineDateTo, author).blockFirst();
         verify(taskRepositoryMock, times(1))
-                .findByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo, TaskStatus.PROCESSED, author);
+                .findByDeadlineDateLessThanEqualAndStatusAndAuthor(deadlineDateTo, TaskStatus.PROCESSED, author);
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadlineGreaterThanOrEqual() {
-        LocalDateTime deadlineFrom = LocalDateTime.now();
+    void shouldReturnProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
+        LocalDate deadlineDateFrom = LocalDate.now();
         String author = "alice";
 
-        when(taskRepositoryMock.findByDeadlineGreaterThanEqualAndStatusAndAuthor(
-                deadlineFrom,
+        when(taskRepositoryMock.findByDeadlineDateGreaterThanEqualAndStatusAndAuthor(
+                deadlineDateFrom,
                 TaskStatus.PROCESSED,
                 author
         )).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(deadlineFrom, null, author).blockFirst();
+        taskService.getProcessedTasks(deadlineDateFrom, null, author).blockFirst();
         verify(taskRepositoryMock, times(1))
-                .findByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom, TaskStatus.PROCESSED, author);
+                .findByDeadlineDateGreaterThanEqualAndStatusAndAuthor(deadlineDateFrom, TaskStatus.PROCESSED, author);
     }
 
     @Test
-    void shouldReturnProcessedTasksWithoutDeadline() {
+    void shouldReturnProcessedTasksWithoutDeadlineDate() {
         String author = "alice";
-        when(taskRepositoryMock.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author))
+        when(taskRepositoryMock.findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author))
                 .thenReturn(Flux.empty());
 
         taskService.getProcessedTasks(null, null, author).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+        verify(taskRepositoryMock, times(1)).findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
     }
 
     @Test
@@ -214,13 +212,13 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldMakeTaskProcessedOnTaskUpdateWhenDeadlineIsNotNull() {
+    void shouldMakeTaskProcessedOnTaskUpdateWhenDeadlineDateIsNotNull() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 
         Task updatedTask = Task.builder()
                 .title("Updated test task")
-                .deadline(LocalDate.now(Clock.systemUTC()).plus(3, ChronoUnit.DAYS))
+                .deadlineDate(LocalDate.now().plus(3, ChronoUnit.DAYS))
                 .build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
         assertNotNull(result);

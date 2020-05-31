@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 import java.net.URI;
 import java.security.Principal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * REST-controller for task managing.
@@ -35,16 +35,16 @@ public class TaskController {
 
     @GetMapping("/processed")
     public Flux<Task> getProcessedTasks(
-            @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
-            @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
+            @RequestParam(name = "deadlineDateFrom", required = false) LocalDate deadlineDateFrom,
+            @RequestParam(name = "deadlineDateTo", required = false) LocalDate deadlineDateTo,
             Principal user,
             ServerHttpRequest request
     ) {
         MultiValueMap<String, String> queryParams = request.getQueryParams();
-        if (!queryParams.containsKey("deadlineFrom") && !queryParams.containsKey("deadlineTo")) {
+        if (!queryParams.containsKey("deadlineDateFrom") && !queryParams.containsKey("deadlineDateTo")) {
             return taskService.getProcessedTasks(user.getName());
         }
-        return taskService.getProcessedTasks(deadlineFrom, deadlineTo, user.getName());
+        return taskService.getProcessedTasks(deadlineDateFrom, deadlineDateTo, user.getName());
     }
 
     @GetMapping("/uncompleted")
