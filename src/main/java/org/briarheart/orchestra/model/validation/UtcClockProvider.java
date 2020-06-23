@@ -1,4 +1,4 @@
-package org.briarheart.orchestra.validation;
+package org.briarheart.orchestra.model.validation;
 
 import javax.validation.ClockProvider;
 import java.time.Clock;

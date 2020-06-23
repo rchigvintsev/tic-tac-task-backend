@@ -21,7 +21,7 @@ import java.util.List;
  */
 @ControllerAdvice
 public class GlobalExceptionHandlingControllerAdvice {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandlingControllerAdvice.class);
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandlingControllerAdvice.class);
 
     /**
      * Maps {@link EntityNotFoundException} to response with status code "404 Not found" and body containing error
@@ -35,7 +35,7 @@ public class GlobalExceptionHandlingControllerAdvice {
     @ResponseBody
     public ErrorResponse handleEntityNotFoundException(EntityNotFoundException e) {
         Assert.notNull(e, "Exception must not be null");
-        logger.debug(e.getMessage(), e);
+        log.debug(e.getMessage(), e);
         ErrorResponse response = new ErrorResponse();
         response.setErrors(List.of(e.getMessage()));
         return response;
@@ -52,7 +52,7 @@ public class GlobalExceptionHandlingControllerAdvice {
     @ExceptionHandler(WebExchangeBindException.class)
     public ResponseEntity<?> handleWebExchangeBindException(WebExchangeBindException e) {
         Assert.notNull(e, "Exception must not be null");
-        logger.debug(e.getMessage(), e);
+        log.debug(e.getMessage(), e);
         return ResponseEntity.status(e.getStatus()).body(new ConstraintViolationErrorResponse(e));
     }
 }
