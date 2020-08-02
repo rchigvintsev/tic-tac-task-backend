@@ -2,6 +2,7 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Task;
+import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -18,17 +19,19 @@ public interface TaskService {
      * Returns all unprocessed tasks belonging to the given author.
      *
      * @param author task author
+     * @param pageable paging restriction
      * @return unprocessed tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getUnprocessedTasks(String author);
+    Flux<Task> getUnprocessedTasks(String author, Pageable pageable);
 
     /**
      * Returns all processed tasks belonging to the given author.
      *
      * @param author task author
+     * @param pageable paging restriction
      * @return processed tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getProcessedTasks(String author);
+    Flux<Task> getProcessedTasks(String author, Pageable pageable);
 
     /**
      * Returns processed tasks optionally falling within the given deadline bounds and belonging to the given author.
@@ -37,17 +40,24 @@ public interface TaskService {
      * @param deadlineDateFrom optional deadline from bound
      * @param deadlineDateTo optional deadline to bound
      * @param author task author
+     * @param pageable paging restriction
      * @return processed tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getProcessedTasks(LocalDate deadlineDateFrom, LocalDate deadlineDateTo, String author);
+    Flux<Task> getProcessedTasks(
+            LocalDate deadlineDateFrom,
+            LocalDate deadlineDateTo,
+            String author,
+            Pageable pageable
+    );
 
     /**
      * Returns all uncompleted tasks (either unprocessed or processed) belonging to the given author.
      *
      * @param author task author
+     * @param pageable paging restriction
      * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getUncompletedTasks(String author);
+    Flux<Task> getUncompletedTasks(String author, Pageable pageable);
 
     /**
      * Returns task with the given id and belonging to the given author.

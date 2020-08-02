@@ -7,9 +7,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.web.ReactivePageableHandlerMethodArgumentResolver;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.web.reactive.config.EnableWebFlux;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
+import org.springframework.web.reactive.result.method.annotation.ArgumentResolverConfigurer;
 
 /**
  * @author Roman Chigvintsev
@@ -27,5 +29,10 @@ public class WebConfig implements WebFluxConfigurer {
     public void addFormatters(FormatterRegistry registry) {
         registry.addFormatter(new LocalDateFormatter());
         registry.addFormatter(new LocalDateTimeFormatter());
+    }
+
+    @Override
+    public void configureArgumentResolvers(ArgumentResolverConfigurer configurer) {
+        configurer.addCustomResolver(new ReactivePageableHandlerMethodArgumentResolver());
     }
 }

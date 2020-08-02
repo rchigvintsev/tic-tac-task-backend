@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -26,8 +27,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
@@ -64,7 +64,7 @@ class TaskControllerTest {
         when(authenticationMock.getName()).thenReturn("alice");
 
         Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
-        when(taskService.getUnprocessedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
+        when(taskService.getUnprocessedTasks(eq(authenticationMock.getName()), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/unprocessed").exchange()
@@ -83,7 +83,7 @@ class TaskControllerTest {
                 .author(authenticationMock.getName())
                 .status(TaskStatus.PROCESSED)
                 .build();
-        when(taskService.getProcessedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
+        when(taskService.getProcessedTasks(eq(authenticationMock.getName()), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/processed").exchange()
@@ -102,7 +102,8 @@ class TaskControllerTest {
                 .author(authenticationMock.getName())
                 .status(TaskStatus.PROCESSED)
                 .build();
-        when(taskService.getProcessedTasks(null, null, authenticationMock.getName())).thenReturn(Flux.just(task));
+        when(taskService.getProcessedTasks(null, null, authenticationMock.getName(), PageRequest.of(0, 20)))
+                .thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/processed?deadlineDateFrom=&deadlineDateTo=").exchange()
@@ -129,8 +130,9 @@ class TaskControllerTest {
         when(taskService.getProcessedTasks(
                 LocalDate.parse(deadlineDateFrom, DateTimeFormatter.ISO_DATE),
                 LocalDate.parse(deadlineDateTo, DateTimeFormatter.ISO_DATE),
-                authenticationMock.getName())
-        ).thenReturn(Flux.just(task));
+                authenticationMock.getName(),
+                PageRequest.of(0, 20)
+        )).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/processed?deadlineDateFrom=" + deadlineDateFrom  + "&deadlineDateTo=" + deadlineDateTo)
@@ -145,7 +147,7 @@ class TaskControllerTest {
         when(authenticationMock.getName()).thenReturn("alice");
 
         Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
-        when(taskService.getUncompletedTasks(authenticationMock.getName())).thenReturn(Flux.just(task));
+        when(taskService.getUncompletedTasks(eq(authenticationMock.getName()), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/uncompleted").exchange()

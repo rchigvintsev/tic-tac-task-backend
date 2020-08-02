@@ -3,6 +3,7 @@ package org.briarheart.orchestra.controller;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.service.TaskService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -29,8 +30,8 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping("/unprocessed")
-    public Flux<Task> getUnprocessedTasks(Principal user) {
-        return taskService.getUnprocessedTasks(user.getName());
+    public Flux<Task> getUnprocessedTasks(Principal user, Pageable pageable) {
+        return taskService.getUnprocessedTasks(user.getName(), pageable);
     }
 
     @GetMapping("/processed")
@@ -38,18 +39,19 @@ public class TaskController {
             @RequestParam(name = "deadlineDateFrom", required = false) LocalDate deadlineDateFrom,
             @RequestParam(name = "deadlineDateTo", required = false) LocalDate deadlineDateTo,
             Principal user,
-            ServerHttpRequest request
+            ServerHttpRequest request,
+            Pageable pageable
     ) {
         MultiValueMap<String, String> queryParams = request.getQueryParams();
         if (!queryParams.containsKey("deadlineDateFrom") && !queryParams.containsKey("deadlineDateTo")) {
-            return taskService.getProcessedTasks(user.getName());
+            return taskService.getProcessedTasks(user.getName(), pageable);
         }
-        return taskService.getProcessedTasks(deadlineDateFrom, deadlineDateTo, user.getName());
+        return taskService.getProcessedTasks(deadlineDateFrom, deadlineDateTo, user.getName(), pageable);
     }
 
     @GetMapping("/uncompleted")
-    public Flux<Task> getUncompletedTasks(Principal user) {
-        return taskService.getUncompletedTasks(user.getName());
+    public Flux<Task> getUncompletedTasks(Principal user, Pageable pageable) {
+        return taskService.getUncompletedTasks(user.getName(), pageable);
     }
 
     @GetMapping("/{id}")

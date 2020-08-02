@@ -6,6 +6,8 @@ import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -34,19 +36,46 @@ class DefaultTaskServiceTest {
     @Test
     void shouldReturnAllUnprocessedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author)).thenReturn(Flux.empty());
+        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, 0, null))
+                .thenReturn(Flux.empty());
 
-        taskService.getUnprocessedTasks(author).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
+        taskService.getUnprocessedTasks(author, Pageable.unpaged()).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, 0, null);
+    }
+
+    @Test
+    void shouldReturnAllUnprocessedTasksWithPagingRestriction() {
+        String author = "alice";
+        PageRequest pageRequest = PageRequest.of(3, 50);
+
+        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, pageRequest.getOffset(),
+                pageRequest.getPageSize())).thenReturn(Flux.empty());
+
+        taskService.getUnprocessedTasks(author, pageRequest).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author,
+                pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
     @Test
     void shouldReturnAllProcessedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.PROCESSED, author)).thenReturn(Flux.empty());
+        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null)).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(author).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author);
+        taskService.getProcessedTasks(author, Pageable.unpaged()).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null);
+    }
+
+    @Test
+    void shouldReturnAllProcessedTasksWithPagingRestriction() {
+        String author = "alice";
+        PageRequest pageRequest = PageRequest.of(3, 50);
+
+        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.PROCESSED, author, pageRequest.getOffset(),
+                pageRequest.getPageSize())).thenReturn(Flux.empty());
+
+        taskService.getProcessedTasks(author, pageRequest).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author,
+                pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
     @Test
@@ -59,12 +88,14 @@ class DefaultTaskServiceTest {
                 deadlineDateFrom,
                 deadlineDateTo,
                 TaskStatus.PROCESSED,
-                author
+                author,
+                0,
+                null
         )).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(deadlineDateFrom, deadlineDateTo, author).blockFirst();
-        verify(taskRepositoryMock, times(1))
-                .findByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom, deadlineDateTo, TaskStatus.PROCESSED, author);
+        taskService.getProcessedTasks(deadlineDateFrom, deadlineDateTo, author, null).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom,
+                deadlineDateTo, TaskStatus.PROCESSED, author, 0, null);
     }
 
     @Test
@@ -75,12 +106,14 @@ class DefaultTaskServiceTest {
         when(taskRepositoryMock.findByDeadlineDateLessThanEqualAndStatusAndAuthor(
                 deadlineDateTo,
                 TaskStatus.PROCESSED,
-                author
+                author,
+                0,
+                null
         )).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(null, deadlineDateTo, author).blockFirst();
-        verify(taskRepositoryMock, times(1))
-                .findByDeadlineDateLessThanEqualAndStatusAndAuthor(deadlineDateTo, TaskStatus.PROCESSED, author);
+        taskService.getProcessedTasks(null, deadlineDateTo, author, null).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByDeadlineDateLessThanEqualAndStatusAndAuthor(deadlineDateTo,
+                TaskStatus.PROCESSED, author, 0, null);
     }
 
     @Test
@@ -91,31 +124,48 @@ class DefaultTaskServiceTest {
         when(taskRepositoryMock.findByDeadlineDateGreaterThanEqualAndStatusAndAuthor(
                 deadlineDateFrom,
                 TaskStatus.PROCESSED,
-                author
+                author,
+                0,
+                null
         )).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(deadlineDateFrom, null, author).blockFirst();
-        verify(taskRepositoryMock, times(1))
-                .findByDeadlineDateGreaterThanEqualAndStatusAndAuthor(deadlineDateFrom, TaskStatus.PROCESSED, author);
+        taskService.getProcessedTasks(deadlineDateFrom, null, author, null).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByDeadlineDateGreaterThanEqualAndStatusAndAuthor(deadlineDateFrom,
+                TaskStatus.PROCESSED, author, 0, null);
     }
 
     @Test
     void shouldReturnProcessedTasksWithoutDeadlineDate() {
         String author = "alice";
-        when(taskRepositoryMock.findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author))
+        when(taskRepositoryMock.findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null))
                 .thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(null, null, author).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+        taskService.getProcessedTasks(null, null, author, null).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author,
+                0, null);
     }
 
     @Test
     void shouldReturnAllUncompletedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author)).thenReturn(Flux.empty());
+        when(taskRepositoryMock.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null))
+                .thenReturn(Flux.empty());
 
-        taskService.getUncompletedTasks(author).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author);
+        taskService.getUncompletedTasks(author, Pageable.unpaged()).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null);
+    }
+
+    @Test
+    void shouldReturnAllUncompletedTasksWithPagingRestriction() {
+        String author = "alice";
+        PageRequest pageRequest = PageRequest.of(3, 50);
+
+        when(taskRepositoryMock.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, pageRequest.getOffset(),
+                pageRequest.getPageSize())).thenReturn(Flux.empty());
+
+        taskService.getUncompletedTasks(author, pageRequest).blockFirst();
+        verify(taskRepositoryMock, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author,
+                pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
     @Test

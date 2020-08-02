@@ -16,33 +16,43 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
     @Query("SELECT * FROM task WHERE id= :id AND author = :author")
     Mono<Task> findByIdAndAuthor(Long id, String author);
 
-    @Query("SELECT * FROM task WHERE status = :status AND author = :author")
-    Flux<Task> findByStatusAndAuthor(TaskStatus status, String author);
+    @Query("SELECT * FROM task WHERE status = :status AND author = :author OFFSET :offset LIMIT :limit")
+    Flux<Task> findByStatusAndAuthor(TaskStatus status, String author, long offset, Integer limit);
 
-    @Query("SELECT * FROM task WHERE status <> :status AND author = :author")
-    Flux<Task> findByStatusNotAndAuthor(TaskStatus status, String author);
+    @Query("SELECT * FROM task WHERE status <> :status AND author = :author OFFSET :offset LIMIT :limit")
+    Flux<Task> findByStatusNotAndAuthor(TaskStatus status, String author, long offset, Integer limit);
 
-    @Query("SELECT * FROM task WHERE deadline_date IS NULL AND status = :status AND author = :author")
-    Flux<Task> findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus status, String author);
+    @Query("SELECT * FROM task WHERE deadline_date IS NULL AND status = :status AND author = :author "
+            + "OFFSET :offset LIMIT :limit")
+    Flux<Task> findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus status, String author, long offset, Integer limit);
 
-    @Query("SELECT * FROM task WHERE deadline_date <= :deadlineDate AND status = :status AND author = :author")
+    @Query("SELECT * FROM task WHERE deadline_date <= :deadlineDate AND status = :status AND author = :author "
+            + "OFFSET :offset LIMIT :limit")
     Flux<Task> findByDeadlineDateLessThanEqualAndStatusAndAuthor(LocalDate deadlineDate,
                                                                  TaskStatus status,
-                                                                 String author);
+                                                                 String author,
+                                                                 long offset,
+                                                                 Integer limit);
 
 
-    @Query("SELECT * FROM task WHERE deadline_date >= :deadlineDate AND status = :status AND author = :author")
+    @Query("SELECT * FROM task WHERE deadline_date >= :deadlineDate AND status = :status AND author = :author "
+            + "OFFSET :offset LIMIT :limit")
     Flux<Task> findByDeadlineDateGreaterThanEqualAndStatusAndAuthor(LocalDate deadlineDate,
                                                                     TaskStatus status,
-                                                                    String author);
+                                                                    String author,
+                                                                    long offset,
+                                                                    Integer limit);
 
     @Query("SELECT * "
             + "FROM task "
             + "WHERE (deadline_date BETWEEN :deadlineDateFrom AND :deadlineDateTo) "
             + "AND status = :status "
-            + "AND author = :author")
+            + "AND author = :author "
+            + "OFFSET :offset LIMIT :limit")
     Flux<Task> findByDeadlineDateBetweenAndStatusAndAuthor(LocalDate deadlineDateFrom,
                                                            LocalDate deadlineDateTo,
                                                            TaskStatus status,
-                                                           String author);
+                                                           String author,
+                                                           long offset,
+                                                           Integer limit);
 }
