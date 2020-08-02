@@ -77,7 +77,9 @@ public class DefaultTaskService implements TaskService {
         return Mono.defer(() -> {
             Task newTask = task.copy();
             newTask.setAuthor(author);
-            newTask.setStatus(TaskStatus.UNPROCESSED);
+            if (newTask.getStatus() == null) {
+                newTask.setStatus(TaskStatus.UNPROCESSED);
+            }
             return taskRepository.save(newTask);
         });
     }
