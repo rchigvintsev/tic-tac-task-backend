@@ -7,6 +7,8 @@ import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskComment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -36,16 +38,32 @@ class DefaultTaskCommentServiceTest {
     void shouldReturnAllCommentsForTask() {
         Task task = Task.builder().id(1L).author("alice").title("Test task").build();
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        when(taskCommentRepositoryMock.findByTaskIdOrderByCreatedAtDesc(task.getId())).thenReturn(Flux.empty());
+        when(taskCommentRepositoryMock.findByTaskIdOrderByCreatedAtDesc(task.getId(), 0, null))
+                .thenReturn(Flux.empty());
 
-        taskCommentService.getComments(task.getId(), task.getAuthor()).blockFirst();
-        verify(taskCommentRepositoryMock, times(1)).findByTaskIdOrderByCreatedAtDesc(task.getId());
+        taskCommentService.getComments(task.getId(), task.getAuthor(), Pageable.unpaged()).blockFirst();
+        verify(taskCommentRepositoryMock, times(1)).findByTaskIdOrderByCreatedAtDesc(task.getId(), 0, null);
+    }
+
+    @Test
+    void shouldReturnAllCommentsForTaskWithPagingRestriction() {
+        PageRequest pageRequest = PageRequest.of(3, 50);
+
+        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskCommentRepositoryMock.findByTaskIdOrderByCreatedAtDesc(task.getId(), pageRequest.getOffset(),
+                pageRequest.getPageSize())).thenReturn(Flux.empty());
+
+        taskCommentService.getComments(task.getId(), task.getAuthor(), pageRequest).blockFirst();
+        verify(taskCommentRepositoryMock, times(1)).findByTaskIdOrderByCreatedAtDesc(task.getId(),
+                pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
     @Test
     void shouldThrowExceptionOnCommentsGetWhenTaskIsNotFound() {
         when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskCommentService.getComments(1L, "alice").blockFirst());
+        assertThrows(EntityNotFoundException.class,
+                () -> taskCommentService.getComments(1L, "alice", Pageable.unpaged()).blockFirst());
     }
 
     @Test

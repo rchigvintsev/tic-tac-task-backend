@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -57,8 +58,11 @@ class TaskCommentControllerTest {
         when(authenticationMock.getName()).thenReturn("alice");
 
         TaskComment comment = TaskComment.builder().id(1L).taskId(2L).commentText("Test comment").build();
-        Mockito.when(taskCommentService.getComments(comment.getTaskId(), authenticationMock.getName()))
-                .thenReturn(Flux.just(comment));
+        Mockito.when(taskCommentService.getComments(
+                comment.getTaskId(),
+                authenticationMock.getName(),
+                PageRequest.of(0, 20)
+        )).thenReturn(Flux.just(comment));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/taskComments?taskId=" + comment.getTaskId()).exchange()

@@ -2,6 +2,7 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.TaskComment;
+import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -17,10 +18,11 @@ public interface TaskCommentService {
      *
      * @param taskId task id
      * @param taskAuthor task author
+     * @param pageable paging restriction
      * @return task comments or empty stream when there is no comment meeting the given criteria
      * @throws EntityNotFoundException if task is not found by id and author
      */
-    Flux<TaskComment> getComments(Long taskId, String taskAuthor) throws EntityNotFoundException;
+    Flux<TaskComment> getComments(Long taskId, String taskAuthor, Pageable pageable) throws EntityNotFoundException;
 
     /**
      * Creates new comment belonging to the given author and associates it with the given task.
