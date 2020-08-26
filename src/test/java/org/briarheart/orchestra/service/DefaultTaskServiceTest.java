@@ -34,6 +34,14 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldReturnNumberOfAllUnprocessedTasks() {
+        String author = "alice";
+        when(taskRepositoryMock.countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author)).thenReturn(Mono.empty());
+        taskService.getUnprocessedTaskCount(author).block();
+        verify(taskRepositoryMock, times(1)).countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
+    }
+
+    @Test
     void shouldReturnAllUnprocessedTasks() {
         String author = "alice";
         when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, 0, null))
@@ -54,6 +62,14 @@ class DefaultTaskServiceTest {
         taskService.getUnprocessedTasks(author, pageRequest).blockFirst();
         verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author,
                 pageRequest.getOffset(), pageRequest.getPageSize());
+    }
+
+    @Test
+    void shouldReturnNumberOfAllProcessedTasks() {
+        String author = "alice";
+        when(taskRepositoryMock.countAllByStatusAndAuthor(TaskStatus.PROCESSED, author)).thenReturn(Mono.empty());
+        taskService.getProcessedTaskCount(author).block();
+        verify(taskRepositoryMock, times(1)).countAllByStatusAndAuthor(TaskStatus.PROCESSED, author);
     }
 
     @Test
@@ -79,6 +95,24 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldReturnNumberOfProcessedTasksWithDeadlineDateBetween() {
+        LocalDate deadlineDateFrom = LocalDate.now();
+        LocalDate deadlineDateTo = deadlineDateFrom.plus(1, ChronoUnit.DAYS);
+        String author = "alice";
+
+        when(taskRepositoryMock.countAllByDeadlineDateBetweenAndStatusAndAuthor(
+                deadlineDateFrom,
+                deadlineDateTo,
+                TaskStatus.PROCESSED,
+                author
+        )).thenReturn(Mono.empty());
+
+        taskService.getProcessedTaskCount(deadlineDateFrom, deadlineDateTo, author).block();
+        verify(taskRepositoryMock, times(1)).countAllByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom,
+                deadlineDateTo, TaskStatus.PROCESSED, author);
+    }
+
+    @Test
     void shouldReturnProcessedTasksWithDeadlineDateBetween() {
         LocalDate deadlineDateFrom = LocalDate.now();
         LocalDate deadlineDateTo = deadlineDateFrom.plus(1, ChronoUnit.DAYS);
@@ -96,6 +130,22 @@ class DefaultTaskServiceTest {
         taskService.getProcessedTasks(deadlineDateFrom, deadlineDateTo, author, null).blockFirst();
         verify(taskRepositoryMock, times(1)).findByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom,
                 deadlineDateTo, TaskStatus.PROCESSED, author, 0, null);
+    }
+
+    @Test
+    void shouldReturnNumberOfProcessedTasksWithDeadlineDateLessThanOrEqual() {
+        LocalDate deadlineDateTo = LocalDate.now().plus(1, ChronoUnit.DAYS);
+        String author = "alice";
+
+        when(taskRepositoryMock.countAllByDeadlineDateLessThanEqualAndStatusAndAuthor(
+                deadlineDateTo,
+                TaskStatus.PROCESSED,
+                author
+        )).thenReturn(Mono.empty());
+
+        taskService.getProcessedTaskCount(null, deadlineDateTo, author).block();
+        verify(taskRepositoryMock, times(1)).countAllByDeadlineDateLessThanEqualAndStatusAndAuthor(deadlineDateTo,
+                TaskStatus.PROCESSED, author);
     }
 
     @Test
@@ -117,6 +167,22 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldReturnNumberOfProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
+        LocalDate deadlineDateFrom = LocalDate.now();
+        String author = "alice";
+
+        when(taskRepositoryMock.countAllByDeadlineDateGreaterThanEqualAndStatusAndAuthor(
+                deadlineDateFrom,
+                TaskStatus.PROCESSED,
+                author
+        )).thenReturn(Mono.empty());
+
+        taskService.getProcessedTaskCount(deadlineDateFrom, null, author).block();
+        verify(taskRepositoryMock, times(1)).countAllByDeadlineDateGreaterThanEqualAndStatusAndAuthor(deadlineDateFrom,
+                TaskStatus.PROCESSED, author);
+    }
+
+    @Test
     void shouldReturnProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
         LocalDate deadlineDateFrom = LocalDate.now();
         String author = "alice";
@@ -135,6 +201,17 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldReturnNumberOfProcessedTasksWithoutDeadlineDate() {
+        String author = "alice";
+        when(taskRepositoryMock.countAllByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author))
+                .thenReturn(Mono.empty());
+
+        taskService.getProcessedTaskCount(null, null, author).block();
+        verify(taskRepositoryMock, times(1)).countAllByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED,
+                author);
+    }
+
+    @Test
     void shouldReturnProcessedTasksWithoutDeadlineDate() {
         String author = "alice";
         when(taskRepositoryMock.findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null))
@@ -143,6 +220,15 @@ class DefaultTaskServiceTest {
         taskService.getProcessedTasks(null, null, author, null).blockFirst();
         verify(taskRepositoryMock, times(1)).findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author,
                 0, null);
+    }
+
+    @Test
+    void shouldReturnNumberOfAllUncompletedTasks() {
+        String author = "alice";
+        when(taskRepositoryMock.countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author)).thenReturn(Mono.empty());
+
+        taskService.getUncompletedTaskCount(author).block();
+        verify(taskRepositoryMock, times(1)).countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author);
     }
 
     @Test

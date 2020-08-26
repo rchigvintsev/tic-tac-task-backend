@@ -34,6 +34,11 @@ public class TaskController {
         return taskService.getUnprocessedTasks(user.getName(), pageable);
     }
 
+    @GetMapping("/unprocessed/count")
+    public Mono<Long> getUnprocessedTaskCount(Principal user) {
+        return taskService.getUnprocessedTaskCount(user.getName());
+    }
+
     @GetMapping("/processed")
     public Flux<Task> getProcessedTasks(
             @RequestParam(name = "deadlineDateFrom", required = false) LocalDate deadlineDateFrom,
@@ -49,9 +54,28 @@ public class TaskController {
         return taskService.getProcessedTasks(deadlineDateFrom, deadlineDateTo, user.getName(), pageable);
     }
 
+    @GetMapping("/processed/count")
+    public Mono<Long> getProcessedTaskCount(
+            @RequestParam(name = "deadlineDateFrom", required = false) LocalDate deadlineDateFrom,
+            @RequestParam(name = "deadlineDateTo", required = false) LocalDate deadlineDateTo,
+            Principal user,
+            ServerHttpRequest request
+    ) {
+        MultiValueMap<String, String> queryParams = request.getQueryParams();
+        if (!queryParams.containsKey("deadlineDateFrom") && !queryParams.containsKey("deadlineDateTo")) {
+            return taskService.getProcessedTaskCount(user.getName());
+        }
+        return taskService.getProcessedTaskCount(deadlineDateFrom, deadlineDateTo, user.getName());
+    }
+
     @GetMapping("/uncompleted")
     public Flux<Task> getUncompletedTasks(Principal user, Pageable pageable) {
         return taskService.getUncompletedTasks(user.getName(), pageable);
+    }
+
+    @GetMapping("/uncompleted/count")
+    public Mono<Long> getUncompletedTaskCount(Principal user) {
+        return taskService.getUncompletedTaskCount(user.getName());
     }
 
     @GetMapping("/{id}")

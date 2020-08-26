@@ -73,6 +73,18 @@ class TaskControllerTest {
     }
 
     @Test
+    void shouldReturnNumberOfAllUnprocessedTasks() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+        when(taskService.getUnprocessedTaskCount(eq(authenticationMock.getName()))).thenReturn(Mono.just(1L));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/unprocessed/count").exchange()
+                .expectStatus().isOk()
+                .expectBody(Long.class).isEqualTo(1L);
+    }
+
+    @Test
     void shouldReturnAllProcessedTasks() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
@@ -89,6 +101,18 @@ class TaskControllerTest {
                 .uri("/tasks/processed").exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
+    }
+
+    @Test
+    void shouldReturnNumberOfAllProcessedTasks() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+        when(taskService.getProcessedTaskCount(eq(authenticationMock.getName()))).thenReturn(Mono.just(1L));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/processed/count").exchange()
+                .expectStatus().isOk()
+                .expectBody(Long.class).isEqualTo(1L);
     }
 
     @Test
@@ -109,6 +133,18 @@ class TaskControllerTest {
                 .uri("/tasks/processed?deadlineDateFrom=&deadlineDateTo=").exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
+    }
+
+    @Test
+    void shouldReturnNumberOfProcessedTasksWithoutDeadline() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+        when(taskService.getProcessedTaskCount(null, null, authenticationMock.getName())).thenReturn(Mono.just(1L));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/processed/count?deadlineDateFrom=&deadlineDateTo=").exchange()
+                .expectStatus().isOk()
+                .expectBody(Long.class).isEqualTo(1L);
     }
 
     @Test
@@ -142,6 +178,29 @@ class TaskControllerTest {
     }
 
     @Test
+    void shouldReturnNumberOfProcessedTasksWithDeadline() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        String deadlineDateFrom = "2020-01-01";
+        String deadlineDateTo = "2020-01-31";
+
+        when(taskService.getProcessedTaskCount(
+                LocalDate.parse(deadlineDateFrom, DateTimeFormatter.ISO_DATE),
+                LocalDate.parse(deadlineDateTo, DateTimeFormatter.ISO_DATE),
+                authenticationMock.getName()
+        )).thenReturn(Mono.just(1L));
+
+        String uri = "/tasks/processed/count"
+                + "?deadlineDateFrom=" + deadlineDateFrom + "&deadlineDateTo=" + deadlineDateTo;
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri(uri)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Long.class).isEqualTo(1L);
+    }
+
+    @Test
     void shouldReturnAllUncompletedTasks() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
@@ -153,6 +212,18 @@ class TaskControllerTest {
                 .uri("/tasks/uncompleted").exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
+    }
+
+    @Test
+    void shouldReturnNumberOfAllUncompletedTasks() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+        when(taskService.getUncompletedTaskCount(eq(authenticationMock.getName()))).thenReturn(Mono.just(1L));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/uncompleted/count").exchange()
+                .expectStatus().isOk()
+                .expectBody(Long.class).isEqualTo(1L);
     }
 
     @Test

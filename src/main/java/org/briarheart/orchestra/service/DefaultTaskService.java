@@ -24,15 +24,42 @@ public class DefaultTaskService implements TaskService {
     private final TaskRepository taskRepository;
 
     @Override
+    public Mono<Long> getUnprocessedTaskCount(String author) {
+        return taskRepository.countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
+    }
+
+    @Override
     public Flux<Task> getUnprocessedTasks(String author, Pageable pageable) {
         return taskRepository.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, getOffset(pageable),
                 getLimit(pageable));
     }
 
     @Override
+    public Mono<Long> getProcessedTaskCount(String author) {
+        return taskRepository.countAllByStatusAndAuthor(TaskStatus.PROCESSED, author);
+    }
+
+    @Override
     public Flux<Task> getProcessedTasks(String author, Pageable pageable) {
         return taskRepository.findByStatusAndAuthor(TaskStatus.PROCESSED, author, getOffset(pageable),
                 getLimit(pageable));
+    }
+
+    @Override
+    public Mono<Long> getProcessedTaskCount(LocalDate deadlineDateFrom, LocalDate deadlineDateTo, String author) {
+        if (deadlineDateFrom == null && deadlineDateTo == null) {
+            return taskRepository.countAllByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+        }
+        if (deadlineDateFrom == null) {
+            return taskRepository.countAllByDeadlineDateLessThanEqualAndStatusAndAuthor(deadlineDateTo,
+                    TaskStatus.PROCESSED, author);
+        }
+        if (deadlineDateTo == null) {
+            return taskRepository.countAllByDeadlineDateGreaterThanEqualAndStatusAndAuthor(deadlineDateFrom,
+                    TaskStatus.PROCESSED, author);
+        }
+        return taskRepository.countAllByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom, deadlineDateTo,
+                TaskStatus.PROCESSED, author);
     }
 
     @Override
@@ -56,6 +83,11 @@ public class DefaultTaskService implements TaskService {
         }
         return taskRepository.findByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom, deadlineDateTo,
                 TaskStatus.PROCESSED, author, getOffset(pageable), getLimit(pageable));
+    }
+
+    @Override
+    public Mono<Long> getUncompletedTaskCount(String author) {
+        return taskRepository.countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author);
     }
 
     @Override

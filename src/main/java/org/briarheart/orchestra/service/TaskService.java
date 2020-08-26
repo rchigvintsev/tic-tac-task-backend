@@ -16,6 +16,14 @@ import java.time.LocalDate;
  */
 public interface TaskService {
     /**
+     * Returns number of all unprocessed tasks belonging to the given author.
+     *
+     * @param author task author
+     * @return number of unprocessed tasks or empty stream when there is no task meeting the given criteria
+     */
+    Mono<Long> getUnprocessedTaskCount(String author);
+
+    /**
      * Returns all unprocessed tasks belonging to the given author.
      *
      * @param author task author
@@ -25,6 +33,14 @@ public interface TaskService {
     Flux<Task> getUnprocessedTasks(String author, Pageable pageable);
 
     /**
+     * Returns number of all processed tasks belonging to the given author.
+     *
+     * @param author task author
+     * @return number of processed tasks or empty stream when there is no task meeting the given criteria
+     */
+    Mono<Long> getProcessedTaskCount(String author);
+
+    /**
      * Returns all processed tasks belonging to the given author.
      *
      * @param author task author
@@ -32,6 +48,17 @@ public interface TaskService {
      * @return processed tasks or empty stream when there is no task meeting the given criteria
      */
     Flux<Task> getProcessedTasks(String author, Pageable pageable);
+
+    /**
+     * Returns number of processed tasks optionally falling within the given deadline bounds and belonging to the given
+     * author. If deadline bounds are not specified this method returns number of processed tasks without deadline.
+     *
+     * @param deadlineDateFrom optional deadline from bound
+     * @param deadlineDateTo optional deadline to bound
+     * @param author task author
+     * @return number of processed tasks or empty stream when there is no task meeting the given criteria
+     */
+    Mono<Long> getProcessedTaskCount(LocalDate deadlineDateFrom, LocalDate deadlineDateTo, String author);
 
     /**
      * Returns processed tasks optionally falling within the given deadline bounds and belonging to the given author.
@@ -49,6 +76,14 @@ public interface TaskService {
             String author,
             Pageable pageable
     );
+
+    /**
+     * Returns number of all uncompleted tasks (either unprocessed or processed) belonging to the given author.
+     *
+     * @param author task author
+     * @return number of uncompleted tasks or empty stream when there is no task meeting the given criteria
+     */
+    Mono<Long> getUncompletedTaskCount(String author);
 
     /**
      * Returns all uncompleted tasks (either unprocessed or processed) belonging to the given author.
