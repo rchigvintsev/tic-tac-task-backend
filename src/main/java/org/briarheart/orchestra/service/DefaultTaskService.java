@@ -5,6 +5,7 @@ import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
+import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -30,8 +31,8 @@ public class DefaultTaskService implements TaskService {
 
     @Override
     public Flux<Task> getUnprocessedTasks(String author, Pageable pageable) {
-        return taskRepository.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, getOffset(pageable),
-                getLimit(pageable));
+        return taskRepository.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, Pageables.getOffset(pageable),
+                Pageables.getLimit(pageable));
     }
 
     @Override
@@ -41,8 +42,8 @@ public class DefaultTaskService implements TaskService {
 
     @Override
     public Flux<Task> getProcessedTasks(String author, Pageable pageable) {
-        return taskRepository.findByStatusAndAuthor(TaskStatus.PROCESSED, author, getOffset(pageable),
-                getLimit(pageable));
+        return taskRepository.findByStatusAndAuthor(TaskStatus.PROCESSED, author, Pageables.getOffset(pageable),
+                Pageables.getLimit(pageable));
     }
 
     @Override
@@ -71,18 +72,18 @@ public class DefaultTaskService implements TaskService {
     ) {
         if (deadlineDateFrom == null && deadlineDateTo == null) {
             return taskRepository.findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author,
-                    getOffset(pageable), getLimit(pageable));
+                    Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
         if (deadlineDateFrom == null) {
             return taskRepository.findByDeadlineDateLessThanEqualAndStatusAndAuthor(deadlineDateTo,
-                    TaskStatus.PROCESSED, author, getOffset(pageable), getLimit(pageable));
+                    TaskStatus.PROCESSED, author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
         if (deadlineDateTo == null) {
             return taskRepository.findByDeadlineDateGreaterThanEqualAndStatusAndAuthor(deadlineDateFrom,
-                    TaskStatus.PROCESSED, author, getOffset(pageable), getLimit(pageable));
+                    TaskStatus.PROCESSED, author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
         return taskRepository.findByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom, deadlineDateTo,
-                TaskStatus.PROCESSED, author, getOffset(pageable), getLimit(pageable));
+                TaskStatus.PROCESSED, author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
     @Override
@@ -92,8 +93,8 @@ public class DefaultTaskService implements TaskService {
 
     @Override
     public Flux<Task> getUncompletedTasks(String author, Pageable pageable) {
-        return taskRepository.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, getOffset(pageable),
-                getLimit(pageable));
+        return taskRepository.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, Pageables.getOffset(pageable),
+                Pageables.getLimit(pageable));
     }
 
     @Override
@@ -138,13 +139,5 @@ public class DefaultTaskService implements TaskService {
             task.setStatus(TaskStatus.COMPLETED);
             return taskRepository.save(task);
         }).then();
-    }
-
-    private long getOffset(Pageable pageable) {
-        return pageable != null && pageable.isPaged() ? pageable.getOffset() : 0L;
-    }
-
-    private Integer getLimit(Pageable pageable) {
-        return pageable != null && pageable.isPaged() ? pageable.getPageSize() : null;
     }
 }

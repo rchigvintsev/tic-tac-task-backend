@@ -5,6 +5,7 @@ import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskCommentRepository;
 import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.TaskComment;
+import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -30,8 +31,8 @@ public class DefaultTaskCommentService implements TaskCommentService {
         return taskRepository.findByIdAndAuthor(taskId, taskAuthor)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + taskId + " is not found")))
                 .flatMapMany(task -> {
-                    long offset = getOffset(pageable);
-                    Integer limit = getLimit(pageable);
+                    long offset = Pageables.getOffset(pageable);
+                    Integer limit = Pageables.getLimit(pageable);
                     return taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(taskId, offset, limit);
                 });
     }
@@ -68,13 +69,5 @@ public class DefaultTaskCommentService implements TaskCommentService {
     @Override
     public Mono<Void> deleteComment(Long id, String author) {
         return taskCommentRepository.deleteByIdAndAuthor(id, author);
-    }
-
-    private long getOffset(Pageable pageable) {
-        return pageable != null && pageable.isPaged() ? pageable.getOffset() : 0L;
-    }
-
-    private Integer getLimit(Pageable pageable) {
-        return pageable != null && pageable.isPaged() ? pageable.getPageSize() : null;
     }
 }
