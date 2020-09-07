@@ -269,12 +269,13 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnTaskTags() {
-        final long TASK_ID = 1L;
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 
         Tag tag = Tag.builder().id(3L).name("Test tag").author("alice").build();
-        when(tagRepositoryMock.findForTaskId(TASK_ID)).thenReturn(Flux.just(tag));
+        when(tagRepositoryMock.findForTaskId(task.getId())).thenReturn(Flux.just(tag));
 
-        Tag result = taskService.getTaskTags(TASK_ID, tag.getAuthor()).blockFirst();
+        Tag result = taskService.getTaskTags(task.getId(), tag.getAuthor()).blockFirst();
         assertNotNull(result);
         assertEquals(tag, result);
     }
