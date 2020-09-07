@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.service.TaskService;
 import org.springframework.data.domain.Pageable;
@@ -81,6 +82,11 @@ public class TaskController {
     @GetMapping("/{id}")
     public Mono<Task> getTask(@PathVariable("id") Long id, Principal user) {
         return taskService.getTask(id, user.getName());
+    }
+
+    @GetMapping("/{id}/tags")
+    public Flux<Tag> getTaskTags(@PathVariable("id") Long id, Principal user) {
+        return taskService.getTaskTags(id, user.getName());
     }
 
     @PostMapping

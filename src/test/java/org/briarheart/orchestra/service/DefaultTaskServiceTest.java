@@ -1,7 +1,9 @@
 package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.data.TagRepository;
 import org.briarheart.orchestra.data.TaskRepository;
+import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,14 +25,15 @@ import static org.mockito.Mockito.*;
  */
 class DefaultTaskServiceTest {
     private TaskRepository taskRepositoryMock;
+    private TagRepository tagRepositoryMock;
     private DefaultTaskService taskService;
 
     @BeforeEach
     void setUp() {
         taskRepositoryMock = mock(TaskRepository.class);
         when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
-
-        taskService = new DefaultTaskService(taskRepositoryMock);
+        tagRepositoryMock = mock(TagRepository.class);
+        taskService = new DefaultTaskService(taskRepositoryMock, tagRepositoryMock);
     }
 
     @Test
@@ -265,9 +268,27 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldReturnTaskTags() {
+        final long TASK_ID = 1L;
+
+        Tag tag = Tag.builder().id(3L).name("Test tag").author("alice").build();
+        when(tagRepositoryMock.findForTaskId(TASK_ID)).thenReturn(Flux.just(tag));
+
+        Tag result = taskService.getTaskTags(TASK_ID, tag.getAuthor()).blockFirst();
+        assertNotNull(result);
+        assertEquals(tag, result);
+    }
+
+    @Test
     void shouldThrowExceptionOnTaskGetWhenTaskIsNotFound() {
         when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class, () -> taskService.getTask(1L, "alice").block());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskTagsGetWhenTaskIsNotFound() {
+        when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.getTaskTags(1L, "alice").blockFirst());
     }
 
     @Test

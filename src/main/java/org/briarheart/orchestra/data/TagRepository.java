@@ -11,4 +11,7 @@ import reactor.core.publisher.Flux;
 public interface TagRepository extends ReactiveCrudRepository<Tag, Long> {
     @Query("SELECT * FROM tag WHERE author = :author OFFSET :offset LIMIT :limit")
     Flux<Tag> findByAuthor(String author, long offset, Integer limit);
+
+    @Query("SELECT * FROM tag WHERE id IN (SELECT tag_id from tasks_tags WHERE task_id = :taskId)")
+    Flux<Tag> findForTaskId(Long taskId);
 }

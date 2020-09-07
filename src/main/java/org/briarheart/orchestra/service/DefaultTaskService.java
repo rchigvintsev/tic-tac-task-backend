@@ -1,11 +1,13 @@
 package org.briarheart.orchestra.service;
 
-import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.data.TagRepository;
 import org.briarheart.orchestra.data.TaskRepository;
+import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
 import org.briarheart.orchestra.util.Pageables;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -20,9 +22,15 @@ import java.time.LocalDate;
  * @author Roman Chigvintsev
  */
 @Service
-@RequiredArgsConstructor
 public class DefaultTaskService implements TaskService {
     private final TaskRepository taskRepository;
+    private final TagRepository tagRepository;
+
+    @Autowired
+    public DefaultTaskService(TaskRepository taskRepository, TagRepository tagRepository) {
+        this.taskRepository = taskRepository;
+        this.tagRepository = tagRepository;
+    }
 
     @Override
     public Mono<Long> getUnprocessedTaskCount(String author) {
@@ -101,6 +109,11 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> getTask(Long id, String author) throws EntityNotFoundException {
         return taskRepository.findByIdAndAuthor(id, author)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")));
+    }
+
+    @Override
+    public Flux<Tag> getTaskTags(Long taskId, String author) throws EntityNotFoundException {
+        return getTask(taskId, author).flatMapMany(t -> tagRepository.findForTaskId(taskId));
     }
 
     @Override
