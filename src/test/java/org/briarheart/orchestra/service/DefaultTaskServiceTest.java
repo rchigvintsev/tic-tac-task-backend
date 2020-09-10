@@ -3,6 +3,7 @@ package org.briarheart.orchestra.service;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TagRepository;
 import org.briarheart.orchestra.data.TaskRepository;
+import org.briarheart.orchestra.data.TaskTagRelationRepository;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
@@ -33,7 +34,8 @@ class DefaultTaskServiceTest {
         taskRepositoryMock = mock(TaskRepository.class);
         when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
         tagRepositoryMock = mock(TagRepository.class);
-        taskService = new DefaultTaskService(taskRepositoryMock, tagRepositoryMock);
+        TaskTagRelationRepository taskTagRelationRepository = mock(TaskTagRelationRepository.class);
+        taskService = new DefaultTaskService(taskRepositoryMock, tagRepositoryMock, taskTagRelationRepository);
     }
 
     @Test

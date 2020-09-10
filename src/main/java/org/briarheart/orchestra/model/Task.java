@@ -8,6 +8,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Main entity representing task to be done.
@@ -30,6 +33,8 @@ public class Task {
 
     @Builder.Default
     private TaskStatus status = TaskStatus.UNPROCESSED;
+    @Builder.Default
+    private List<Tag> tags = Collections.emptyList();
 
     private String author;
     private LocalDate deadlineDate;
@@ -48,6 +53,7 @@ public class Task {
         copy.setAuthor(author);
         copy.setDeadlineDate(deadlineDate);
         copy.setDeadlineTime(deadlineTime);
+        copy.setTags(this.tags.isEmpty() ? Collections.emptyList() : new ArrayList<>(this.tags));
         return copy;
     }
 }

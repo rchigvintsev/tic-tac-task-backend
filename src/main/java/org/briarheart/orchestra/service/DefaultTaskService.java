@@ -3,9 +3,11 @@ package org.briarheart.orchestra.service;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TagRepository;
 import org.briarheart.orchestra.data.TaskRepository;
+import org.briarheart.orchestra.data.TaskTagRelationRepository;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
+import org.briarheart.orchestra.model.TaskTagRelation;
 import org.briarheart.orchestra.util.Pageables;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -25,11 +27,15 @@ import java.time.LocalDate;
 public class DefaultTaskService implements TaskService {
     private final TaskRepository taskRepository;
     private final TagRepository tagRepository;
+    private final TaskTagRelationRepository taskTagRelationRepository;
 
     @Autowired
-    public DefaultTaskService(TaskRepository taskRepository, TagRepository tagRepository) {
+    public DefaultTaskService(TaskRepository taskRepository,
+                              TagRepository tagRepository,
+                              TaskTagRelationRepository taskTagRelationRepository) {
         this.taskRepository = taskRepository;
         this.tagRepository = tagRepository;
+        this.taskTagRelationRepository = taskTagRelationRepository;
     }
 
     @Override
@@ -133,17 +139,19 @@ public class DefaultTaskService implements TaskService {
     @Override
     public Mono<Task> updateTask(Task task, Long id, String author) throws EntityNotFoundException {
         Assert.notNull(task, "Task must not be null");
-        return getTask(id, author).flatMap(t -> {
-            task.setId(id);
-            task.setAuthor(author);
-            if (task.getStatus() == null) {
-                task.setStatus(t.getStatus());
-            }
-            if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadlineDate() != null) {
-                task.setStatus(TaskStatus.PROCESSED);
-            }
-            return taskRepository.save(task);
-        });
+        return getTask(id, author).flatMap(t -> Flux.fromIterable(task.getTags())
+                .flatMap(tag -> createTaskTagRelation(t, tag))
+                .then(Mono.defer(() -> {
+                    task.setId(id);
+                    task.setAuthor(author);
+                    if (task.getStatus() == null) {
+                        task.setStatus(t.getStatus());
+                    }
+                    if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadlineDate() != null) {
+                        task.setStatus(TaskStatus.PROCESSED);
+                    }
+                    return taskRepository.save(task);
+                })));
     }
 
     @Override
@@ -152,5 +160,21 @@ public class DefaultTaskService implements TaskService {
             task.setStatus(TaskStatus.COMPLETED);
             return taskRepository.save(task);
         }).then();
+    }
+
+    private Mono<TaskTagRelation> createTaskTagRelation(Task task, Tag tag) {
+        tag.setAuthor(task.getAuthor());
+        Mono<Tag> tagMono;
+        if (tag.getId() != null) {
+            tagMono = tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor());
+        } else {
+            tagMono = tagRepository.findByNameAndAuthor(tag.getName(), tag.getAuthor())
+                    .switchIfEmpty(Mono.defer(() -> tagRepository.save(tag)));
+        }
+        return tagMono
+                .flatMap(savedTag
+                        -> taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), savedTag.getId()))
+                .switchIfEmpty(Mono.defer(()
+                        -> taskTagRelationRepository.create(task.getId(), tag.getId()).then(Mono.empty())));
     }
 }
