@@ -3,6 +3,7 @@ package org.briarheart.orchestra.model;
 import lombok.*;
 import org.briarheart.orchestra.model.validation.constraints.NotPast;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -33,7 +34,9 @@ public class Task {
 
     @Builder.Default
     private TaskStatus status = TaskStatus.UNPROCESSED;
+
     @Builder.Default
+    @Transient
     private List<Tag> tags = Collections.emptyList();
 
     private String author;

@@ -9,6 +9,8 @@ import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
 import org.briarheart.orchestra.model.TaskTagRelation;
 import org.briarheart.orchestra.util.Pageables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ import java.time.LocalDate;
  */
 @Service
 public class DefaultTaskService implements TaskService {
+    private static final Logger log = LoggerFactory.getLogger(DefaultTaskService.class);
+
     private final TaskRepository taskRepository;
     private final TagRepository tagRepository;
     private final TaskTagRelationRepository taskTagRelationRepository;
@@ -140,7 +144,8 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> updateTask(Task task, Long id, String author) throws EntityNotFoundException {
         Assert.notNull(task, "Task must not be null");
         return getTask(id, author).flatMap(t -> Flux.fromIterable(task.getTags())
-                .flatMap(tag -> createTaskTagRelation(t, tag))
+                .flatMap(tag -> assignTag(tag, t))
+                .onErrorContinue((throwable, value) -> log.error("Failed to assign tag", throwable))
                 .then(Mono.defer(() -> {
                     task.setId(id);
                     task.setAuthor(author);
@@ -162,19 +167,20 @@ public class DefaultTaskService implements TaskService {
         }).then();
     }
 
-    private Mono<TaskTagRelation> createTaskTagRelation(Task task, Tag tag) {
+    private Mono<TaskTagRelation> assignTag(Tag tag, Task task) {
         tag.setAuthor(task.getAuthor());
         Mono<Tag> tagMono;
         if (tag.getId() != null) {
-            tagMono = tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor());
+            String errorMessage = "Tag with id " + tag.getId() + " is not found";
+            tagMono = tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())
+                    .switchIfEmpty(Mono.error(new EntityNotFoundException(errorMessage)));
         } else {
             tagMono = tagRepository.findByNameAndAuthor(tag.getName(), tag.getAuthor())
                     .switchIfEmpty(Mono.defer(() -> tagRepository.save(tag)));
         }
         return tagMono
-                .flatMap(savedTag
-                        -> taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), savedTag.getId()))
-                .switchIfEmpty(Mono.defer(()
-                        -> taskTagRelationRepository.create(task.getId(), tag.getId()).then(Mono.empty())));
+                .flatMap(savedTag -> taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), savedTag.getId()))
+                .switchIfEmpty(Mono.defer(() -> taskTagRelationRepository.create(task.getId(), tag.getId())
+                        .then(Mono.empty())));
     }
 }

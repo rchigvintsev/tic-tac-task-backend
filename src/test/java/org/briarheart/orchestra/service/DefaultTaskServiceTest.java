@@ -7,6 +7,7 @@ import org.briarheart.orchestra.data.TaskTagRelationRepository;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
+import org.briarheart.orchestra.model.TaskTagRelation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +17,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -27,14 +30,20 @@ import static org.mockito.Mockito.*;
 class DefaultTaskServiceTest {
     private TaskRepository taskRepositoryMock;
     private TagRepository tagRepositoryMock;
+    private TaskTagRelationRepository taskTagRelationRepository;
+
     private DefaultTaskService taskService;
 
     @BeforeEach
     void setUp() {
         taskRepositoryMock = mock(TaskRepository.class);
         when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
+
         tagRepositoryMock = mock(TagRepository.class);
-        TaskTagRelationRepository taskTagRelationRepository = mock(TaskTagRelationRepository.class);
+
+        taskTagRelationRepository = mock(TaskTagRelationRepository.class);
+        when(taskTagRelationRepository.create(any(), any())).thenReturn(Mono.empty().then());
+
         taskService = new DefaultTaskService(taskRepositoryMock, tagRepositoryMock, taskTagRelationRepository);
     }
 
@@ -390,6 +399,72 @@ class DefaultTaskServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> taskService.updateTask(null, null, null));
         assertEquals("Task must not be null", exception.getMessage());
+    }
+
+    @Test
+    void shouldAssignNewTagOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Tag newTag = Tag.builder().name("Test tag").build();
+        task.setTags(Collections.singletonList(newTag));
+
+        final long TAG_ID = 2L;
+        when(tagRepositoryMock.findByNameAndAuthor(newTag.getName(), task.getAuthor())).thenReturn(Mono.empty());
+        when(tagRepositoryMock.save(newTag)).thenAnswer(invocation -> {
+            Tag tagToSave = invocation.getArgument(0);
+            tagToSave.setId(TAG_ID);
+            return Mono.just(tagToSave);
+        });
+
+        when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), TAG_ID)).thenReturn(Mono.empty());
+        when(taskTagRelationRepository.create(task.getId(), TAG_ID)).thenReturn(Mono.empty().then());
+
+        Task result = taskService.updateTask(task, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        verify(taskTagRelationRepository, times(1)).create(task.getId(), TAG_ID);
+    }
+
+    @Test
+    void shouldIgnoreAlreadyAssignedTagsOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Tag redTag = Tag.builder().id(2L).name("Red").build();
+        Tag greenTag = Tag.builder().id(3L).name("Green").build();
+        task.setTags(List.of(redTag, greenTag));
+
+        when(tagRepositoryMock.findByIdAndAuthor(redTag.getId(), task.getAuthor())).thenReturn(Mono.just(redTag));
+        when(tagRepositoryMock.findByIdAndAuthor(greenTag.getId(), task.getAuthor())).thenReturn(Mono.just(greenTag));
+
+        when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), redTag.getId()))
+                .thenReturn(Mono.just(new TaskTagRelation(task.getId(), redTag.getId())));
+        when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), greenTag.getId())).thenReturn(Mono.empty());
+
+        Task result = taskService.updateTask(task, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        verify(taskTagRelationRepository, never()).create(task.getId(), redTag.getId());
+        verify(taskTagRelationRepository, times(1)).create(task.getId(), greenTag.getId());
+    }
+
+    @Test
+    void shouldIgnoreNotFoundTagsOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Tag redTag = Tag.builder().id(2L).name("Red").build();
+        Tag greenTag = Tag.builder().id(3L).name("Green").build();
+        task.setTags(List.of(redTag, greenTag));
+
+        when(tagRepositoryMock.findByIdAndAuthor(redTag.getId(), task.getAuthor())).thenReturn(Mono.empty());
+        when(tagRepositoryMock.findByIdAndAuthor(greenTag.getId(), task.getAuthor())).thenReturn(Mono.just(greenTag));
+
+        when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), greenTag.getId())).thenReturn(Mono.empty());
+
+        Task result = taskService.updateTask(task, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        verify(taskTagRelationRepository, never()).create(task.getId(), redTag.getId());
+        verify(taskTagRelationRepository, times(1)).create(task.getId(), greenTag.getId());
     }
 
     @Test

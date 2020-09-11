@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
+ * Many-to-many relation between {@link Task} and {@link Tag}.
+ *
  * @author Roman Chigvintsev
  */
 @Data
