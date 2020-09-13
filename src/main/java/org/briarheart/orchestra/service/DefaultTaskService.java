@@ -19,6 +19,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link TaskService}.
@@ -118,12 +120,11 @@ public class DefaultTaskService implements TaskService {
     @Override
     public Mono<Task> getTask(Long id, String author) throws EntityNotFoundException {
         return taskRepository.findByIdAndAuthor(id, author)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")));
-    }
-
-    @Override
-    public Flux<Tag> getTaskTags(Long taskId, String author) throws EntityNotFoundException {
-        return getTask(taskId, author).flatMapMany(t -> tagRepository.findForTaskId(taskId));
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")))
+                .flatMap(task -> getTags(task).map(tags -> {
+                    task.setTags(tags);
+                    return task;
+                }));
     }
 
     @Override
@@ -143,20 +144,15 @@ public class DefaultTaskService implements TaskService {
     @Override
     public Mono<Task> updateTask(Task task, Long id, String author) throws EntityNotFoundException {
         Assert.notNull(task, "Task must not be null");
-        return getTask(id, author).flatMap(t -> Flux.fromIterable(task.getTags())
-                .flatMap(tag -> assignTag(tag, t))
-                .onErrorContinue((throwable, value) -> log.error("Failed to assign tag", throwable))
-                .then(Mono.defer(() -> {
-                    task.setId(id);
-                    task.setAuthor(author);
-                    if (task.getStatus() == null) {
-                        task.setStatus(t.getStatus());
-                    }
-                    if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadlineDate() != null) {
-                        task.setStatus(TaskStatus.PROCESSED);
-                    }
-                    return taskRepository.save(task);
-                })));
+        return getTask(id, author).flatMap(savedTask -> {
+            List<Tag> tagsToRemove = findTagsToRemove(savedTask, task);
+            return Flux.fromIterable(tagsToRemove)
+                    .flatMap(tag -> removeTag(tag, savedTask))
+                    .then(Flux.fromIterable(task.getTags())
+                            .flatMap(tag -> assignTag(tag, savedTask))
+                            .onErrorContinue((throwable, value) -> log.error("Failed to assign tag", throwable))
+                            .then(Mono.defer(() -> updateTask(savedTask, task))));
+        });
     }
 
     @Override
@@ -165,6 +161,23 @@ public class DefaultTaskService implements TaskService {
             task.setStatus(TaskStatus.COMPLETED);
             return taskRepository.save(task);
         }).then();
+    }
+
+    private Mono<List<Tag>> getTags(Task task) {
+        return taskTagRelationRepository.findByTaskId(task.getId())
+                .flatMap(taskTagRelation -> tagRepository.findById(taskTagRelation.getTagId()))
+                .collectList();
+    }
+
+    private List<Tag> findTagsToRemove(Task oldTask, Task newTask) {
+        return oldTask.getTags().stream()
+                .filter(oldTag -> newTask.getTags().stream()
+                        .noneMatch(newTag -> oldTag.getId().equals(newTag.getId())))
+                .collect(Collectors.toList());
+    }
+
+    private Mono<Void> removeTag(Tag tag, Task task) {
+        return taskTagRelationRepository.delete(task.getId(), tag.getId());
     }
 
     private Mono<TaskTagRelation> assignTag(Tag tag, Task task) {
@@ -182,5 +195,17 @@ public class DefaultTaskService implements TaskService {
                 .flatMap(savedTag -> taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), savedTag.getId()))
                 .switchIfEmpty(Mono.defer(() -> taskTagRelationRepository.create(task.getId(), tag.getId())
                         .then(Mono.empty())));
+    }
+
+    private Mono<Task> updateTask(Task oldTask, Task newTask) {
+        newTask.setId(oldTask.getId());
+        newTask.setAuthor(oldTask.getAuthor());
+        if (newTask.getStatus() == null) {
+            newTask.setStatus(oldTask.getStatus());
+        }
+        if (newTask.getStatus() == TaskStatus.UNPROCESSED && newTask.getDeadlineDate() != null) {
+            newTask.setStatus(TaskStatus.PROCESSED);
+        }
+        return taskRepository.save(newTask);
     }
 }

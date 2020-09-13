@@ -1,7 +1,6 @@
 package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
-import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
@@ -104,16 +103,6 @@ public interface TaskService {
      * @throws EntityNotFoundException if task is not found by id and author
      */
     Mono<Task> getTask(Long id, String author) throws EntityNotFoundException;
-
-    /**
-     * Returns tags for task with the given id and belonging to the given author.
-     *
-     * @param taskId task id
-     * @param author task author
-     * @return requested tags
-     * @throws EntityNotFoundException if task is not found by id and author
-     */
-    Flux<Tag> getTaskTags(Long taskId, String author) throws EntityNotFoundException;
 
     /**
      * Creates new task belonging to the given author.

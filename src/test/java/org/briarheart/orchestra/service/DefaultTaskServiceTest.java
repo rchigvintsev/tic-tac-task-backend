@@ -17,7 +17,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,6 +42,7 @@ class DefaultTaskServiceTest {
 
         taskTagRelationRepository = mock(TaskTagRelationRepository.class);
         when(taskTagRelationRepository.create(any(), any())).thenReturn(Mono.empty().then());
+        when(taskTagRelationRepository.findByTaskId(any())).thenReturn(Flux.empty());
 
         taskService = new DefaultTaskService(taskRepositoryMock, tagRepositoryMock, taskTagRelationRepository);
     }
@@ -279,28 +279,24 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldReturnTaskTags() {
+    void shouldReturnTaskTagsOnTaskGetById() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        Tag tag = Tag.builder().id(2L).name("Test tag").author(task.getAuthor()).build();
+
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskTagRelationRepository.findByTaskId(task.getId()))
+                .thenReturn(Flux.just(new TaskTagRelation(task.getId(), tag.getId())));
+        when(tagRepositoryMock.findById(tag.getId())).thenReturn(Mono.just(tag));
 
-        Tag tag = Tag.builder().id(3L).name("Test tag").author("alice").build();
-        when(tagRepositoryMock.findForTaskId(task.getId())).thenReturn(Flux.just(tag));
-
-        Tag result = taskService.getTaskTags(task.getId(), tag.getAuthor()).blockFirst();
+        Task result = taskService.getTask(task.getId(), task.getAuthor()).block();
         assertNotNull(result);
-        assertEquals(tag, result);
+        assertEquals(List.of(tag), result.getTags());
     }
 
     @Test
     void shouldThrowExceptionOnTaskGetWhenTaskIsNotFound() {
         when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class, () -> taskService.getTask(1L, "alice").block());
-    }
-
-    @Test
-    void shouldThrowExceptionOnTaskTagsGetWhenTaskIsNotFound() {
-        when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.getTaskTags(1L, "alice").blockFirst());
     }
 
     @Test
@@ -404,10 +400,12 @@ class DefaultTaskServiceTest {
     @Test
     void shouldAssignNewTagOnTaskUpdate() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        Task savedTask = task.copy();
+        savedTask.setId(1L);
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(savedTask));
 
         Tag newTag = Tag.builder().name("Test tag").build();
-        task.setTags(Collections.singletonList(newTag));
+        task.setTags(List.of(newTag));
 
         final long TAG_ID = 2L;
         when(tagRepositoryMock.findByNameAndAuthor(newTag.getName(), task.getAuthor())).thenReturn(Mono.empty());
@@ -428,43 +426,54 @@ class DefaultTaskServiceTest {
     @Test
     void shouldIgnoreAlreadyAssignedTagsOnTaskUpdate() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        Task savedTask = task.copy();
+        savedTask.setId(1L);
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(savedTask));
 
-        Tag redTag = Tag.builder().id(2L).name("Red").build();
-        Tag greenTag = Tag.builder().id(3L).name("Green").build();
-        task.setTags(List.of(redTag, greenTag));
+        Tag tag = Tag.builder().id(2L).name("Test tag").build();
+        task.setTags(List.of(tag));
 
-        when(tagRepositoryMock.findByIdAndAuthor(redTag.getId(), task.getAuthor())).thenReturn(Mono.just(redTag));
-        when(tagRepositoryMock.findByIdAndAuthor(greenTag.getId(), task.getAuthor())).thenReturn(Mono.just(greenTag));
-
-        when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), redTag.getId()))
-                .thenReturn(Mono.just(new TaskTagRelation(task.getId(), redTag.getId())));
-        when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), greenTag.getId())).thenReturn(Mono.empty());
+        when(tagRepositoryMock.findByIdAndAuthor(tag.getId(), task.getAuthor())).thenReturn(Mono.just(tag));
+        when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), tag.getId()))
+                .thenReturn(Mono.just(new TaskTagRelation(task.getId(), tag.getId())));
 
         Task result = taskService.updateTask(task, task.getId(), task.getAuthor()).block();
         assertNotNull(result);
-        verify(taskTagRelationRepository, never()).create(task.getId(), redTag.getId());
-        verify(taskTagRelationRepository, times(1)).create(task.getId(), greenTag.getId());
+        verify(taskTagRelationRepository, never()).create(task.getId(), tag.getId());
     }
 
     @Test
     void shouldIgnoreNotFoundTagsOnTaskUpdate() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        Task savedTask = task.copy();
+        savedTask.setId(1L);
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(savedTask));
 
-        Tag redTag = Tag.builder().id(2L).name("Red").build();
-        Tag greenTag = Tag.builder().id(3L).name("Green").build();
-        task.setTags(List.of(redTag, greenTag));
-
-        when(tagRepositoryMock.findByIdAndAuthor(redTag.getId(), task.getAuthor())).thenReturn(Mono.empty());
-        when(tagRepositoryMock.findByIdAndAuthor(greenTag.getId(), task.getAuthor())).thenReturn(Mono.just(greenTag));
-
-        when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), greenTag.getId())).thenReturn(Mono.empty());
+        Tag tag = Tag.builder().id(2L).name("Test tag").build();
+        task.setTags(List.of(tag));
+        when(tagRepositoryMock.findByIdAndAuthor(tag.getId(), task.getAuthor())).thenReturn(Mono.empty());
 
         Task result = taskService.updateTask(task, task.getId(), task.getAuthor()).block();
         assertNotNull(result);
-        verify(taskTagRelationRepository, never()).create(task.getId(), redTag.getId());
-        verify(taskTagRelationRepository, times(1)).create(task.getId(), greenTag.getId());
+        verify(taskTagRelationRepository, never()).create(task.getId(), tag.getId());
+    }
+
+    @Test
+    void shouldRemoveTagsOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        Tag tag = Tag.builder().id(2L).name("Test tag").build();
+
+        Task savedTask = task.copy();
+        savedTask.setId(1L);
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(savedTask));
+        when(tagRepositoryMock.findById(tag.getId())).thenReturn(Mono.just(tag));
+        when(taskTagRelationRepository.findByTaskId(task.getId()))
+                .thenReturn(Flux.just(new TaskTagRelation(task.getId(), tag.getId())));
+        when(taskTagRelationRepository.delete(task.getId(), tag.getId())).thenReturn(Mono.empty().then());
+
+        Task result = taskService.updateTask(task, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        verify(taskTagRelationRepository, times(1)).delete(task.getId(), tag.getId());
     }
 
     @Test

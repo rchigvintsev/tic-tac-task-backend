@@ -2,7 +2,6 @@ package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.data.EntityNotFoundException;
-import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
 import org.briarheart.orchestra.service.TaskService;
@@ -242,22 +241,6 @@ class TaskControllerTest {
     }
 
     @Test
-    void shouldReturnTaskTags() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        final long TASK_ID = 1L;
-
-        Tag tag = Tag.builder().id(2L).name("Test tag").author(authenticationMock.getName()).build();
-        when(taskService.getTaskTags(TASK_ID, authenticationMock.getName())).thenReturn(Flux.just(tag));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/" + TASK_ID + "/tags").exchange()
-                .expectStatus().isOk()
-                .expectBody(Tag[].class).isEqualTo(new Tag[] {tag});
-    }
-
-    @Test
     void shouldReturnNotFoundStatusCodeWhenTaskIsNotFoundById() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
@@ -272,25 +255,6 @@ class TaskControllerTest {
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/1").exchange()
-                .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
-    }
-
-    @Test
-    void shouldReturnNotFoundStatusCodeOnTaskTagsGetWhenTaskIsNotFoundById() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        String errorMessage = "Task is not found";
-
-        when(taskService.getTaskTags(anyLong(), anyString()))
-                .thenReturn(Flux.error(new EntityNotFoundException(errorMessage)));
-
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setErrors(List.of(errorMessage));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/1/tags").exchange()
                 .expectStatus().isNotFound()
                 .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
     }
