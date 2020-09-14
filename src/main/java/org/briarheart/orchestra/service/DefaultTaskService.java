@@ -149,8 +149,10 @@ public class DefaultTaskService implements TaskService {
             return Flux.fromIterable(tagsToRemove)
                     .flatMap(tag -> removeTag(tag, savedTask))
                     .then(Flux.fromIterable(task.getTags())
-                            .flatMap(tag -> assignTag(tag, savedTask))
-                            .onErrorContinue((throwable, value) -> log.error("Failed to assign tag", throwable))
+                            .flatMap(tag -> assignTag(tag, savedTask).onErrorResume(e -> {
+                                log.error("Failed to assign tag", e);
+                                return Mono.empty();
+                            }))
                             .then(Mono.defer(() -> updateTask(savedTask, task))));
         });
     }
