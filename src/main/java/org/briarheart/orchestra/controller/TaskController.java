@@ -41,31 +41,31 @@ public class TaskController {
 
     @GetMapping("/processed")
     public Flux<Task> getProcessedTasks(
-            @RequestParam(name = "deadlineDateFrom", required = false) LocalDate deadlineDateFrom,
-            @RequestParam(name = "deadlineDateTo", required = false) LocalDate deadlineDateTo,
+            @RequestParam(name = "deadlineFrom", required = false) LocalDate deadlineFrom,
+            @RequestParam(name = "deadlineTo", required = false) LocalDate deadlineTo,
             Principal user,
             ServerHttpRequest request,
             Pageable pageable
     ) {
         MultiValueMap<String, String> queryParams = request.getQueryParams();
-        if (!queryParams.containsKey("deadlineDateFrom") && !queryParams.containsKey("deadlineDateTo")) {
+        if (!queryParams.containsKey("deadlineFrom") && !queryParams.containsKey("deadlineTo")) {
             return taskService.getProcessedTasks(user.getName(), pageable);
         }
-        return taskService.getProcessedTasks(deadlineDateFrom, deadlineDateTo, user.getName(), pageable);
+        return taskService.getProcessedTasks(deadlineFrom, deadlineTo, user.getName(), pageable);
     }
 
     @GetMapping("/processed/count")
     public Mono<Long> getProcessedTaskCount(
-            @RequestParam(name = "deadlineDateFrom", required = false) LocalDate deadlineDateFrom,
-            @RequestParam(name = "deadlineDateTo", required = false) LocalDate deadlineDateTo,
+            @RequestParam(name = "deadlineFrom", required = false) LocalDate deadlineFrom,
+            @RequestParam(name = "deadlineTo", required = false) LocalDate deadlineTo,
             Principal user,
             ServerHttpRequest request
     ) {
         MultiValueMap<String, String> queryParams = request.getQueryParams();
-        if (!queryParams.containsKey("deadlineDateFrom") && !queryParams.containsKey("deadlineDateTo")) {
+        if (!queryParams.containsKey("deadlineFrom") && !queryParams.containsKey("deadlineTo")) {
             return taskService.getProcessedTaskCount(user.getName());
         }
-        return taskService.getProcessedTaskCount(deadlineDateFrom, deadlineDateTo, user.getName());
+        return taskService.getProcessedTaskCount(deadlineFrom, deadlineTo, user.getName());
     }
 
     @GetMapping("/uncompleted")

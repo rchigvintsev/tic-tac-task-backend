@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -130,7 +131,7 @@ class TaskControllerTest {
                 .thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed?deadlineDateFrom=&deadlineDateTo=").exchange()
+                .uri("/tasks/processed?deadlineFrom=&deadlineTo=").exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
     }
@@ -142,7 +143,7 @@ class TaskControllerTest {
         when(taskService.getProcessedTaskCount(null, null, authenticationMock.getName())).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed/count?deadlineDateFrom=&deadlineDateTo=").exchange()
+                .uri("/tasks/processed/count?deadlineFrom=&deadlineTo=").exchange()
                 .expectStatus().isOk()
                 .expectBody(Long.class).isEqualTo(1L);
     }
@@ -157,21 +158,21 @@ class TaskControllerTest {
                 .title("Test task")
                 .author(authenticationMock.getName())
                 .status(TaskStatus.PROCESSED)
-                .deadlineDate(LocalDate.parse("2020-01-10", DateTimeFormatter.ISO_DATE))
+                .deadline(LocalDateTime.parse("2020-01-10T00:00:00", DateTimeFormatter.ISO_DATE_TIME))
                 .build();
 
-        String deadlineDateFrom = "2020-01-01";
-        String deadlineDateTo = "2020-01-31";
+        String deadlineFrom = "2020-01-01";
+        String deadlineTo = "2020-01-31";
 
         when(taskService.getProcessedTasks(
-                LocalDate.parse(deadlineDateFrom, DateTimeFormatter.ISO_DATE),
-                LocalDate.parse(deadlineDateTo, DateTimeFormatter.ISO_DATE),
+                LocalDate.parse(deadlineFrom, DateTimeFormatter.ISO_DATE),
+                LocalDate.parse(deadlineTo, DateTimeFormatter.ISO_DATE),
                 authenticationMock.getName(),
                 PageRequest.of(0, 20)
         )).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed?deadlineDateFrom=" + deadlineDateFrom  + "&deadlineDateTo=" + deadlineDateTo)
+                .uri("/tasks/processed?deadlineFrom=" + deadlineFrom  + "&deadlineTo=" + deadlineTo)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
@@ -182,17 +183,17 @@ class TaskControllerTest {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
 
-        String deadlineDateFrom = "2020-01-01";
-        String deadlineDateTo = "2020-01-31";
+        String deadlineFrom = "2020-01-01";
+        String deadlineTo = "2020-01-31";
 
         when(taskService.getProcessedTaskCount(
-                LocalDate.parse(deadlineDateFrom, DateTimeFormatter.ISO_DATE),
-                LocalDate.parse(deadlineDateTo, DateTimeFormatter.ISO_DATE),
+                LocalDate.parse(deadlineFrom, DateTimeFormatter.ISO_DATE),
+                LocalDate.parse(deadlineTo, DateTimeFormatter.ISO_DATE),
                 authenticationMock.getName()
         )).thenReturn(Mono.just(1L));
 
         String uri = "/tasks/processed/count"
-                + "?deadlineDateFrom=" + deadlineDateFrom + "&deadlineDateTo=" + deadlineDateTo;
+                + "?deadlineFrom=" + deadlineFrom + "&deadlineTo=" + deadlineTo;
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri(uri)
                 .exchange()
@@ -371,7 +372,7 @@ class TaskControllerTest {
 
         Task task = Task.builder()
                 .title("Test title")
-                .deadlineDate(LocalDate.now().minus(3, ChronoUnit.DAYS))
+                .deadline(LocalDateTime.now().minus(3, ChronoUnit.DAYS))
                 .build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
@@ -384,7 +385,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.deadlineDate").isEqualTo("Value must not be in past");
+                .jsonPath("$.fieldErrors.deadline").isEqualTo("Value must not be in past");
     }
 
     @Test

@@ -2,7 +2,6 @@ package org.briarheart.orchestra.controller;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.briarheart.orchestra.model.validation.constraints.NotPast;
 import org.springframework.util.Assert;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.support.WebExchangeBindException;
@@ -35,11 +34,7 @@ public class ConstraintViolationErrorResponse extends ErrorResponse {
         Map<String, String> fieldErrors = new HashMap<>();
 
         for (ObjectError globalError : e.getGlobalErrors()) {
-            if (NotPast.class.getSimpleName().equals(globalError.getCode())) {
-                fieldErrors.putAll(handleNotPastConstraintViolation(globalError, e));
-            } else {
-                globalErrorMessages.add(globalError.getDefaultMessage());
-            }
+            globalErrorMessages.add(globalError.getDefaultMessage());
         }
 
         if (!globalErrorMessages.isEmpty()) {
@@ -54,22 +49,5 @@ public class ConstraintViolationErrorResponse extends ErrorResponse {
         if (!fieldErrors.isEmpty()) {
             this.fieldErrors = fieldErrors;
         }
-    }
-
-    private Map<String, String> handleNotPastConstraintViolation(ObjectError error, WebExchangeBindException e) {
-        Map<String, String> fieldErrors = new HashMap<>();
-        Object target = e.getTarget();
-        if (target != null) {
-            NotPast notPast = target.getClass().getAnnotation(NotPast.class);
-            Object date = e.getRawFieldValue(notPast.dateFieldName());
-            if (date != null) {
-                fieldErrors.put(notPast.dateFieldName(), error.getDefaultMessage());
-            }
-            Object time = e.getRawFieldValue(notPast.timeFieldName());
-            if (time != null) {
-                fieldErrors.put(notPast.timeFieldName(), error.getDefaultMessage());
-            }
-        }
-        return fieldErrors;
     }
 }

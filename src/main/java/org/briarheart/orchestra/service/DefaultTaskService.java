@@ -67,43 +67,43 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
-    public Mono<Long> getProcessedTaskCount(LocalDate deadlineDateFrom, LocalDate deadlineDateTo, String author) {
-        if (deadlineDateFrom == null && deadlineDateTo == null) {
-            return taskRepository.countAllByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+    public Mono<Long> getProcessedTaskCount(LocalDate deadlineFrom, LocalDate deadlineTo, String author) {
+        if (deadlineFrom == null && deadlineTo == null) {
+            return taskRepository.countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
         }
-        if (deadlineDateFrom == null) {
-            return taskRepository.countAllByDeadlineDateLessThanEqualAndStatusAndAuthor(deadlineDateTo,
+        if (deadlineFrom == null) {
+            return taskRepository.countAllByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo, TaskStatus.PROCESSED,
+                    author);
+        }
+        if (deadlineTo == null) {
+            return taskRepository.countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom,
                     TaskStatus.PROCESSED, author);
         }
-        if (deadlineDateTo == null) {
-            return taskRepository.countAllByDeadlineDateGreaterThanEqualAndStatusAndAuthor(deadlineDateFrom,
-                    TaskStatus.PROCESSED, author);
-        }
-        return taskRepository.countAllByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom, deadlineDateTo,
+        return taskRepository.countAllByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo,
                 TaskStatus.PROCESSED, author);
     }
 
     @Override
     public Flux<Task> getProcessedTasks(
-            LocalDate deadlineDateFrom,
-            LocalDate deadlineDateTo,
+            LocalDate deadlineFrom,
+            LocalDate deadlineTo,
             String author,
             Pageable pageable
     ) {
-        if (deadlineDateFrom == null && deadlineDateTo == null) {
-            return taskRepository.findByDeadlineDateIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author,
+        if (deadlineFrom == null && deadlineTo == null) {
+            return taskRepository.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author,
                     Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
-        if (deadlineDateFrom == null) {
-            return taskRepository.findByDeadlineDateLessThanEqualAndStatusAndAuthor(deadlineDateTo,
-                    TaskStatus.PROCESSED, author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+        if (deadlineFrom == null) {
+            return taskRepository.findByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo, TaskStatus.PROCESSED,
+                    author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
-        if (deadlineDateTo == null) {
-            return taskRepository.findByDeadlineDateGreaterThanEqualAndStatusAndAuthor(deadlineDateFrom,
-                    TaskStatus.PROCESSED, author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+        if (deadlineTo == null) {
+            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom, TaskStatus.PROCESSED,
+                    author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
-        return taskRepository.findByDeadlineDateBetweenAndStatusAndAuthor(deadlineDateFrom, deadlineDateTo,
-                TaskStatus.PROCESSED, author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+        return taskRepository.findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo, TaskStatus.PROCESSED,
+                author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
     @Override
@@ -205,7 +205,7 @@ public class DefaultTaskService implements TaskService {
         if (newTask.getStatus() == null) {
             newTask.setStatus(oldTask.getStatus());
         }
-        if (newTask.getStatus() == TaskStatus.UNPROCESSED && newTask.getDeadlineDate() != null) {
+        if (newTask.getStatus() == TaskStatus.UNPROCESSED && newTask.getDeadline() != null) {
             newTask.setStatus(TaskStatus.PROCESSED);
         }
         return taskRepository.save(newTask);

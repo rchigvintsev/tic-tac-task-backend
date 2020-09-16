@@ -1,14 +1,13 @@
 package org.briarheart.orchestra.model;
 
 import lombok.*;
-import org.briarheart.orchestra.model.validation.constraints.NotPast;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 
+import javax.validation.constraints.FutureOrPresent;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +19,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-@NotPast(dateFieldName = "deadlineDate", timeFieldName = "deadlineTime")
 public class Task {
     @Id
     private Long id;
@@ -40,8 +38,11 @@ public class Task {
     private List<Tag> tags = Collections.emptyList();
 
     private String author;
-    private LocalDate deadlineDate;
-    private LocalTime deadlineTime;
+
+    @FutureOrPresent
+    private LocalDateTime deadline;
+
+    private boolean deadlineTimeExplicitlySet;
 
     /**
      * Creates copy of this task including all attributes except primary key.
@@ -54,8 +55,8 @@ public class Task {
         copy.setDescription(description);
         copy.setStatus(status);
         copy.setAuthor(author);
-        copy.setDeadlineDate(deadlineDate);
-        copy.setDeadlineTime(deadlineTime);
+        copy.setDeadline(deadline);
+        copy.setDeadlineTimeExplicitlySet(deadlineTimeExplicitlySet);
         copy.setTags(this.tags.isEmpty() ? Collections.emptyList() : new ArrayList<>(this.tags));
         return copy;
     }

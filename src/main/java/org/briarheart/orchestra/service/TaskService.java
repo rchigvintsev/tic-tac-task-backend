@@ -53,29 +53,24 @@ public interface TaskService {
      * Returns number of processed tasks optionally falling within the given deadline bounds and belonging to the given
      * author. If deadline bounds are not specified this method returns number of processed tasks without deadline.
      *
-     * @param deadlineDateFrom optional deadline from bound
-     * @param deadlineDateTo optional deadline to bound
+     * @param deadlineFrom optional deadline from bound
+     * @param deadlineTo optional deadline to bound
      * @param author task author
      * @return number of processed tasks or empty stream when there is no task meeting the given criteria
      */
-    Mono<Long> getProcessedTaskCount(LocalDate deadlineDateFrom, LocalDate deadlineDateTo, String author);
+    Mono<Long> getProcessedTaskCount(LocalDate deadlineFrom, LocalDate deadlineTo, String author);
 
     /**
      * Returns processed tasks optionally falling within the given deadline bounds and belonging to the given author.
      * If deadline bounds are not specified this method returns processed tasks without deadline.
      *
-     * @param deadlineDateFrom optional deadline from bound
-     * @param deadlineDateTo optional deadline to bound
+     * @param deadlineFrom optional deadline from bound
+     * @param deadlineTo optional deadline to bound
      * @param author task author
      * @param pageable paging restriction
      * @return processed tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getProcessedTasks(
-            LocalDate deadlineDateFrom,
-            LocalDate deadlineDateTo,
-            String author,
-            Pageable pageable
-    );
+    Flux<Task> getProcessedTasks(LocalDate deadlineFrom, LocalDate deadlineTo, String author, Pageable pageable);
 
     /**
      * Returns number of all uncompleted tasks (either unprocessed or processed) belonging to the given author.
