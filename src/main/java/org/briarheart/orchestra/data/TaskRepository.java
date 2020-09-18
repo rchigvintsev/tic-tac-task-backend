@@ -7,7 +7,7 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author Roman Chigvintsev
@@ -28,7 +28,7 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
 
     @Query("SELECT * FROM task WHERE deadline <= :deadline AND status = :status AND author = :author "
             + "OFFSET :offset LIMIT :limit")
-    Flux<Task> findByDeadlineLessThanEqualAndStatusAndAuthor(LocalDate deadline,
+    Flux<Task> findByDeadlineLessThanEqualAndStatusAndAuthor(LocalDateTime deadline,
                                                              TaskStatus status,
                                                              String author,
                                                              long offset,
@@ -37,7 +37,7 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
 
     @Query("SELECT * FROM task WHERE deadline >= :deadline AND status = :status AND author = :author "
             + "OFFSET :offset LIMIT :limit")
-    Flux<Task> findByDeadlineGreaterThanEqualAndStatusAndAuthor(LocalDate deadline,
+    Flux<Task> findByDeadlineGreaterThanEqualAndStatusAndAuthor(LocalDateTime deadline,
                                                                 TaskStatus status,
                                                                 String author,
                                                                 long offset,
@@ -49,8 +49,8 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
             + "AND status = :status "
             + "AND author = :author "
             + "OFFSET :offset LIMIT :limit")
-    Flux<Task> findByDeadlineBetweenAndStatusAndAuthor(LocalDate deadlineFrom,
-                                                       LocalDate deadlineTo,
+    Flux<Task> findByDeadlineBetweenAndStatusAndAuthor(LocalDateTime deadlineFrom,
+                                                       LocalDateTime deadlineTo,
                                                        TaskStatus status,
                                                        String author,
                                                        long offset,
@@ -66,10 +66,12 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
     Mono<Long> countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus status, String author);
 
     @Query("SELECT COUNT(*) FROM task WHERE deadline <= :deadline AND status = :status AND author = :author")
-    Mono<Long> countAllByDeadlineLessThanEqualAndStatusAndAuthor(LocalDate deadline, TaskStatus status, String author);
+    Mono<Long> countAllByDeadlineLessThanEqualAndStatusAndAuthor(LocalDateTime deadline,
+                                                                 TaskStatus status,
+                                                                 String author);
 
     @Query("SELECT COUNT(*) FROM task WHERE deadline >= :deadline AND status = :status AND author = :author")
-    Mono<Long> countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(LocalDate deadline,
+    Mono<Long> countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(LocalDateTime deadline,
                                                                     TaskStatus status,
                                                                     String author);
 
@@ -78,8 +80,8 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
             + "WHERE (deadline BETWEEN :deadlineFrom AND :deadlineTo) "
             + "AND status = :status "
             + "AND author = :author")
-    Mono<Long> countAllByDeadlineBetweenAndStatusAndAuthor(LocalDate deadlineFrom,
-                                                           LocalDate deadlineTo,
+    Mono<Long> countAllByDeadlineBetweenAndStatusAndAuthor(LocalDateTime deadlineFrom,
+                                                           LocalDateTime deadlineTo,
                                                            TaskStatus status,
                                                            String author);
 }

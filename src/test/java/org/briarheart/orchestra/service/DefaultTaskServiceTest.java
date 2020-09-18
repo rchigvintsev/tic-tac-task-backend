@@ -15,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -111,8 +110,8 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadlineDateBetween() {
-        LocalDate deadlineFrom = LocalDate.now();
-        LocalDate deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
+        LocalDateTime deadlineFrom = LocalDateTime.now();
+        LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
         when(taskRepositoryMock.countAllByDeadlineBetweenAndStatusAndAuthor(
@@ -129,8 +128,8 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadlineDateBetween() {
-        LocalDate deadlineFrom = LocalDate.now();
-        LocalDate deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
+        LocalDateTime deadlineFrom = LocalDateTime.now();
+        LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
         when(taskRepositoryMock.findByDeadlineBetweenAndStatusAndAuthor(
@@ -149,7 +148,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadlineDateLessThanOrEqual() {
-        LocalDate deadlineTo = LocalDate.now().plus(1, ChronoUnit.DAYS);
+        LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
         when(taskRepositoryMock.countAllByDeadlineLessThanEqualAndStatusAndAuthor(
@@ -165,7 +164,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadlineDateLessThanOrEqual() {
-        LocalDate deadlineTo = LocalDate.now().plus(1, ChronoUnit.DAYS);
+        LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
         when(taskRepositoryMock.findByDeadlineLessThanEqualAndStatusAndAuthor(
@@ -183,7 +182,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
-        LocalDate deadlineFrom = LocalDate.now();
+        LocalDateTime deadlineFrom = LocalDateTime.now();
         String author = "alice";
 
         when(taskRepositoryMock.countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(
@@ -199,7 +198,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
-        LocalDate deadlineFrom = LocalDate.now();
+        LocalDateTime deadlineFrom = LocalDateTime.now();
         String author = "alice";
 
         when(taskRepositoryMock.findByDeadlineGreaterThanEqualAndStatusAndAuthor(

@@ -18,7 +18,7 @@ import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,7 +67,7 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
-    public Mono<Long> getProcessedTaskCount(LocalDate deadlineFrom, LocalDate deadlineTo, String author) {
+    public Mono<Long> getProcessedTaskCount(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, String author) {
         if (deadlineFrom == null && deadlineTo == null) {
             return taskRepository.countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
         }
@@ -85,8 +85,8 @@ public class DefaultTaskService implements TaskService {
 
     @Override
     public Flux<Task> getProcessedTasks(
-            LocalDate deadlineFrom,
-            LocalDate deadlineTo,
+            LocalDateTime deadlineFrom,
+            LocalDateTime deadlineTo,
             String author,
             Pageable pageable
     ) {

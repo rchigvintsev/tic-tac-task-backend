@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Service for task managing.
@@ -58,7 +58,7 @@ public interface TaskService {
      * @param author task author
      * @return number of processed tasks or empty stream when there is no task meeting the given criteria
      */
-    Mono<Long> getProcessedTaskCount(LocalDate deadlineFrom, LocalDate deadlineTo, String author);
+    Mono<Long> getProcessedTaskCount(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, String author);
 
     /**
      * Returns processed tasks optionally falling within the given deadline bounds and belonging to the given author.
@@ -70,7 +70,10 @@ public interface TaskService {
      * @param pageable paging restriction
      * @return processed tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getProcessedTasks(LocalDate deadlineFrom, LocalDate deadlineTo, String author, Pageable pageable);
+    Flux<Task> getProcessedTasks(LocalDateTime deadlineFrom,
+                                 LocalDateTime deadlineTo,
+                                 String author,
+                                 Pageable pageable);
 
     /**
      * Returns number of all uncompleted tasks (either unprocessed or processed) belonging to the given author.

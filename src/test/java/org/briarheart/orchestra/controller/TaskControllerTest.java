@@ -21,7 +21,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -161,12 +160,12 @@ class TaskControllerTest {
                 .deadline(LocalDateTime.parse("2020-01-10T00:00:00", DateTimeFormatter.ISO_DATE_TIME))
                 .build();
 
-        String deadlineFrom = "2020-01-01";
-        String deadlineTo = "2020-01-31";
+        String deadlineFrom = "2020-01-01T00:00";
+        String deadlineTo = "2020-01-31T23:59";
 
         when(taskService.getProcessedTasks(
-                LocalDate.parse(deadlineFrom, DateTimeFormatter.ISO_DATE),
-                LocalDate.parse(deadlineTo, DateTimeFormatter.ISO_DATE),
+                LocalDateTime.parse(deadlineFrom, DateTimeFormatter.ISO_DATE_TIME),
+                LocalDateTime.parse(deadlineTo, DateTimeFormatter.ISO_DATE_TIME),
                 authenticationMock.getName(),
                 PageRequest.of(0, 20)
         )).thenReturn(Flux.just(task));
@@ -183,12 +182,12 @@ class TaskControllerTest {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
 
-        String deadlineFrom = "2020-01-01";
-        String deadlineTo = "2020-01-31";
+        String deadlineFrom = "2020-01-01T00:00";
+        String deadlineTo = "2020-01-31T23:59";
 
         when(taskService.getProcessedTaskCount(
-                LocalDate.parse(deadlineFrom, DateTimeFormatter.ISO_DATE),
-                LocalDate.parse(deadlineTo, DateTimeFormatter.ISO_DATE),
+                LocalDateTime.parse(deadlineFrom, DateTimeFormatter.ISO_DATE_TIME),
+                LocalDateTime.parse(deadlineTo, DateTimeFormatter.ISO_DATE_TIME),
                 authenticationMock.getName()
         )).thenReturn(Mono.just(1L));
 

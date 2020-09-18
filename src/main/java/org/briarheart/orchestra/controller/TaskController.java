@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 import java.net.URI;
 import java.security.Principal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * REST-controller for task managing.
@@ -41,8 +41,8 @@ public class TaskController {
 
     @GetMapping("/processed")
     public Flux<Task> getProcessedTasks(
-            @RequestParam(name = "deadlineFrom", required = false) LocalDate deadlineFrom,
-            @RequestParam(name = "deadlineTo", required = false) LocalDate deadlineTo,
+            @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
+            @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
             Principal user,
             ServerHttpRequest request,
             Pageable pageable
@@ -56,8 +56,8 @@ public class TaskController {
 
     @GetMapping("/processed/count")
     public Mono<Long> getProcessedTaskCount(
-            @RequestParam(name = "deadlineFrom", required = false) LocalDate deadlineFrom,
-            @RequestParam(name = "deadlineTo", required = false) LocalDate deadlineTo,
+            @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
+            @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
             Principal user,
             ServerHttpRequest request
     ) {
