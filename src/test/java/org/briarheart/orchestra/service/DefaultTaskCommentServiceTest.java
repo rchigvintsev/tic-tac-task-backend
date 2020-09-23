@@ -251,5 +251,4 @@ class DefaultTaskCommentServiceTest {
         taskCommentService.deleteComment(commentId, commentAuthor).block();
         verify(taskCommentRepositoryMock, times(1)).deleteByIdAndAuthor(commentId, commentAuthor);
     }
-
 }

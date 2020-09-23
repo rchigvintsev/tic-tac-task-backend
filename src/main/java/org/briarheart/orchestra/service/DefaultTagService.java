@@ -7,6 +7,7 @@ import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Default implementation of {@link TagService}.
@@ -21,5 +22,10 @@ public class DefaultTagService implements TagService {
     @Override
     public Flux<Tag> getTags(String author, Pageable pageable) {
         return tagRepository.findByAuthor(author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+    }
+
+    @Override
+    public Mono<Void> deleteTag(Long id, String author) {
+        return tagRepository.deleteByIdAndAuthor(id, author);
     }
 }
