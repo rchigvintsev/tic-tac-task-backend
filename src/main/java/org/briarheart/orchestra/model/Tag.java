@@ -22,4 +22,16 @@ public class Tag {
     private String name;
 
     private String author;
+
+    /**
+     * Creates copy of this tag including all attributes except primary key.
+     *
+     * @return copy of this tag
+     */
+    public Tag copy() {
+        Tag copy = new Tag();
+        copy.setName(name);
+        copy.setAuthor(author);
+        return copy;
+    }
 }

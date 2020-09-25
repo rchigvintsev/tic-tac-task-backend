@@ -1,11 +1,13 @@
 package org.briarheart.orchestra.service;
 
 import lombok.RequiredArgsConstructor;
+import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TagRepository;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -22,6 +24,18 @@ public class DefaultTagService implements TagService {
     @Override
     public Flux<Tag> getTags(String author, Pageable pageable) {
         return tagRepository.findByAuthor(author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+    }
+
+    @Override
+    public Mono<Tag> updateTag(Tag tag, Long id, String author) throws EntityNotFoundException {
+        Assert.notNull(tag, "Tag must not be null");
+        return tagRepository.findByIdAndAuthor(id, author)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")))
+                .flatMap(t -> {
+                    tag.setId(t.getId());
+                    tag.setAuthor(author);
+                    return tagRepository.save(tag);
+                });
     }
 
     @Override

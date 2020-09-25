@@ -106,7 +106,7 @@ class TaskCommentControllerTest {
                 .thenReturn(Mono.just(updatedComment));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).put()
-                .uri("/taskComments/" + comment.getId() + "?taskId=" + updatedComment.getTaskId())
+                .uri("/taskComments/" + comment.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()

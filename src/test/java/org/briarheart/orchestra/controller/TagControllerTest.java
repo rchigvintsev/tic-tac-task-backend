@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -64,6 +65,28 @@ class TagControllerTest {
                 .uri("/tags").exchange()
                 .expectStatus().isOk()
                 .expectBody(Tag[].class).isEqualTo(new Tag[] {tag});
+    }
+
+    @Test
+    void shouldUpdateTag() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Tag tag = Tag.builder().id(1L).name("Test tag").build();
+        Tag updatedTag = tag.copy();
+        updatedTag.setId(1L);
+        updatedTag.setName("Updated test tag");
+        Mockito.when(tagService.updateTag(tag, tag.getId(), authenticationMock.getName()))
+                .thenReturn(Mono.just(updatedTag));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).put()
+                .uri("/tags/" + tag.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tag)
+                .exchange()
+
+                .expectStatus().isOk()
+                .expectBody(Tag.class).isEqualTo(updatedTag);
     }
 
     @Test

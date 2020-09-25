@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
 import java.security.Principal;
 
 /**
@@ -25,6 +26,11 @@ public class TagController {
     @GetMapping
     public Flux<Tag> getTags(Principal user, Pageable pageable) {
         return tagService.getTags(user.getName(), pageable);
+    }
+
+    @PutMapping("/{id}")
+    public Mono<Tag> updateTag(@Valid @RequestBody Tag tag, @PathVariable Long id, Principal user) {
+        return tagService.updateTag(tag, id, user.getName());
     }
 
     @DeleteMapping("/{id}")
