@@ -4,6 +4,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 
+import javax.validation.Valid;
 import javax.validation.constraints.FutureOrPresent;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -35,6 +36,7 @@ public class Task {
 
     @Builder.Default
     @Transient
+    @Valid
     private List<Tag> tags = Collections.emptyList();
 
     private String author;

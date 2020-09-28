@@ -2,6 +2,7 @@ package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
 import org.briarheart.orchestra.service.TaskService;
@@ -171,7 +172,7 @@ class TaskControllerTest {
         )).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed?deadlineFrom=" + deadlineFrom  + "&deadlineTo=" + deadlineTo)
+                .uri("/tasks/processed?deadlineFrom=" + deadlineFrom + "&deadlineTo=" + deadlineTo)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
@@ -385,6 +386,48 @@ class TaskControllerTest {
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
                 .jsonPath("$.fieldErrors.deadline").isEqualTo("Value must not be in past");
+    }
+
+    @Test
+    void shouldRejectTaskCreationWhenTagNameIsEmpty() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder().title("Test task").author(authenticationMock.getName()).build();
+        task.setTags(List.of(Tag.builder().build()));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).post()
+                .uri("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(task)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors['tags[0].name']").isEqualTo("Value must not be blank");
+    }
+
+    @Test
+    void shouldRejectTaskCreationWhenTagNameIsLong() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder().title("Test task").author(authenticationMock.getName()).build();
+        task.setTags(List.of(Tag.builder().name("L" + "o".repeat(43) + "ng name").build()));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).post()
+                .uri("/tasks")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(task)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors['tags[0].name']").isEqualTo("Value length must not be greater than 50");
     }
 
     @Test
