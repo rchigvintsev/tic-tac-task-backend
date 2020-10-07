@@ -22,6 +22,7 @@ public class Tag {
     private String name;
 
     private String author;
+    private Integer color;
 
     /**
      * Creates copy of this tag including all attributes except primary key.
@@ -32,6 +33,7 @@ public class Tag {
         Tag copy = new Tag();
         copy.setName(name);
         copy.setAuthor(author);
+        copy.setColor(color);
         return copy;
     }
 }
