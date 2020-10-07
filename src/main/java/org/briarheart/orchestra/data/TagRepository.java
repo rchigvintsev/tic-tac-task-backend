@@ -6,12 +6,17 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Set;
+
 /**
  * @author Roman Chigvintsev
  */
 public interface TagRepository extends ReactiveCrudRepository<Tag, Long> {
-    @Query("SELECT * FROM tag WHERE author = :author OFFSET :offset LIMIT :limit")
-    Flux<Tag> findByAuthor(String author, long offset, Integer limit);
+    @Query("SELECT * FROM tag WHERE id IN (:ids)")
+    Flux<Tag> findByIdIn(Set<Long> ids);
+
+    @Query("SELECT * FROM tag WHERE author = :author")
+    Flux<Tag> findByAuthor(String author);
 
     @Query("SELECT * FROM tag WHERE id = :id AND author = :author")
     Mono<Tag> findByIdAndAuthor(Long id, String author);

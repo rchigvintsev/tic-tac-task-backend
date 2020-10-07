@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -167,8 +168,17 @@ public class DefaultTaskService implements TaskService {
 
     private Mono<List<Tag>> getTags(Task task) {
         return taskTagRelationRepository.findByTaskId(task.getId())
-                .flatMap(taskTagRelation -> tagRepository.findById(taskTagRelation.getTagId()))
-                .collectList();
+                .collectList()
+                .flatMap(taskTagRelations -> {
+                    if (taskTagRelations.isEmpty()) {
+                        return Mono.just(List.of());
+                    }
+
+                    Set<Long> tagIds = taskTagRelations.stream()
+                            .map(TaskTagRelation::getTagId)
+                            .collect(Collectors.toSet());
+                    return tagRepository.findByIdIn(tagIds).collectList();
+                });
     }
 
     private List<Tag> findTagsToRemove(Task oldTask, Task newTask) {

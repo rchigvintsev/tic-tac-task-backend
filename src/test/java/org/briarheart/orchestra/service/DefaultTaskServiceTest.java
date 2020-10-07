@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -285,7 +286,7 @@ class DefaultTaskServiceTest {
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
         when(taskTagRelationRepository.findByTaskId(task.getId()))
                 .thenReturn(Flux.just(new TaskTagRelation(task.getId(), tag.getId())));
-        when(tagRepositoryMock.findById(tag.getId())).thenReturn(Mono.just(tag));
+        when(tagRepositoryMock.findByIdIn(Set.of(tag.getId()))).thenReturn(Flux.just(tag));
 
         Task result = taskService.getTask(task.getId(), task.getAuthor()).block();
         assertNotNull(result);
@@ -459,20 +460,27 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRemoveTagsOnTaskUpdate() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        Tag tag = Tag.builder().id(2L).name("Test tag").build();
+        Tag redTag = Tag.builder().id(2L).name("Red").build();
+        Tag greenTag = Tag.builder().id(3L).name("Green").build();
 
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         Task savedTask = task.copy();
         savedTask.setId(1L);
+        task.setTags(List.of(greenTag));
+
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(savedTask));
-        when(tagRepositoryMock.findById(tag.getId())).thenReturn(Mono.just(tag));
-        when(taskTagRelationRepository.findByTaskId(task.getId()))
-                .thenReturn(Flux.just(new TaskTagRelation(task.getId(), tag.getId())));
-        when(taskTagRelationRepository.delete(task.getId(), tag.getId())).thenReturn(Mono.empty().then());
+        when(tagRepositoryMock.findByIdIn(Set.of(redTag.getId(), greenTag.getId())))
+                .thenReturn(Flux.just(redTag, greenTag));
+        when(tagRepositoryMock.findByIdAndAuthor(greenTag.getId(), task.getAuthor())).thenReturn(Mono.just(greenTag));
+        when(taskTagRelationRepository.findByTaskId(task.getId())).thenReturn(Flux.just(
+                new TaskTagRelation(task.getId(), redTag.getId()),
+                new TaskTagRelation(task.getId(), greenTag.getId())
+        ));
+        when(taskTagRelationRepository.delete(task.getId(), redTag.getId())).thenReturn(Mono.empty().then());
 
         Task result = taskService.updateTask(task, task.getId(), task.getAuthor()).block();
         assertNotNull(result);
-        verify(taskTagRelationRepository, times(1)).delete(task.getId(), tag.getId());
+        verify(taskTagRelationRepository, times(1)).delete(task.getId(), redTag.getId());
     }
 
     @Test
