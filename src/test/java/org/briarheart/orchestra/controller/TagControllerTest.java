@@ -21,7 +21,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.Locale;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,7 +58,7 @@ class TagControllerTest {
         when(authenticationMock.getName()).thenReturn("alice");
 
         Tag tag = Tag.builder().id(1L).name("Test tag").author(authenticationMock.getName()).build();
-        when(tagService.getTags(eq(authenticationMock.getName()), any())).thenReturn(Flux.just(tag));
+        when(tagService.getTags(eq(authenticationMock.getName()))).thenReturn(Flux.just(tag));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tags").exchange()

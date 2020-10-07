@@ -27,9 +27,9 @@ class DefaultTagServiceTest {
     @Test
     void shouldReturnAllTags() {
         String author = "alice";
-        when(tagRepository.findByAuthor(author, 0, null)).thenReturn(Flux.empty());
-        tagService.getTags(author, null).blockFirst();
-        verify(tagRepository, times(1)).findByAuthor(author, 0, null);
+        when(tagRepository.findByAuthor(author)).thenReturn(Flux.empty());
+        tagService.getTags(author).blockFirst();
+        verify(tagRepository, times(1)).findByAuthor(author);
     }
 
     @Test

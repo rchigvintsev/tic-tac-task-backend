@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TagRepository;
 import org.briarheart.orchestra.model.Tag;
-import org.briarheart.orchestra.util.Pageables;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
@@ -22,8 +20,8 @@ public class DefaultTagService implements TagService {
     private final TagRepository tagRepository;
 
     @Override
-    public Flux<Tag> getTags(String author, Pageable pageable) {
-        return tagRepository.findByAuthor(author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+    public Flux<Tag> getTags(String author) {
+        return tagRepository.findByAuthor(author);
     }
 
     @Override
