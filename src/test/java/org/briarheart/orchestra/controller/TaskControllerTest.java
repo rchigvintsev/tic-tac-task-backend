@@ -203,14 +203,33 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnAllUncompletedTasks() {
+        String username = "alice";
         Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        when(authenticationMock.getName()).thenReturn(username);
 
         Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
-        when(taskService.getUncompletedTasks(eq(authenticationMock.getName()), any())).thenReturn(Flux.just(task));
+        when(taskService.getUncompletedTasks(isNull(), eq(username), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/uncompleted").exchange()
+                .expectStatus().isOk()
+                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+    }
+
+    @Test
+    void shouldReturnUncompletedTasksFilteredByTagId() {
+        String username = "alice";
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        long tagId = 2L;
+
+        Task task = Task.builder().id(1L).title("Test task").author(username).build();
+        when(taskService.getUncompletedTasks(eq(tagId), eq(username), any()))
+                .thenReturn(Flux.just(task));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/uncompleted?tagId=" + tagId).exchange()
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[] {task});
     }

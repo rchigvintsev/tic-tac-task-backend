@@ -25,5 +25,5 @@ public interface TagRepository extends ReactiveCrudRepository<Tag, Long> {
     Mono<Tag> findByNameAndAuthor(String name, String author);
 
     @Query("DELETE FROM tag WHERE id = :id AND author = :author")
-    Mono<Void> deleteByIdAndAuthor(Long id, String author);
+    Mono<Void> deleteByIdAndAuthor(Long id, String author); 
 }

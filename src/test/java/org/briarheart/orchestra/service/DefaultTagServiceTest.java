@@ -33,6 +33,22 @@ class DefaultTagServiceTest {
     }
 
     @Test
+    void shouldReturnTagById() {
+        Tag tag = Tag.builder().id(1L).name("Test tag").author("alice").build();
+        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
+
+        Tag result = tagService.getTag(tag.getId(), tag.getAuthor()).block();
+        assertNotNull(result);
+        assertEquals(tag, result);
+    }
+
+    @Test
+    void shouldThrowExceptionOnTagGetWhenTagIsNotFound() {
+        when(tagRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> tagService.getTag(1L, "alice").block());
+    }
+
+    @Test
     void shouldUpdateTag() {
         Tag tag = Tag.builder().id(1L).author("alice").name("Test tag").build();
         when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));

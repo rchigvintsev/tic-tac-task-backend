@@ -27,6 +27,11 @@ public class TagController {
         return tagService.getTags(user.getName());
     }
 
+    @GetMapping("/{id}")
+    public Mono<Tag> getTag(@PathVariable Long id, Principal user) {
+        return tagService.getTag(id, user.getName());
+    }
+
     @PutMapping("/{id}")
     public Mono<Tag> updateTag(@Valid @RequestBody Tag tag, @PathVariable Long id, Principal user) {
         return tagService.updateTag(tag, id, user.getName());

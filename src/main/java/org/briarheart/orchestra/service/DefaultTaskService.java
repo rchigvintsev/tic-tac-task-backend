@@ -113,7 +113,11 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
-    public Flux<Task> getUncompletedTasks(String author, Pageable pageable) {
+    public Flux<Task> getUncompletedTasks(Long tagId, String author, Pageable pageable) {
+        if (tagId != null) {
+            return taskRepository.findByStatusNotAndAuthorAndTagId(TaskStatus.COMPLETED, author, tagId,
+                    Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+        }
         return taskRepository.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, Pageables.getOffset(pageable),
                 Pageables.getLimit(pageable));
     }

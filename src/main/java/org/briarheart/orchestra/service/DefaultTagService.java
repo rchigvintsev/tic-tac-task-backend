@@ -25,15 +25,19 @@ public class DefaultTagService implements TagService {
     }
 
     @Override
+    public Mono<Tag> getTag(Long id, String author) {
+        return tagRepository.findByIdAndAuthor(id, author)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")));
+    }
+
+    @Override
     public Mono<Tag> updateTag(Tag tag, Long id, String author) throws EntityNotFoundException {
         Assert.notNull(tag, "Tag must not be null");
-        return tagRepository.findByIdAndAuthor(id, author)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")))
-                .flatMap(t -> {
-                    tag.setId(t.getId());
-                    tag.setAuthor(author);
-                    return tagRepository.save(tag);
-                });
+        return getTag(id, author).flatMap(t -> {
+            tag.setId(t.getId());
+            tag.setAuthor(author);
+            return tagRepository.save(tag);
+        });
     }
 
     @Override

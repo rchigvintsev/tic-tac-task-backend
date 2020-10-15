@@ -251,7 +251,7 @@ class DefaultTaskServiceTest {
         when(taskRepositoryMock.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null))
                 .thenReturn(Flux.empty());
 
-        taskService.getUncompletedTasks(author, Pageable.unpaged()).blockFirst();
+        taskService.getUncompletedTasks(null, author, Pageable.unpaged()).blockFirst();
         verify(taskRepositoryMock, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null);
     }
 
@@ -263,9 +263,22 @@ class DefaultTaskServiceTest {
         when(taskRepositoryMock.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.empty());
 
-        taskService.getUncompletedTasks(author, pageRequest).blockFirst();
+        taskService.getUncompletedTasks(null, author, pageRequest).blockFirst();
         verify(taskRepositoryMock, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author,
                 pageRequest.getOffset(), pageRequest.getPageSize());
+    }
+
+    @Test
+    void shouldReturnUncompletedTasksFilteredByTagId() {
+        String author = "alice";
+        Long tagId = 1L;
+
+        when(taskRepositoryMock.findByStatusNotAndAuthorAndTagId(TaskStatus.COMPLETED, author, tagId, 0, null))
+                .thenReturn(Flux.empty());
+
+        taskService.getUncompletedTasks(tagId, author, Pageable.unpaged()).blockFirst();
+        verify(taskRepositoryMock, times(1))
+                .findByStatusNotAndAuthorAndTagId(TaskStatus.COMPLETED, author, tagId, 0, null);
     }
 
     @Test

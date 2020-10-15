@@ -1,7 +1,9 @@
 package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
+import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;
+import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.service.TagService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -19,9 +21,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Locale;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
@@ -64,6 +67,39 @@ class TagControllerTest {
                 .uri("/tags").exchange()
                 .expectStatus().isOk()
                 .expectBody(Tag[].class).isEqualTo(new Tag[] {tag});
+    }
+
+    @Test
+    void shouldReturnTagById() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Tag tag = Tag.builder().id(1L).name("Test tag").author(authenticationMock.getName()).build();
+        when(tagService.getTag(tag.getId(), authenticationMock.getName())).thenReturn(Mono.just(tag));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tags/1").exchange()
+                .expectStatus().isOk()
+                .expectBody(Tag.class).isEqualTo(tag);
+    }
+
+    @Test
+    void shouldReturnNotFoundStatusCodeWhenTagIsNotFoundById() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        String errorMessage = "Tag is not found";
+
+        when(tagService.getTag(anyLong(), anyString()))
+                .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
+
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setErrors(List.of(errorMessage));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tags/1").exchange()
+                .expectStatus().isNotFound()
+                .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
     }
 
     @Test

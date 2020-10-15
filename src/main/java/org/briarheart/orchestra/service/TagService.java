@@ -21,6 +21,16 @@ public interface TagService {
     Flux<Tag> getTags(String author);
 
     /**
+     * Returns tag with the given id and belonging to the given author.
+     *
+     * @param id     tag id
+     * @param author tag author
+     * @return requested tag
+     * @throws EntityNotFoundException if tag is not found by id and author
+     */
+    Mono<Tag> getTag(Long id, String author);
+
+    /**
      * Updates tag with the given id and belonging to the given author.
      *
      * @param tag tag to be updated (must not be {@code null})

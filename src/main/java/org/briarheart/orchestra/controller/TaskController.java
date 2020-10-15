@@ -69,8 +69,10 @@ public class TaskController {
     }
 
     @GetMapping("/uncompleted")
-    public Flux<Task> getUncompletedTasks(Principal user, Pageable pageable) {
-        return taskService.getUncompletedTasks(user.getName(), pageable);
+    public Flux<Task> getUncompletedTasks(@RequestParam(value = "tagId", required = false) Long tagId,
+                                          Principal user,
+                                          Pageable pageable) {
+        return taskService.getUncompletedTasks(tagId, user.getName(), pageable);
     }
 
     @GetMapping("/uncompleted/count")
