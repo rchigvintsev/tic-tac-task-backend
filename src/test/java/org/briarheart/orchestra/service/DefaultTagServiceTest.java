@@ -2,6 +2,7 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TagRepository;
+import org.briarheart.orchestra.data.TaskTagRelationRepository;
 import org.briarheart.orchestra.model.Tag;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,12 +17,14 @@ import static org.mockito.Mockito.*;
  */
 class DefaultTagServiceTest {
     private TagRepository tagRepository;
+    private TaskTagRelationRepository taskTagRelationRepository;
     private DefaultTagService tagService;
 
     @BeforeEach
     void setUp() {
         tagRepository = mock(TagRepository.class);
-        tagService = new DefaultTagService(tagRepository);
+        taskTagRelationRepository = mock(TaskTagRelationRepository.class);
+        tagService = new DefaultTagService(tagRepository, taskTagRelationRepository);
     }
 
     @Test
@@ -102,10 +105,22 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldDeleteTag() {
-        Long tagId = 1L;
-        String tagAuthor = "alice";
-        when(tagRepository.deleteByIdAndAuthor(tagId, tagAuthor)).thenReturn(Mono.empty());
-        tagService.deleteTag(tagId, tagAuthor).block();
-        verify(tagRepository, times(1)).deleteByIdAndAuthor(tagId, tagAuthor);
+        Tag tag = Tag.builder().id(1L).name("Test tag").author("alice").build();
+
+        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
+        when(taskTagRelationRepository.deleteByTagId(tag.getId())).thenReturn(Mono.empty());
+        when(tagRepository.deleteByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.empty());
+
+        tagService.deleteTag(tag.getId(), tag.getAuthor()).block();
+        verify(tagRepository, times(1)).deleteByIdAndAuthor(tag.getId(), tag.getAuthor());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTagDeleteWhenTagIsNotFound() {
+        when(tagRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        long tagId = 1L;
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> tagService.deleteTag(tagId, "alice").block());
+        assertEquals("Tag with id " + tagId + " is not found", exception.getMessage());
     }
 }

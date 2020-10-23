@@ -3,6 +3,7 @@ package org.briarheart.orchestra.service;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TagRepository;
+import org.briarheart.orchestra.data.TaskTagRelationRepository;
 import org.briarheart.orchestra.model.Tag;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class DefaultTagService implements TagService {
     private final TagRepository tagRepository;
+    private final TaskTagRelationRepository taskTagRelationRepository;
 
     @Override
     public Flux<Tag> getTags(String author) {
@@ -42,6 +44,7 @@ public class DefaultTagService implements TagService {
 
     @Override
     public Mono<Void> deleteTag(Long id, String author) {
-        return tagRepository.deleteByIdAndAuthor(id, author);
+        return getTag(id, author).flatMap(tag -> taskTagRelationRepository.deleteByTagId(tag.getId())
+                .then(tagRepository.deleteByIdAndAuthor(id, author)));
     }
 }

@@ -193,7 +193,7 @@ public class DefaultTaskService implements TaskService {
     }
 
     private Mono<Void> removeTag(Tag tag, Task task) {
-        return taskTagRelationRepository.delete(task.getId(), tag.getId());
+        return taskTagRelationRepository.deleteByTaskIdAndTagId(task.getId(), tag.getId());
     }
 
     private Mono<TaskTagRelation> assignTag(Tag tag, Task task) {

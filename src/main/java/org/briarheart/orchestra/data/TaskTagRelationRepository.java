@@ -20,5 +20,8 @@ public interface TaskTagRelationRepository extends ReactiveCrudRepository<TaskTa
     Mono<Void> create(Long taskId, Long tagId);
 
     @Query("DELETE FROM tasks_tags WHERE task_id = :taskId AND tag_id = :tagId")
-    Mono<Void> delete(Long taskId, Long tagId);
+    Mono<Void> deleteByTaskIdAndTagId(Long taskId, Long tagId);
+
+    @Query("DELETE FROM tasks_tags WHERE tag_id = :tagId")
+    Mono<Void> deleteByTagId(Long tagId);
 }

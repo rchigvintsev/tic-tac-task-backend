@@ -489,11 +489,11 @@ class DefaultTaskServiceTest {
                 new TaskTagRelation(task.getId(), redTag.getId()),
                 new TaskTagRelation(task.getId(), greenTag.getId())
         ));
-        when(taskTagRelationRepository.delete(task.getId(), redTag.getId())).thenReturn(Mono.empty().then());
+        when(taskTagRelationRepository.deleteByTaskIdAndTagId(task.getId(), redTag.getId())).thenReturn(Mono.empty().then());
 
         Task result = taskService.updateTask(task, task.getId(), task.getAuthor()).block();
         assertNotNull(result);
-        verify(taskTagRelationRepository, times(1)).delete(task.getId(), redTag.getId());
+        verify(taskTagRelationRepository, times(1)).deleteByTaskIdAndTagId(task.getId(), redTag.getId());
     }
 
     @Test
