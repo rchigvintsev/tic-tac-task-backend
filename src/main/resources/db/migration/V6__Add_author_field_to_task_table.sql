@@ -1,2 +1,2 @@
 -- noinspection SqlResolve
-ALTER TABLE task ADD author VARCHAR(254) NOT NULL DEFAULT 'unknown';
+ALTER TABLE task ADD author VARCHAR(255) NOT NULL DEFAULT 'unknown';
