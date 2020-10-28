@@ -65,7 +65,7 @@ class TaskCommentControllerTest {
         )).thenReturn(Flux.just(comment));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/taskComments?taskId=" + comment.getTaskId()).exchange()
+                .uri("/task-comments?taskId=" + comment.getTaskId()).exchange()
                 .expectStatus().isOk()
                 .expectBody(TaskComment[].class).isEqualTo(new TaskComment[]{comment});
     }
@@ -83,13 +83,13 @@ class TaskCommentControllerTest {
                 .thenReturn(Mono.just(savedComment));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
-                .uri("/taskComments?taskId=" + savedComment.getTaskId())
+                .uri("/task-comments?taskId=" + savedComment.getTaskId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()
 
                 .expectStatus().isCreated()
-                .expectHeader().valueEquals("Location", "/taskComments/" + savedComment.getId())
+                .expectHeader().valueEquals("Location", "/task-comments/" + savedComment.getId())
                 .expectBody(TaskComment.class).isEqualTo(savedComment);
     }
 
@@ -106,7 +106,7 @@ class TaskCommentControllerTest {
                 .thenReturn(Mono.just(updatedComment));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).put()
-                .uri("/taskComments/" + comment.getId())
+                .uri("/task-comments/" + comment.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()
@@ -125,7 +125,7 @@ class TaskCommentControllerTest {
                 .thenReturn(Mono.empty());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).delete()
-                .uri("/taskComments/" + commentId).exchange()
+                .uri("/task-comments/" + commentId).exchange()
                 .expectStatus().isNoContent();
     }
 
@@ -137,7 +137,7 @@ class TaskCommentControllerTest {
         TaskComment comment = TaskComment.builder().taskId(1L).build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
-                .uri("/taskComments?taskId=" + comment.getTaskId())
+                .uri("/task-comments?taskId=" + comment.getTaskId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()
@@ -156,7 +156,7 @@ class TaskCommentControllerTest {
         TaskComment comment = TaskComment.builder().taskId(1L).commentText("").build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
-                .uri("/taskComments?taskId=" + comment.getTaskId())
+                .uri("/task-comments?taskId=" + comment.getTaskId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()
@@ -175,7 +175,7 @@ class TaskCommentControllerTest {
         TaskComment comment = TaskComment.builder().taskId(1L).commentText("L" + "o".repeat(9993) + "ng text").build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
-                .uri("/taskComments?taskId=" + comment.getTaskId())
+                .uri("/task-comments?taskId=" + comment.getTaskId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()

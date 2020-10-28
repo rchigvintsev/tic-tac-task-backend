@@ -22,7 +22,7 @@ import java.security.Principal;
  * @author Roman Chigvintsev
  */
 @RestController
-@RequestMapping("/taskComments")
+@RequestMapping("/task-comments")
 @RequiredArgsConstructor
 public class TaskCommentController {
     private final TaskCommentService taskCommentService;
