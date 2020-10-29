@@ -3,10 +3,7 @@ package org.briarheart.orchestra.controller;
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;
-import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.service.TagService;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -22,7 +19,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
@@ -37,23 +33,11 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @WebFluxTest(TagController.class)
 @Import(PermitAllSecurityConfig.class)
 class TagControllerTest {
-    private static final Locale DEFAULT_LOCALE = Locale.getDefault();
-
     @Autowired
     private WebTestClient testClient;
 
     @MockBean
     private TagService tagService;
-
-    @BeforeAll
-    static void beforeAll() {
-        Locale.setDefault(Locale.ENGLISH);
-    }
-
-    @AfterAll
-    static void afterAll() {
-        Locale.setDefault(DEFAULT_LOCALE);
-    }
 
     @Test
     void shouldReturnAllTags() {
