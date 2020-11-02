@@ -346,6 +346,20 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldThrowExceptionOnTaskCreateWhenAuthorIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(Task.builder().title("New task").build(), null));
+        assertEquals("Task author must not be null or empty", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskCreateWhenAuthorIsEmpty() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(Task.builder().title("New task").build(), ""));
+        assertEquals("Task author must not be null or empty", exception.getMessage());
+    }
+
+    @Test
     void shouldUpdateTask() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));

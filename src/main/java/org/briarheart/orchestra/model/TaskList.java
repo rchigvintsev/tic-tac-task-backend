@@ -23,4 +23,16 @@ public class TaskList {
 
     private String author;
     private boolean completed;
+
+    /**
+     * Creates copy of this task list including all attributes except primary key.
+     *
+     * @return copy of this task list
+     */
+    public TaskList copy() {
+        TaskList copy = new TaskList();
+        copy.setName(name);
+        copy.setAuthor(author);
+        return copy;
+    }
 }

@@ -326,7 +326,7 @@ class TaskControllerTest {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
 
-        Task task = Task.builder().title("").build();
+        Task task = Task.builder().title(" ").build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .mutateWith(csrf()).post()

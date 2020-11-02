@@ -5,6 +5,7 @@ import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskListRepository;
 import org.briarheart.orchestra.model.TaskList;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -26,6 +27,17 @@ public class DefaultTaskListService implements TaskListService {
     public Mono<TaskList> getTaskList(Long id, String author) {
         return taskListRepository.findByIdAndAuthor(id, author)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task list with id " + id + " is not found")));
+    }
+
+    @Override
+    public Mono<TaskList> createTaskList(TaskList taskList, String author) {
+        Assert.notNull(taskList, "Task list must not be null");
+        Assert.hasText(author, "Task list author must not be null or empty");
+        return Mono.defer(() -> {
+            TaskList newTaskList = taskList.copy();
+            newTaskList.setAuthor(author);
+            return taskListRepository.save(newTaskList);
+        });
     }
 
     @Override

@@ -20,6 +20,15 @@ public interface TaskListService {
     Flux<TaskList> getUncompletedTaskLists(String author);
 
     /**
+     * Creates new task list belonging to the given author.
+     *
+     * @param taskList task list to be created (must not be {@code null})
+     * @param author task list author (must not be {@code null} or empty)
+     * @return created task list
+     */
+    Mono<TaskList> createTaskList(TaskList taskList, String author);
+
+    /**
      * Deletes task list with the given id and belonging to the given author.
      *
      * @param id task list id

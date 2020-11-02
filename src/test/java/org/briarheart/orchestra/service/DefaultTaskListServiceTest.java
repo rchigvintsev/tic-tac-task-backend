@@ -23,6 +23,8 @@ class DefaultTaskListServiceTest {
     @BeforeEach
     void setUp() {
         taskListRepository = mock(TaskListRepository.class);
+        when(taskListRepository.save(any()))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0, TaskList.class)));
         taskListService = new DefaultTaskListService(taskListRepository);
     }
 
@@ -49,6 +51,45 @@ class DefaultTaskListServiceTest {
     void shouldThrowExceptionOnTaskListGetWhenTaskListIsNotFound() {
         when(taskListRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class, () -> taskListService.getTaskList(1L, "alice").block());
+    }
+
+    @Test
+    void shouldCreateTaskList() {
+        TaskList taskList = TaskList.builder().name("New task list").build();
+        TaskList result = taskListService.createTaskList(taskList, "alice").block();
+        assertNotNull(result);
+        assertEquals(taskList.getName(), result.getName());
+        verify(taskListRepository, times(1)).save(any());
+    }
+
+    @Test
+    void shouldSetAuthorFieldOnTaskListCreate() {
+        TaskList taskList = TaskList.builder().name("New task list").build();
+        String author = "alice";
+        TaskList result = taskListService.createTaskList(taskList, author).block();
+        assertNotNull(result);
+        assertEquals(author, result.getAuthor());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskListCreateWhenTaskListIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskListService.createTaskList(null, null));
+        assertEquals("Task list must not be null", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskListCreateWhenAuthorIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskListService.createTaskList(TaskList.builder().name("New task list").build(), null));
+        assertEquals("Task list author must not be null or empty", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskListCreateWhenAuthorIsEmpty() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskListService.createTaskList(TaskList.builder().name("New task list").build(), ""));
+        assertEquals("Task list author must not be null or empty", exception.getMessage());
     }
 
     @Test
