@@ -1,9 +1,6 @@
 package org.briarheart.orchestra.service;
 
-import org.briarheart.orchestra.data.EntityNotFoundException;
-import org.briarheart.orchestra.data.TagRepository;
-import org.briarheart.orchestra.data.TaskRepository;
-import org.briarheart.orchestra.data.TaskTagRelationRepository;
+import org.briarheart.orchestra.data.*;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
@@ -31,6 +28,7 @@ class DefaultTaskServiceTest {
     private TaskRepository taskRepositoryMock;
     private TagRepository tagRepositoryMock;
     private TaskTagRelationRepository taskTagRelationRepository;
+    private TaskCommentRepository taskCommentRepository;
 
     private DefaultTaskService taskService;
 
@@ -45,7 +43,10 @@ class DefaultTaskServiceTest {
         when(taskTagRelationRepository.create(any(), any())).thenReturn(Mono.empty().then());
         when(taskTagRelationRepository.findByTaskId(any())).thenReturn(Flux.empty());
 
-        taskService = new DefaultTaskService(taskRepositoryMock, tagRepositoryMock, taskTagRelationRepository);
+        taskCommentRepository = mock(TaskCommentRepository.class);
+
+        taskService = new DefaultTaskService(taskRepositoryMock, tagRepositoryMock, taskTagRelationRepository,
+                taskCommentRepository);
     }
 
     @Test
@@ -310,6 +311,38 @@ class DefaultTaskServiceTest {
     void shouldThrowExceptionOnTaskGetWhenTaskIsNotFound() {
         when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class, () -> taskService.getTask(1L, "alice").block());
+    }
+
+    @Test
+    void shouldReturnAllCommentsForTask() {
+        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(task.getId(), 0, null))
+                .thenReturn(Flux.empty());
+
+        taskService.getComments(task.getId(), task.getAuthor(), Pageable.unpaged()).blockFirst();
+        verify(taskCommentRepository, times(1)).findByTaskIdOrderByCreatedAtDesc(task.getId(), 0, null);
+    }
+
+    @Test
+    void shouldReturnCommentsForTaskWithPagingRestriction() {
+        PageRequest pageRequest = PageRequest.of(3, 50);
+
+        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
+        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(task.getId(), pageRequest.getOffset(),
+                pageRequest.getPageSize())).thenReturn(Flux.empty());
+
+        taskService.getComments(task.getId(), task.getAuthor(), pageRequest).blockFirst();
+        verify(taskCommentRepository, times(1)).findByTaskIdOrderByCreatedAtDesc(task.getId(),
+                pageRequest.getOffset(), pageRequest.getPageSize());
+    }
+
+    @Test
+    void shouldThrowExceptionOnCommentsGetWhenTaskIsNotFound() {
+        when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class,
+                () -> taskService.getComments(1L, "alice", Pageable.unpaged()).blockFirst());
     }
 
     @Test

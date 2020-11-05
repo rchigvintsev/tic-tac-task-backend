@@ -5,11 +5,8 @@ import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskCommentRepository;
 import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.TaskComment;
-import org.briarheart.orchestra.util.Pageables;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -25,17 +22,6 @@ import java.time.ZoneOffset;
 public class DefaultTaskCommentService implements TaskCommentService {
     private final TaskRepository taskRepository;
     private final TaskCommentRepository taskCommentRepository;
-
-    @Override
-    public Flux<TaskComment> getComments(Long taskId, String taskAuthor, Pageable pageable) {
-        return taskRepository.findByIdAndAuthor(taskId, taskAuthor)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + taskId + " is not found")))
-                .flatMapMany(task -> {
-                    long offset = Pageables.getOffset(pageable);
-                    Integer limit = Pageables.getLimit(pageable);
-                    return taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(taskId, offset, limit);
-                });
-    }
 
     @Override
     public Mono<TaskComment> createComment(TaskComment comment, String commentAuthor, Long taskId) {

@@ -1,17 +1,11 @@
 package org.briarheart.orchestra.service;
 
-import org.briarheart.orchestra.data.EntityNotFoundException;
-import org.briarheart.orchestra.data.TagRepository;
-import org.briarheart.orchestra.data.TaskRepository;
-import org.briarheart.orchestra.data.TaskTagRelationRepository;
-import org.briarheart.orchestra.model.Tag;
-import org.briarheart.orchestra.model.Task;
-import org.briarheart.orchestra.model.TaskStatus;
-import org.briarheart.orchestra.model.TaskTagRelation;
+import lombok.RequiredArgsConstructor;
+import org.briarheart.orchestra.data.*;
+import org.briarheart.orchestra.model.*;
 import org.briarheart.orchestra.util.Pageables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -29,21 +23,14 @@ import java.util.stream.Collectors;
  * @author Roman Chigvintsev
  */
 @Service
+@RequiredArgsConstructor
 public class DefaultTaskService implements TaskService {
     private static final Logger log = LoggerFactory.getLogger(DefaultTaskService.class);
 
     private final TaskRepository taskRepository;
     private final TagRepository tagRepository;
     private final TaskTagRelationRepository taskTagRelationRepository;
-
-    @Autowired
-    public DefaultTaskService(TaskRepository taskRepository,
-                              TagRepository tagRepository,
-                              TaskTagRelationRepository taskTagRelationRepository) {
-        this.taskRepository = taskRepository;
-        this.tagRepository = tagRepository;
-        this.taskTagRelationRepository = taskTagRelationRepository;
-    }
+    private final TaskCommentRepository taskCommentRepository;
 
     @Override
     public Mono<Long> getUnprocessedTaskCount(String author) {
@@ -124,12 +111,19 @@ public class DefaultTaskService implements TaskService {
 
     @Override
     public Mono<Task> getTask(Long id, String author) throws EntityNotFoundException {
-        return taskRepository.findByIdAndAuthor(id, author)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")))
-                .flatMap(task -> getTags(task).map(tags -> {
-                    task.setTags(tags);
-                    return task;
-                }));
+        return findTask(id, author).flatMap(task -> getTags(task).map(tags -> {
+            task.setTags(tags);
+            return task;
+        }));
+    }
+
+    @Override
+    public Flux<TaskComment> getComments(Long taskId, String taskAuthor, Pageable pageable) {
+        return findTask(taskId, taskAuthor).flatMapMany(task -> {
+            long offset = Pageables.getOffset(pageable);
+            Integer limit = Pageables.getLimit(pageable);
+            return taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(taskId, offset, limit);
+        });
     }
 
     @Override
@@ -168,6 +162,11 @@ public class DefaultTaskService implements TaskService {
             task.setStatus(TaskStatus.COMPLETED);
             return taskRepository.save(task);
         }).then();
+    }
+
+    private Mono<Task> findTask(Long id, String author) {
+        return taskRepository.findByIdAndAuthor(id, author)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")));
     }
 
     private Mono<List<Tag>> getTags(Task task) {

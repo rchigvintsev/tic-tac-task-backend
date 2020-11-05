@@ -12,12 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Locale;
@@ -50,24 +48,6 @@ class TaskCommentControllerTest {
     @AfterAll
     static void afterAll() {
         Locale.setDefault(DEFAULT_LOCALE);
-    }
-
-    @Test
-    void shouldGetCommentsForTask() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        TaskComment comment = TaskComment.builder().id(1L).taskId(2L).commentText("Test comment").build();
-        Mockito.when(taskCommentService.getComments(
-                comment.getTaskId(),
-                authenticationMock.getName(),
-                PageRequest.of(0, 20)
-        )).thenReturn(Flux.just(comment));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/task-comments?taskId=" + comment.getTaskId()).exchange()
-                .expectStatus().isOk()
-                .expectBody(TaskComment[].class).isEqualTo(new TaskComment[]{comment});
     }
 
     @Test

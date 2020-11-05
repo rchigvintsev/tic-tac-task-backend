@@ -4,12 +4,14 @@ import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
+import org.briarheart.orchestra.model.TaskComment;
 import org.briarheart.orchestra.model.TaskStatus;
 import org.briarheart.orchestra.service.TaskService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -277,6 +279,24 @@ class TaskControllerTest {
                 .uri("/tasks/1").exchange()
                 .expectStatus().isNotFound()
                 .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
+    }
+
+    @Test
+    void shouldGetCommentsForTask() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        TaskComment comment = TaskComment.builder().id(1L).taskId(2L).commentText("Test comment").build();
+        Mockito.when(taskService.getComments(
+                comment.getTaskId(),
+                authenticationMock.getName(),
+                PageRequest.of(0, 20)
+        )).thenReturn(Flux.just(comment));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/" + comment.getTaskId() + "/comments").exchange()
+                .expectStatus().isOk()
+                .expectBody(TaskComment[].class).isEqualTo(new TaskComment[]{comment});
     }
 
     @Test

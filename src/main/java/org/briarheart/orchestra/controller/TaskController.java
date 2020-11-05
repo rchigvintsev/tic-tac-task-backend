@@ -2,6 +2,7 @@ package org.briarheart.orchestra.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.Task;
+import org.briarheart.orchestra.model.TaskComment;
 import org.briarheart.orchestra.service.TaskService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -83,6 +84,11 @@ public class TaskController {
     @GetMapping("/{id}")
     public Mono<Task> getTask(@PathVariable("id") Long id, Principal user) {
         return taskService.getTask(id, user.getName());
+    }
+
+    @GetMapping("/{taskId}/comments")
+    public Flux<TaskComment> getComments(@PathVariable("taskId") Long taskId, Principal user, Pageable pageable) {
+        return taskService.getComments(taskId, user.getName(), pageable);
     }
 
     @PostMapping
