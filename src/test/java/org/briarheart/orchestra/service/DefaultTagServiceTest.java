@@ -2,10 +2,13 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TagRepository;
+import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.data.TaskTagRelationRepository;
 import org.briarheart.orchestra.model.Tag;
+import org.briarheart.orchestra.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -18,13 +21,15 @@ import static org.mockito.Mockito.*;
 class DefaultTagServiceTest {
     private TagRepository tagRepository;
     private TaskTagRelationRepository taskTagRelationRepository;
+    private TaskRepository taskRepository;
     private DefaultTagService tagService;
 
     @BeforeEach
     void setUp() {
         tagRepository = mock(TagRepository.class);
         taskTagRelationRepository = mock(TaskTagRelationRepository.class);
-        tagService = new DefaultTagService(tagRepository, taskTagRelationRepository);
+        taskRepository = mock(TaskRepository.class);
+        tagService = new DefaultTagService(tagRepository, taskTagRelationRepository, taskRepository);
     }
 
     @Test
@@ -49,6 +54,17 @@ class DefaultTagServiceTest {
     void shouldThrowExceptionOnTagGetWhenTagIsNotFound() {
         when(tagRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class, () -> tagService.getTag(1L, "alice").block());
+    }
+
+    @Test
+    void shouldReturnAllUncompletedTasksForTag() {
+        Tag tag = Tag.builder().id(1L).author("alice").name("Test tag").build();
+        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
+        when(taskRepository.findByStatusNotAndTagId(TaskStatus.COMPLETED, tag.getId(), 0, null))
+                .thenReturn(Flux.empty());
+
+        tagService.getUncompletedTasks(tag.getId(), tag.getAuthor(), Pageable.unpaged()).blockFirst();
+        verify(taskRepository, times(1)).findByStatusNotAndTagId(TaskStatus.COMPLETED, tag.getId(), 0, null);
     }
 
     @Test

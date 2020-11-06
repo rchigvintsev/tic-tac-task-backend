@@ -2,6 +2,8 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;
+import org.briarheart.orchestra.model.Task;
+import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -29,6 +31,18 @@ public interface TagService {
      * @throws EntityNotFoundException if tag is not found by id and author
      */
     Mono<Tag> getTag(Long id, String author);
+
+    /**
+     * Returns uncompleted tasks (either unprocessed or processed) for tag with the given id and belonging to the given
+     * author.
+     *
+     * @param tagId tag id
+     * @param tagAuthor tag author
+     * @param pageable paging restriction
+     * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
+     * @throws EntityNotFoundException if tag is not found by id and author
+     */
+    Flux<Task> getUncompletedTasks(Long tagId, String tagAuthor, Pageable pageable);
 
     /**
      * Updates tag with the given id and belonging to the given author.

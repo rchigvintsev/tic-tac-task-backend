@@ -85,15 +85,13 @@ public interface TaskService {
     Mono<Long> getUncompletedTaskCount(String author);
 
     /**
-     * Returns uncompleted tasks (either unprocessed or processed) belonging to the given author and optionally
-     * filtered by the given tag id.
+     * Returns uncompleted tasks (either unprocessed or processed) belonging to the given author.
      *
-     * @param tagId optional filter by tag id
      * @param author task author
      * @param pageable paging restriction
      * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getUncompletedTasks(Long tagId, String author, Pageable pageable);
+    Flux<Task> getUncompletedTasks(String author, Pageable pageable);
 
     /**
      * Returns task with the given id and belonging to the given author.

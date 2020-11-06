@@ -3,6 +3,7 @@ package org.briarheart.orchestra.controller;
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;
+import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.service.TagService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -84,6 +85,23 @@ class TagControllerTest {
                 .uri("/tags/1").exchange()
                 .expectStatus().isNotFound()
                 .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
+    }
+
+    @Test
+    void shouldReturnUncompletedTasksForTag() {
+        String username = "alice";
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        long tagId = 1L;
+
+        Task task = Task.builder().id(2L).title("Test task").author(username).build();
+        when(tagService.getUncompletedTasks(eq(tagId), eq(username), any())).thenReturn(Flux.just(task));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tags/" + tagId + "/tasks/uncompleted").exchange()
+                .expectStatus().isOk()
+                .expectBody(Task[].class).isEqualTo(new Task[] {task});
     }
 
     @Test
