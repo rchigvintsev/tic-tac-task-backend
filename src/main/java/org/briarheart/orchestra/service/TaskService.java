@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskComment;
 import org.springframework.data.domain.Pageable;
@@ -104,15 +105,25 @@ public interface TaskService {
     Mono<Task> getTask(Long id, String author) throws EntityNotFoundException;
 
     /**
+     * Returns tags for task with the given id and belonging to the given author.
+     *
+     * @param taskId task id
+     * @param taskAuthor task author
+     * @return task tags or empty stream when task does not have any tag
+     * @throws EntityNotFoundException if task is not found by id and author
+     */
+    Flux<Tag> getTags(Long taskId, String taskAuthor) throws EntityNotFoundException;
+
+    /**
      * Returns comments for task with the given id and belonging to the given author.
      *
      * @param taskId task id
      * @param taskAuthor task author
      * @param pageable paging restriction
-     * @return task comments or empty stream when there is no comment meeting the given criteria
+     * @return task comments or empty stream when task does not have any comment
      * @throws EntityNotFoundException if task is not found by id and author
      */
-    Flux<TaskComment> getComments(Long taskId, String taskAuthor, Pageable pageable);
+    Flux<TaskComment> getComments(Long taskId, String taskAuthor, Pageable pageable) throws EntityNotFoundException;
 
     /**
      * Creates new task belonging to the given author.

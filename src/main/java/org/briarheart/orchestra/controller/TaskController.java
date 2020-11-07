@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskComment;
 import org.briarheart.orchestra.service.TaskService;
@@ -82,6 +83,11 @@ public class TaskController {
     @GetMapping("/{id}")
     public Mono<Task> getTask(@PathVariable("id") Long id, Principal user) {
         return taskService.getTask(id, user.getName());
+    }
+
+    @GetMapping("/{taskId}/tags")
+    public Flux<Tag> getTags(@PathVariable("taskId") Long taskId, Principal user) {
+        return taskService.getTags(taskId, user.getName());
     }
 
     @GetMapping("/{taskId}/comments")

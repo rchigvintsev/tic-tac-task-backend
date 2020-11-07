@@ -2,16 +2,11 @@ package org.briarheart.orchestra.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.Transient;
 
-import javax.validation.Valid;
 import javax.validation.constraints.FutureOrPresent;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Main entity representing task to be done.
@@ -34,11 +29,6 @@ public class Task {
     @Builder.Default
     private TaskStatus status = TaskStatus.UNPROCESSED;
 
-    @Builder.Default
-    @Transient
-    @Valid
-    private List<Tag> tags = Collections.emptyList();
-
     private String author;
 
     @FutureOrPresent
@@ -59,7 +49,6 @@ public class Task {
         copy.setAuthor(author);
         copy.setDeadline(deadline);
         copy.setDeadlineTimeExplicitlySet(deadlineTimeExplicitlySet);
-        copy.setTags(this.tags.isEmpty() ? Collections.emptyList() : new ArrayList<>(this.tags));
         return copy;
     }
 }

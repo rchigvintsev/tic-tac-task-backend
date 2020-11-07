@@ -72,7 +72,7 @@ class TaskControllerTest {
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/unprocessed").exchange()
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+                .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
 
     @Test
@@ -103,7 +103,7 @@ class TaskControllerTest {
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/processed").exchange()
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+                .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
 
     @Test
@@ -135,7 +135,7 @@ class TaskControllerTest {
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/processed?deadlineFrom=&deadlineTo=").exchange()
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+                .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
 
     @Test
@@ -177,7 +177,7 @@ class TaskControllerTest {
                 .uri("/tasks/processed?deadlineFrom=" + deadlineFrom + "&deadlineTo=" + deadlineTo)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+                .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
 
     @Test
@@ -215,7 +215,7 @@ class TaskControllerTest {
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/uncompleted").exchange()
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+                .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
 
     @Test
@@ -261,6 +261,23 @@ class TaskControllerTest {
                 .uri("/tasks/1").exchange()
                 .expectStatus().isNotFound()
                 .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
+    }
+
+    @Test
+    void shouldReturnTagsForTask() {
+        String username = "alice";
+        Long taskId = 1L;
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        Tag tag = Tag.builder().id(2L).author(username).name("Test tag").build();
+        Mockito.when(taskService.getTags(taskId, username)).thenReturn(Flux.just(tag));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/" + taskId + "/tags").exchange()
+                .expectStatus().isOk()
+                .expectBody(Tag[].class).isEqualTo(new Tag[]{tag});
     }
 
     @Test
@@ -407,48 +424,6 @@ class TaskControllerTest {
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
                 .jsonPath("$.fieldErrors.deadline").isEqualTo("Value must not be in past");
-    }
-
-    @Test
-    void shouldRejectTaskCreationWhenTagNameIsEmpty() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        Task task = Task.builder().title("Test task").author(authenticationMock.getName()).build();
-        task.setTags(List.of(Tag.builder().build()));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/tasks")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
-                .exchange()
-
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors['tags[0].name']").isEqualTo("Value must not be blank");
-    }
-
-    @Test
-    void shouldRejectTaskCreationWhenTagNameIsLong() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        Task task = Task.builder().title("Test task").author(authenticationMock.getName()).build();
-        task.setTags(List.of(Tag.builder().name("L" + "o".repeat(43) + "ng name").build()));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/tasks")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
-                .exchange()
-
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors['tags[0].name']").isEqualTo("Value length must not be greater than 50");
     }
 
     @Test

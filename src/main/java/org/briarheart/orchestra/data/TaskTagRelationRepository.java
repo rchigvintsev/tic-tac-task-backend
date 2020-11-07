@@ -13,9 +13,6 @@ public interface TaskTagRelationRepository extends ReactiveCrudRepository<TaskTa
     @Query("SELECT * FROM tasks_tags WHERE task_id = :taskId")
     Flux<TaskTagRelation> findByTaskId(Long taskId);
 
-    @Query("SELECT * FROM tasks_tags WHERE task_id = :taskId AND tag_id = :tagId")
-    Mono<TaskTagRelation> findByTaskIdAndTagId(Long taskId, Long tagId);
-
     @Query("INSERT INTO tasks_tags (task_id, tag_id) VALUES (:taskId, :tagId)")
     Mono<Void> create(Long taskId, Long tagId);
 
