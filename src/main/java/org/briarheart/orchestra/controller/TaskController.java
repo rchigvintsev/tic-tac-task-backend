@@ -90,6 +90,14 @@ public class TaskController {
         return taskService.getTags(taskId, user.getName());
     }
 
+    @PutMapping("/{taskId}/tags/{tagId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> assignTag(@PathVariable("taskId") Long taskId,
+                                @PathVariable("tagId") Long tagId,
+                                Principal user) {
+        return taskService.assignTag(taskId, tagId, user.getName());
+    }
+
     @GetMapping("/{taskId}/comments")
     public Flux<TaskComment> getComments(@PathVariable("taskId") Long taskId, Principal user, Pageable pageable) {
         return taskService.getComments(taskId, user.getName(), pageable);

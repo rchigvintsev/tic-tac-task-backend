@@ -123,6 +123,15 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
+    public Mono<Void> assignTag(Long taskId, Long tagId, String author) throws EntityNotFoundException {
+        return findTask(taskId, author)
+                .flatMap(task -> findTag(tagId, author))
+                .flatMap(tag -> taskTagRelationRepository.findByTaskIdAndTagId(taskId, tagId))
+                .switchIfEmpty(Mono.defer(() -> taskTagRelationRepository.create(taskId, tagId)))
+                .then();
+    }
+
+    @Override
     public Flux<TaskComment> getComments(Long taskId, String taskAuthor, Pageable pageable) {
         return findTask(taskId, taskAuthor).flatMapMany(task -> {
             long offset = Pageables.getOffset(pageable);
@@ -172,5 +181,10 @@ public class DefaultTaskService implements TaskService {
     private Mono<Task> findTask(Long id, String author) {
         return taskRepository.findByIdAndAuthor(id, author)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")));
+    }
+
+    private Mono<Tag> findTag(Long id, String author) {
+        return tagRepository.findByIdAndAuthor(id, author)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")));
     }
 }

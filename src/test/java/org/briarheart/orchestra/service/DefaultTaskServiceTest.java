@@ -24,45 +24,50 @@ import static org.mockito.Mockito.*;
  * @author Roman Chigvintsev
  */
 class DefaultTaskServiceTest {
-    private TaskRepository taskRepositoryMock;
+    private TaskRepository taskRepository;
     private TaskTagRelationRepository taskTagRelationRepository;
-    private TagRepository tagRepositoryMock;
+    private TagRepository tagRepository;
     private TaskCommentRepository taskCommentRepository;
 
     private DefaultTaskService taskService;
 
     @BeforeEach
     void setUp() {
-        taskRepositoryMock = mock(TaskRepository.class);
-        when(taskRepositoryMock.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
+        taskRepository = mock(TaskRepository.class);
+        when(taskRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
 
         taskTagRelationRepository = mock(TaskTagRelationRepository.class);
         when(taskTagRelationRepository.findByTaskId(any())).thenReturn(Flux.empty());
+        when(taskTagRelationRepository.create(anyLong(), anyLong())).thenAnswer(args -> {
+            Long taskId = args.getArgument(0);
+            Long tagId = args.getArgument(1);
+            return Mono.just(new TaskTagRelation(taskId, tagId));
+        });
 
-        tagRepositoryMock = mock(TagRepository.class);
+        tagRepository = mock(TagRepository.class);
 
         taskCommentRepository = mock(TaskCommentRepository.class);
 
-        taskService = new DefaultTaskService(taskRepositoryMock, taskTagRelationRepository, tagRepositoryMock,
+        taskService = new DefaultTaskService(taskRepository, taskTagRelationRepository, tagRepository,
                 taskCommentRepository);
     }
 
     @Test
     void shouldReturnNumberOfAllUnprocessedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author)).thenReturn(Mono.empty());
+        when(taskRepository.countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author)).thenReturn(Mono.empty());
         taskService.getUnprocessedTaskCount(author).block();
-        verify(taskRepositoryMock, times(1)).countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
+        verify(taskRepository, times(1)).countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
     }
 
     @Test
     void shouldReturnAllUnprocessedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, 0, null))
+        when(taskRepository.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, 0, null))
                 .thenReturn(Flux.empty());
 
         taskService.getUnprocessedTasks(author, Pageable.unpaged()).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, 0, null);
+        verify(taskRepository, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, 0, null);
     }
 
     @Test
@@ -70,29 +75,29 @@ class DefaultTaskServiceTest {
         String author = "alice";
         PageRequest pageRequest = PageRequest.of(3, 50);
 
-        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, pageRequest.getOffset(),
+        when(taskRepository.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.empty());
 
         taskService.getUnprocessedTasks(author, pageRequest).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author,
+        verify(taskRepository, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author,
                 pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
     @Test
     void shouldReturnNumberOfAllProcessedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.countAllByStatusAndAuthor(TaskStatus.PROCESSED, author)).thenReturn(Mono.empty());
+        when(taskRepository.countAllByStatusAndAuthor(TaskStatus.PROCESSED, author)).thenReturn(Mono.empty());
         taskService.getProcessedTaskCount(author).block();
-        verify(taskRepositoryMock, times(1)).countAllByStatusAndAuthor(TaskStatus.PROCESSED, author);
+        verify(taskRepository, times(1)).countAllByStatusAndAuthor(TaskStatus.PROCESSED, author);
     }
 
     @Test
     void shouldReturnAllProcessedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null)).thenReturn(Flux.empty());
+        when(taskRepository.findByStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null)).thenReturn(Flux.empty());
 
         taskService.getProcessedTasks(author, Pageable.unpaged()).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null);
+        verify(taskRepository, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null);
     }
 
     @Test
@@ -100,11 +105,11 @@ class DefaultTaskServiceTest {
         String author = "alice";
         PageRequest pageRequest = PageRequest.of(3, 50);
 
-        when(taskRepositoryMock.findByStatusAndAuthor(TaskStatus.PROCESSED, author, pageRequest.getOffset(),
+        when(taskRepository.findByStatusAndAuthor(TaskStatus.PROCESSED, author, pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.empty());
 
         taskService.getProcessedTasks(author, pageRequest).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author,
+        verify(taskRepository, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author,
                 pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
@@ -114,7 +119,7 @@ class DefaultTaskServiceTest {
         LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
-        when(taskRepositoryMock.countAllByDeadlineBetweenAndStatusAndAuthor(
+        when(taskRepository.countAllByDeadlineBetweenAndStatusAndAuthor(
                 deadlineFrom,
                 deadlineTo,
                 TaskStatus.PROCESSED,
@@ -122,7 +127,7 @@ class DefaultTaskServiceTest {
         )).thenReturn(Mono.empty());
 
         taskService.getProcessedTaskCount(deadlineFrom, deadlineTo, author).block();
-        verify(taskRepositoryMock, times(1)).countAllByDeadlineBetweenAndStatusAndAuthor(deadlineFrom,
+        verify(taskRepository, times(1)).countAllByDeadlineBetweenAndStatusAndAuthor(deadlineFrom,
                 deadlineTo, TaskStatus.PROCESSED, author);
     }
 
@@ -132,7 +137,7 @@ class DefaultTaskServiceTest {
         LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
-        when(taskRepositoryMock.findByDeadlineBetweenAndStatusAndAuthor(
+        when(taskRepository.findByDeadlineBetweenAndStatusAndAuthor(
                 deadlineFrom,
                 deadlineTo,
                 TaskStatus.PROCESSED,
@@ -142,7 +147,7 @@ class DefaultTaskServiceTest {
         )).thenReturn(Flux.empty());
 
         taskService.getProcessedTasks(deadlineFrom, deadlineTo, author, null).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo,
+        verify(taskRepository, times(1)).findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo,
                 TaskStatus.PROCESSED, author, 0, null);
     }
 
@@ -151,14 +156,14 @@ class DefaultTaskServiceTest {
         LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
-        when(taskRepositoryMock.countAllByDeadlineLessThanEqualAndStatusAndAuthor(
+        when(taskRepository.countAllByDeadlineLessThanEqualAndStatusAndAuthor(
                 deadlineTo,
                 TaskStatus.PROCESSED,
                 author
         )).thenReturn(Mono.empty());
 
         taskService.getProcessedTaskCount(null, deadlineTo, author).block();
-        verify(taskRepositoryMock, times(1)).countAllByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo,
+        verify(taskRepository, times(1)).countAllByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo,
                 TaskStatus.PROCESSED, author);
     }
 
@@ -167,7 +172,7 @@ class DefaultTaskServiceTest {
         LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
         String author = "alice";
 
-        when(taskRepositoryMock.findByDeadlineLessThanEqualAndStatusAndAuthor(
+        when(taskRepository.findByDeadlineLessThanEqualAndStatusAndAuthor(
                 deadlineTo,
                 TaskStatus.PROCESSED,
                 author,
@@ -176,7 +181,7 @@ class DefaultTaskServiceTest {
         )).thenReturn(Flux.empty());
 
         taskService.getProcessedTasks(null, deadlineTo, author, null).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo,
+        verify(taskRepository, times(1)).findByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo,
                 TaskStatus.PROCESSED, author, 0, null);
     }
 
@@ -185,14 +190,14 @@ class DefaultTaskServiceTest {
         LocalDateTime deadlineFrom = LocalDateTime.now();
         String author = "alice";
 
-        when(taskRepositoryMock.countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(
+        when(taskRepository.countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(
                 deadlineFrom,
                 TaskStatus.PROCESSED,
                 author
         )).thenReturn(Mono.empty());
 
         taskService.getProcessedTaskCount(deadlineFrom, null, author).block();
-        verify(taskRepositoryMock, times(1)).countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom,
+        verify(taskRepository, times(1)).countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom,
                 TaskStatus.PROCESSED, author);
     }
 
@@ -201,7 +206,7 @@ class DefaultTaskServiceTest {
         LocalDateTime deadlineFrom = LocalDateTime.now();
         String author = "alice";
 
-        when(taskRepositoryMock.findByDeadlineGreaterThanEqualAndStatusAndAuthor(
+        when(taskRepository.findByDeadlineGreaterThanEqualAndStatusAndAuthor(
                 deadlineFrom,
                 TaskStatus.PROCESSED,
                 author,
@@ -210,48 +215,48 @@ class DefaultTaskServiceTest {
         )).thenReturn(Flux.empty());
 
         taskService.getProcessedTasks(deadlineFrom, null, author, null).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom,
+        verify(taskRepository, times(1)).findByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom,
                 TaskStatus.PROCESSED, author, 0, null);
     }
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithoutDeadlineDate() {
         String author = "alice";
-        when(taskRepositoryMock.countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author))
+        when(taskRepository.countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author))
                 .thenReturn(Mono.empty());
 
         taskService.getProcessedTaskCount(null, null, author).block();
-        verify(taskRepositoryMock, times(1)).countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+        verify(taskRepository, times(1)).countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
     }
 
     @Test
     void shouldReturnProcessedTasksWithoutDeadlineDate() {
         String author = "alice";
-        when(taskRepositoryMock.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null))
+        when(taskRepository.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null))
                 .thenReturn(Flux.empty());
 
         taskService.getProcessedTasks(null, null, author, null).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author,
+        verify(taskRepository, times(1)).findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author,
                 0, null);
     }
 
     @Test
     void shouldReturnNumberOfAllUncompletedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author)).thenReturn(Mono.empty());
+        when(taskRepository.countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author)).thenReturn(Mono.empty());
 
         taskService.getUncompletedTaskCount(author).block();
-        verify(taskRepositoryMock, times(1)).countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author);
+        verify(taskRepository, times(1)).countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author);
     }
 
     @Test
     void shouldReturnAllUncompletedTasks() {
         String author = "alice";
-        when(taskRepositoryMock.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null))
+        when(taskRepository.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null))
                 .thenReturn(Flux.empty());
 
         taskService.getUncompletedTasks(author, Pageable.unpaged()).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null);
+        verify(taskRepository, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null);
     }
 
     @Test
@@ -259,18 +264,18 @@ class DefaultTaskServiceTest {
         String author = "alice";
         PageRequest pageRequest = PageRequest.of(3, 50);
 
-        when(taskRepositoryMock.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, pageRequest.getOffset(),
+        when(taskRepository.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.empty());
 
         taskService.getUncompletedTasks(author, pageRequest).blockFirst();
-        verify(taskRepositoryMock, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author,
+        verify(taskRepository, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author,
                 pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
     @Test
     void shouldReturnTaskById() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 
         Task result = taskService.getTask(task.getId(), task.getAuthor()).block();
         assertNotNull(result);
@@ -279,7 +284,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskGetWhenTaskIsNotFound() {
-        when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        when(taskRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class, () -> taskService.getTask(1L, "alice").block());
     }
 
@@ -288,25 +293,67 @@ class DefaultTaskServiceTest {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         Tag tag = Tag.builder().id(2L).name("Test tag").author(task.getAuthor()).build();
 
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
         when(taskTagRelationRepository.findByTaskId(task.getId()))
                 .thenReturn(Flux.just(new TaskTagRelation(task.getId(), tag.getId())));
-        when(tagRepositoryMock.findByIdIn(Set.of(tag.getId()))).thenReturn(Flux.just(tag));
+        when(tagRepository.findByIdIn(Set.of(tag.getId()))).thenReturn(Flux.just(tag));
 
         taskService.getTags(task.getId(), task.getAuthor()).blockFirst();
-        verify(tagRepositoryMock, times(1)).findByIdIn(Set.of(tag.getId()));
+        verify(tagRepository, times(1)).findByIdIn(Set.of(tag.getId()));
     }
 
     @Test
     void shouldThrowExceptionOnTagsGetWhenTaskIsNotFound() {
-        when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        when(taskRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class, () -> taskService.getTags(1L, "alice").blockFirst());
+    }
+
+    @Test
+    void shouldAssignTagToTask() {
+        String author = "alice";
+        Task task = Task.builder().id(1L).title("Test task").author(author).build();
+        Tag tag = Tag.builder().id(2L).name("Test tag").author(author).build();
+
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
+        when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), tag.getId())).thenReturn(Mono.empty());
+
+        taskService.assignTag(task.getId(), tag.getId(), author).block();
+        verify(taskTagRelationRepository, times(1)).create(task.getId(), tag.getId());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTagAssignWhenTaskIsNotFound() {
+        Long taskId = 1L;
+        String author = "alice";
+        Tag tag = Tag.builder().id(2L).name("Test tag").author(author).build();
+
+        when(taskRepository.findByIdAndAuthor(taskId, author)).thenReturn(Mono.empty());
+        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
+
+        assertThrows(EntityNotFoundException.class,
+                () -> taskService.assignTag(taskId, tag.getId(), author).block(),
+                "Task with id " + taskId + "is not found");
+    }
+
+    @Test
+    void shouldThrowExceptionOnTagAssignWhenTagIsNotFound() {
+        Long tagId = 2L;
+        String author = "alice";
+        Task task = Task.builder().id(1L).title("Test task").author(author).build();
+
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(tagRepository.findByIdAndAuthor(tagId, author)).thenReturn(Mono.empty());
+
+        assertThrows(EntityNotFoundException.class,
+                () -> taskService.assignTag(task.getId(), tagId, author).block(),
+                "Tag with id " + tagId + " is not found");
     }
 
     @Test
     void shouldReturnAllCommentsForTask() {
         Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
         when(taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(task.getId(), 0, null))
                 .thenReturn(Flux.empty());
 
@@ -319,7 +366,7 @@ class DefaultTaskServiceTest {
         PageRequest pageRequest = PageRequest.of(3, 50);
 
         Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
         when(taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(task.getId(), pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.empty());
 
@@ -330,7 +377,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnCommentsGetWhenTaskIsNotFound() {
-        when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        when(taskRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class,
                 () -> taskService.getComments(1L, "alice", Pageable.unpaged()).blockFirst());
     }
@@ -341,7 +388,7 @@ class DefaultTaskServiceTest {
         Task result = taskService.createTask(task, "alice").block();
         assertNotNull(result);
         assertEquals(task.getTitle(), result.getTitle());
-        verify(taskRepositoryMock, times(1)).save(any());
+        verify(taskRepository, times(1)).save(any());
     }
 
     @Test
@@ -385,7 +432,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldUpdateTask() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 
         Task updatedTask = Task.builder().title("Updated test task").build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
@@ -396,7 +443,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldSetIdFieldOnTaskUpdate() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 
         Task updatedTask = Task.builder().title("Updated test task").build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
@@ -407,7 +454,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldSetAuthorFieldOnTaskUpdate() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 
         Task updatedTask = Task.builder().title("Updated test task").build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
@@ -418,7 +465,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldSetStatusFieldOnTaskUpdate() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 
         Task updatedTask = Task.builder().title("Updated test task").status(null).build();
         Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
@@ -429,7 +476,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldMakeTaskProcessedOnTaskUpdateWhenDeadlineDateIsNotNull() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 
         Task updatedTask = Task.builder()
                 .title("Updated test task")
@@ -450,7 +497,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldCompleteTask() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 
         taskService.completeTask(task.getId(), task.getAuthor()).block();
         assertSame(TaskStatus.COMPLETED, task.getStatus());

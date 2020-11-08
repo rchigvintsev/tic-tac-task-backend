@@ -115,6 +115,16 @@ public interface TaskService {
     Flux<Tag> getTags(Long taskId, String taskAuthor) throws EntityNotFoundException;
 
     /**
+     * Assigns tag with the given id to task with the given id. Both task and tag must belong to the given author.
+     *
+     * @param taskId task id
+     * @param tagId id of tag to be assigned
+     * @param author task/tag author
+     * @throws EntityNotFoundException if task or tag is not found by id and author
+     */
+    Mono<Void> assignTag(Long taskId, Long tagId, String author) throws EntityNotFoundException;
+
+    /**
      * Returns comments for task with the given id and belonging to the given author.
      *
      * @param taskId task id

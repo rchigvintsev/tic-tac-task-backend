@@ -281,6 +281,24 @@ class TaskControllerTest {
     }
 
     @Test
+    void shouldAssignTagToTask() {
+        Long taskId = 1L;
+        Long tagId = 2L;
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        when(taskService.assignTag(taskId, tagId, username)).thenReturn(Mono.empty());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).put()
+                .uri("/tasks/" + taskId + "/tags/" + tagId)
+                .exchange()
+                .expectStatus().isNoContent();
+    }
+
+    @Test
     void shouldReturnCommentsForTask() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
