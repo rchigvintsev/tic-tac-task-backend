@@ -295,6 +295,26 @@ class TaskControllerTest {
                 .mutateWith(csrf()).put()
                 .uri("/tasks/" + taskId + "/tags/" + tagId)
                 .exchange()
+
+                .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldRemoveTagFromTask() {
+        Long taskId = 1L;
+        Long tagId = 2L;
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        when(taskService.removeTag(taskId, username, tagId)).thenReturn(Mono.empty());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).delete()
+                .uri("/tasks/" + taskId + "/tags/" + tagId)
+                .exchange()
+
                 .expectStatus().isNoContent();
     }
 

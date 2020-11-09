@@ -125,6 +125,16 @@ public interface TaskService {
     Mono<Void> assignTag(Long taskId, Long tagId, String author) throws EntityNotFoundException;
 
     /**
+     * Removes tag with the given id from task with the given id and belonging to the given author.
+     *
+     * @param taskId task id
+     * @param taskAuthor task author
+     * @param tagId id of tag to be removed
+     * @throws EntityNotFoundException if task is not found by id and author
+     */
+    Mono<Void> removeTag(Long taskId, String taskAuthor, Long tagId) throws EntityNotFoundException;
+
+    /**
      * Returns comments for task with the given id and belonging to the given author.
      *
      * @param taskId task id

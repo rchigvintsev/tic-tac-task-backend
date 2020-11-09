@@ -351,6 +351,30 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldRemoveTagFromTask() {
+        String author = "alice";
+        Task task = Task.builder().id(1L).title("Test task").author(author).build();
+        Tag tag = Tag.builder().id(2L).name("Test tag").author(author).build();
+
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskTagRelationRepository.deleteByTaskIdAndTagId(task.getId(), tag.getId()))
+                .thenReturn(Mono.empty().then());
+
+        taskService.removeTag(task.getId(), author, tag.getId()).block();
+        verify(taskTagRelationRepository, times(1)).deleteByTaskIdAndTagId(task.getId(), tag.getId());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTagRemoveWhenTaskIsNotFound() {
+        Long taskId = 1L;
+        Long tagId = 2L;
+        String author = "alice";
+        when(taskRepository.findByIdAndAuthor(taskId, author)).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.removeTag(taskId, author, tagId).block(),
+                "Task with id " + taskId + "is not found");
+    }
+
+    @Test
     void shouldReturnAllCommentsForTask() {
         Task task = Task.builder().id(1L).author("alice").title("Test task").build();
         when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
