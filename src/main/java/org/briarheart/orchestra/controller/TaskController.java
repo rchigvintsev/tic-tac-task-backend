@@ -111,6 +111,14 @@ public class TaskController {
         return taskService.getComments(taskId, user.getName(), pageable);
     }
 
+    @PostMapping("/{taskId}/comments")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<TaskComment> addComment(@PathVariable("taskId") Long taskId,
+                                        @Valid @RequestBody TaskComment comment,
+                                        Principal user) {
+        return taskService.addComment(taskId, user.getName(), comment);
+    }
+
     @PostMapping
     public Mono<ResponseEntity<Task>> createTask(@Valid @RequestBody Task task,
                                                  Principal user,

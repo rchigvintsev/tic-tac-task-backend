@@ -12,18 +12,6 @@ import reactor.core.publisher.Mono;
  */
 public interface TaskCommentService {
     /**
-     * Creates new comment belonging to the given author and associates it with the given task.
-     *
-     * @param comment comment to be created (must not be {@code null})
-     * @param commentAuthor comment author
-     * @param taskId id of task with which the new comment should be associated
-     * @return created comment
-     * @throws EntityNotFoundException if task is not found by id
-     */
-    Mono<TaskComment> createComment(TaskComment comment, String commentAuthor, Long taskId)
-            throws EntityNotFoundException;
-
-    /**
      * Updates comment with the given id and belonging to the given author.
      *
      * @param comment comment to be updated (must not be {@code null})

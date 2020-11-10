@@ -51,29 +51,6 @@ class TaskCommentControllerTest {
     }
 
     @Test
-    void shouldCreateComment() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        TaskComment comment = TaskComment.builder().commentText("New test comment").build();
-        TaskComment savedComment = comment.copy();
-        savedComment.setId(1L);
-        savedComment.setTaskId(2L);
-        Mockito.when(taskCommentService.createComment(comment, authenticationMock.getName(), savedComment.getTaskId()))
-                .thenReturn(Mono.just(savedComment));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
-                .uri("/task-comments?taskId=" + savedComment.getTaskId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
-                .exchange()
-
-                .expectStatus().isCreated()
-                .expectHeader().valueEquals("Location", "/task-comments/" + savedComment.getId())
-                .expectBody(TaskComment.class).isEqualTo(savedComment);
-    }
-
-    @Test
     void shouldUpdateComment() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
@@ -107,62 +84,5 @@ class TaskCommentControllerTest {
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).delete()
                 .uri("/task-comments/" + commentId).exchange()
                 .expectStatus().isNoContent();
-    }
-
-    @Test
-    void shouldRejectCommentCreationWhenCommentTextIsNull() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        TaskComment comment = TaskComment.builder().taskId(1L).build();
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
-                .uri("/task-comments?taskId=" + comment.getTaskId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
-                .exchange()
-
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
-    }
-
-    @Test
-    void shouldRejectCommentCreationWhenCommentTextIsBlank() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        TaskComment comment = TaskComment.builder().taskId(1L).commentText("").build();
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
-                .uri("/task-comments?taskId=" + comment.getTaskId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
-                .exchange()
-
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
-    }
-
-    @Test
-    void shouldRejectCommentCreationWhenCommentTextIsTooLong() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        TaskComment comment = TaskComment.builder().taskId(1L).commentText("L" + "o".repeat(9993) + "ng text").build();
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).post()
-                .uri("/task-comments?taskId=" + comment.getTaskId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
-                .exchange()
-
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value length must not be greater than 10000");
     }
 }

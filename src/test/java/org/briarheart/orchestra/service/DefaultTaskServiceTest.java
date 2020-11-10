@@ -1,10 +1,7 @@
 package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.*;
-import org.briarheart.orchestra.model.Tag;
-import org.briarheart.orchestra.model.Task;
-import org.briarheart.orchestra.model.TaskStatus;
-import org.briarheart.orchestra.model.TaskTagRelation;
+import org.briarheart.orchestra.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
@@ -386,6 +383,85 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldAddCommentToTask() {
+        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskCommentRepository.save(any())).thenAnswer(invocation -> {
+            TaskComment comment = invocation.getArgument(0, TaskComment.class);
+            comment.setId(2L);
+            return Mono.just(comment);
+        });
+        TaskComment newComment = TaskComment.builder().commentText("New comment").build();
+
+        taskService.addComment(task.getId(), task.getAuthor(), newComment).block();
+        verify(taskCommentRepository, times(1)).save(any());
+    }
+
+    @Test
+    void shouldSetTaskIdFieldOnCommentAdd() {
+        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskCommentRepository.save(any())).thenAnswer(invocation -> {
+            TaskComment comment = invocation.getArgument(0, TaskComment.class);
+            comment.setId(2L);
+            return Mono.just(comment);
+        });
+        TaskComment newComment = TaskComment.builder().commentText("New comment").build();
+
+        TaskComment result = taskService.addComment(task.getId(), task.getAuthor(), newComment).block();
+        assertNotNull(result);
+        assertEquals(task.getId(), result.getTaskId());
+    }
+
+    @Test
+    void shouldSetAuthorFieldOnCommentAdd() {
+        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskCommentRepository.save(any())).thenAnswer(invocation -> {
+            TaskComment comment = invocation.getArgument(0, TaskComment.class);
+            comment.setId(2L);
+            return Mono.just(comment);
+        });
+        TaskComment newComment = TaskComment.builder().commentText("New comment").build();
+
+        TaskComment result = taskService.addComment(task.getId(), task.getAuthor(), newComment).block();
+        assertNotNull(result);
+        assertEquals(task.getAuthor(), result.getAuthor());
+    }
+
+    @Test
+    void shouldSetCreatedAtFieldOnCommentAdd() {
+        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskCommentRepository.save(any())).thenAnswer(invocation -> {
+            TaskComment comment = invocation.getArgument(0, TaskComment.class);
+            comment.setId(2L);
+            return Mono.just(comment);
+        });
+        TaskComment newComment = TaskComment.builder().commentText("New comment").build();
+
+        TaskComment result = taskService.addComment(task.getId(), task.getAuthor(), newComment).block();
+        assertNotNull(result);
+        assertNotNull(result.getCreatedAt());
+    }
+
+    @Test
+    void shouldThrowExceptionOnCommentAddWhenCommentIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> taskService.addComment(1L, "alice", null),
+                "Task comment must not be null");
+    }
+
+    @Test
+    void shouldThrowExceptionOnCommentAddWhenTaskIsNotFound() {
+        Long taskId = 1L;
+        String author = "alice";
+        TaskComment comment = TaskComment.builder().commentText("New comment").build();
+        when(taskRepository.findByIdAndAuthor(taskId, author)).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.addComment(taskId, author, comment).block(),
+                "Task with id " + taskId + "is not found");
+    }
+
+    @Test
     void shouldReturnCommentsForTaskWithPagingRestriction() {
         PageRequest pageRequest = PageRequest.of(3, 50);
 
@@ -498,7 +574,7 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldMakeTaskProcessedOnTaskUpdateWhenDeadlineDateIsNotNull() {
+    void shouldMarkTaskAsProcessedOnTaskUpdateWhenDeadlineDateIsNotNull() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
         when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
 

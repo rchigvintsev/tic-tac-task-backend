@@ -11,6 +11,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -143,6 +144,19 @@ public class DefaultTaskService implements TaskService {
             long offset = Pageables.getOffset(pageable);
             Integer limit = Pageables.getLimit(pageable);
             return taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(taskId, offset, limit);
+        });
+    }
+
+    @Override
+    public Mono<TaskComment> addComment(Long taskId, String taskAuthor, TaskComment comment)
+            throws EntityNotFoundException {
+        Assert.notNull(comment, "Task comment must not be null");
+        return findTask(taskId, taskAuthor).flatMap(task -> {
+            TaskComment newComment = comment.copy();
+            newComment.setTaskId(taskId);
+            newComment.setAuthor(taskAuthor);
+            newComment.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+            return taskCommentRepository.save(newComment);
         });
     }
 

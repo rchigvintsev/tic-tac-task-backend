@@ -337,6 +337,102 @@ class TaskControllerTest {
     }
 
     @Test
+    void shouldAddCommentToTask() {
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        Long taskId = 1L;
+        TaskComment comment = TaskComment.builder().commentText("Test comment").build();
+        TaskComment savedComment = TaskComment.builder()
+                .id(2L)
+                .taskId(taskId)
+                .commentText(comment.getCommentText())
+                .author(username)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(taskService.addComment(taskId, username, comment)).thenReturn(Mono.just(savedComment));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf())
+                .post().uri("/tasks/" + taskId + "/comments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isCreated()
+                .expectBody(TaskComment.class).isEqualTo(savedComment);
+    }
+
+    @Test
+    void shouldRejectCommentAddingWhenCommentTextIsNull() {
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        TaskComment comment = TaskComment.builder().build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf())
+                .post().uri("/tasks/1/comments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
+    }
+
+    @Test
+    void shouldRejectCommentAddingWhenCommentTextIsBlank() {
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        TaskComment comment = TaskComment.builder().commentText(" ").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf())
+                .post().uri("/tasks/1/comments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
+    }
+
+    @Test
+    void shouldRejectCommentAddingWhenCommentTextIsTooLong() {
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        TaskComment comment = TaskComment.builder().commentText("L" + "o".repeat(9993) + "ng text").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf())
+                .post().uri("/tasks/1/comments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value length must not be greater than 10000");
+    }
+
+    @Test
     void shouldCreateTask() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");

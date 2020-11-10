@@ -3,7 +3,6 @@ package org.briarheart.orchestra.service;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskCommentRepository;
-import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.TaskComment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -20,22 +19,7 @@ import java.time.ZoneOffset;
 @Service
 @RequiredArgsConstructor
 public class DefaultTaskCommentService implements TaskCommentService {
-    private final TaskRepository taskRepository;
     private final TaskCommentRepository taskCommentRepository;
-
-    @Override
-    public Mono<TaskComment> createComment(TaskComment comment, String commentAuthor, Long taskId) {
-        Assert.notNull(comment, "Task comment must not be null");
-        return taskRepository.findByIdAndAuthor(taskId, commentAuthor)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + taskId + " is not found")))
-                .flatMap(task -> {
-                    TaskComment newComment = comment.copy();
-                    newComment.setTaskId(taskId);
-                    newComment.setAuthor(commentAuthor);
-                    newComment.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
-                    return taskCommentRepository.save(newComment);
-                });
-    }
 
     @Override
     public Mono<TaskComment> updateComment(TaskComment comment, Long id, String author) {

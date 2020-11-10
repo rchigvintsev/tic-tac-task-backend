@@ -146,6 +146,17 @@ public interface TaskService {
     Flux<TaskComment> getComments(Long taskId, String taskAuthor, Pageable pageable) throws EntityNotFoundException;
 
     /**
+     * Adds new comment to task with the given id and belonging to the given author.
+     *
+     * @param taskId task id
+     * @param taskAuthor task author
+     * @param comment new comment
+     * @return added comment
+     * @throws EntityNotFoundException if task is not found by id and author
+     */
+    Mono<TaskComment> addComment(Long taskId, String taskAuthor, TaskComment comment) throws EntityNotFoundException;
+
+    /**
      * Creates new task belonging to the given author.
      *
      * @param task task to be created (must not be {@code null})

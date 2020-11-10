@@ -2,8 +2,6 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskCommentRepository;
-import org.briarheart.orchestra.data.TaskRepository;
-import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskComment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,88 +18,13 @@ import static org.mockito.Mockito.*;
  * @author Roman Chigvintsev
  */
 class DefaultTaskCommentServiceTest {
-    private TaskRepository taskRepositoryMock;
     private TaskCommentRepository taskCommentRepository;
     private DefaultTaskCommentService taskCommentService;
 
     @BeforeEach
     void setUp() {
-        taskRepositoryMock = mock(TaskRepository.class);
         taskCommentRepository = mock(TaskCommentRepository.class);
-        taskCommentService = new DefaultTaskCommentService(taskRepositoryMock, taskCommentRepository);
-    }
-
-    @Test
-    void shouldCreateComment() {
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        long expectedTaskCommentId = 2L;
-        when(taskCommentRepository.save(any())).thenAnswer(invocation -> {
-            TaskComment savedComment = invocation.getArgument(0, TaskComment.class);
-            savedComment.setId(expectedTaskCommentId);
-            return Mono.just(savedComment);
-        });
-        TaskComment newComment = TaskComment.builder().commentText("New test comment").build();
-
-        TaskComment result = taskCommentService.createComment(newComment, task.getAuthor(), task.getId()).block();
-        assertNotNull(result);
-        assertEquals(expectedTaskCommentId, result.getId());
-        assertEquals(newComment.getCommentText(), result.getCommentText());
-    }
-
-    @Test
-    void shouldSetTaskIdFieldOnTaskCommentCreate() {
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        TaskComment newComment = TaskComment.builder().commentText("New test comment").build();
-        when(taskCommentRepository.save(any()))
-                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0, TaskComment.class)));
-
-        TaskComment result = taskCommentService.createComment(newComment, task.getAuthor(), task.getId()).block();
-        assertNotNull(result);
-        assertEquals(task.getId(), result.getTaskId());
-    }
-
-    @Test
-    void shouldSetAuthorFieldOnTaskCommentCreate() {
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        TaskComment newComment = TaskComment.builder().commentText("New test comment").build();
-        when(taskCommentRepository.save(any()))
-                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0, TaskComment.class)));
-
-        TaskComment result = taskCommentService.createComment(newComment, task.getAuthor(), task.getId()).block();
-        assertNotNull(result);
-        assertEquals(task.getAuthor(), result.getAuthor());
-    }
-
-    @Test
-    void shouldSetCreatedAtFieldOnTaskCommentCreate() {
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepositoryMock.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        TaskComment newComment = TaskComment.builder().commentText("New test comment").build();
-        when(taskCommentRepository.save(any()))
-                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0, TaskComment.class)));
-
-        TaskComment result = taskCommentService.createComment(newComment, task.getAuthor(), task.getId()).block();
-        assertNotNull(result);
-        assertNotNull(result.getCreatedAt());
-    }
-
-    @Test
-    void shouldThrowExceptionOnCommentCreateWhenCommentIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskCommentService.createComment(null, null, null));
-        assertEquals("Task comment must not be null", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowExceptionOnCommentCreateWhenTaskIsNotFound() {
-        when(taskRepositoryMock.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
-        long taskId = 1L;
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> taskCommentService.createComment(new TaskComment(), "alice", taskId).block());
-        assertEquals("Task with id " + taskId + " is not found", exception.getMessage());
+        taskCommentService = new DefaultTaskCommentService(taskCommentRepository);
     }
 
     @Test
