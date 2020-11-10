@@ -499,8 +499,7 @@ class TaskControllerTest {
 
         testClient.mutateWith(csrf())
                 .mutateWith(mockAuthentication(authenticationMock))
-                .post()
-                .uri("/tasks/1/complete")
+                .put().uri("/tasks/completed/" + task.getId())
                 .exchange()
 
                 .expectStatus().isNoContent();

@@ -129,7 +129,7 @@ public class TaskController {
         return taskService.updateTask(task, id, user.getName());
     }
 
-    @PostMapping("/{id}/complete")
+    @PutMapping("/completed/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> completeTask(@PathVariable Long id, Principal user) {
         return taskService.completeTask(id, user.getName());
