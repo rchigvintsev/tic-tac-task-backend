@@ -33,16 +33,13 @@ public interface TagService {
     Mono<Tag> getTag(Long id, String author);
 
     /**
-     * Returns uncompleted tasks (either unprocessed or processed) for tag with the given id and belonging to the given
-     * author.
+     * Creates new tag belonging to the given author.
      *
-     * @param tagId tag id
-     * @param tagAuthor tag author
-     * @param pageable paging restriction
-     * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
-     * @throws EntityNotFoundException if tag is not found by id and author
+     * @param tag tag to be created (must not be {@code null})
+     * @param author tag author (must not be {@code null} or empty)
+     * @return created tag
      */
-    Flux<Task> getUncompletedTasks(Long tagId, String tagAuthor, Pageable pageable);
+    Mono<Tag> createTag(Tag tag, String author);
 
     /**
      * Updates tag with the given id and belonging to the given author.
@@ -62,4 +59,16 @@ public interface TagService {
      * @param author tag author
      */
     Mono<Void> deleteTag(Long id, String author);
+
+    /**
+     * Returns uncompleted tasks (either unprocessed or processed) for tag with the given id and belonging to the given
+     * author.
+     *
+     * @param tagId tag id
+     * @param tagAuthor tag author
+     * @param pageable paging restriction
+     * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
+     * @throws EntityNotFoundException if tag is not found by id and author
+     */
+    Flux<Task> getUncompletedTasks(Long tagId, String tagAuthor, Pageable pageable);
 }
