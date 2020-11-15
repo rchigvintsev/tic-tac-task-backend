@@ -27,6 +27,8 @@ class DefaultTagServiceTest {
     @BeforeEach
     void setUp() {
         tagRepository = mock(TagRepository.class);
+        when(tagRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Tag.class)));
+
         taskTagRelationRepository = mock(TaskTagRelationRepository.class);
         taskRepository = mock(TaskRepository.class);
         tagService = new DefaultTagService(tagRepository, taskTagRelationRepository, taskRepository);
@@ -57,21 +59,46 @@ class DefaultTagServiceTest {
     }
 
     @Test
-    void shouldReturnAllUncompletedTasksForTag() {
-        Tag tag = Tag.builder().id(1L).author("alice").name("Test tag").build();
-        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
-        when(taskRepository.findByStatusNotAndTagId(TaskStatus.COMPLETED, tag.getId(), 0, null))
-                .thenReturn(Flux.empty());
+    void shouldCreateTag() {
+        Tag tag = Tag.builder().name("New tag").build();
+        Tag result = tagService.createTag(tag, "alice").block();
+        assertNotNull(result);
+        assertEquals(tag.getName(), result.getName());
+        verify(tagRepository, times(1)).save(any());
+    }
 
-        tagService.getUncompletedTasks(tag.getId(), tag.getAuthor(), Pageable.unpaged()).blockFirst();
-        verify(taskRepository, times(1)).findByStatusNotAndTagId(TaskStatus.COMPLETED, tag.getId(), 0, null);
+    @Test
+    void shouldSetAuthorFieldOnTagCreate() {
+        Tag tag = Tag.builder().name("New tag").build();
+        String author = "alice";
+        Tag result = tagService.createTag(tag, author).block();
+        assertNotNull(result);
+        assertEquals(author, result.getAuthor());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTagCreateWhenTagIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> tagService.createTag(null, "alice"), "Tag must not be null");
+    }
+
+    @Test
+    void shouldThrowExceptionOnTagCreateWhenAuthorIsNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> tagService.createTag(Tag.builder().name("New tag").build(), null),
+                "Tag author must not be null or empty");
+    }
+
+    @Test
+    void shouldThrowExceptionOnTagCreateWhenAuthorIsEmpty() {
+        assertThrows(IllegalArgumentException.class,
+                () -> tagService.createTag(Tag.builder().name("New tag").build(), ""),
+                "Tag author must not be null or empty");
     }
 
     @Test
     void shouldUpdateTag() {
         Tag tag = Tag.builder().id(1L).author("alice").name("Test tag").build();
         when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
-        when(tagRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Tag.class)));
 
         Tag updatedTag = Tag.builder().name("Updated test tag").build();
         Tag result = tagService.updateTag(updatedTag, tag.getId(), tag.getAuthor()).block();
@@ -83,7 +110,6 @@ class DefaultTagServiceTest {
     void shouldSetIdFieldOnTagUpdate() {
         Tag tag = Tag.builder().id(1L).author("alice").name("Test tag").build();
         when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
-        when(tagRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Tag.class)));
 
         Tag updatedTag = Tag.builder().name("Updated test tag").build();
         Tag result = tagService.updateTag(updatedTag, tag.getId(), tag.getAuthor()).block();
@@ -95,7 +121,6 @@ class DefaultTagServiceTest {
     void shouldSetAuthorFieldOnTagUpdate() {
         Tag tag = Tag.builder().id(1L).author("alice").name("Test tag").build();
         when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
-        when(tagRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Tag.class)));
 
         Tag updatedTag = Tag.builder().name("Updated test tag").build();
         Tag result = tagService.updateTag(updatedTag, tag.getId(), tag.getAuthor()).block();
@@ -138,5 +163,16 @@ class DefaultTagServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> tagService.deleteTag(tagId, "alice").block());
         assertEquals("Tag with id " + tagId + " is not found", exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnAllUncompletedTasksForTag() {
+        Tag tag = Tag.builder().id(1L).author("alice").name("Test tag").build();
+        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
+        when(taskRepository.findByStatusNotAndTagId(TaskStatus.COMPLETED, tag.getId(), 0, null))
+                .thenReturn(Flux.empty());
+
+        tagService.getUncompletedTasks(tag.getId(), tag.getAuthor(), Pageable.unpaged()).blockFirst();
+        verify(taskRepository, times(1)).findByStatusNotAndTagId(TaskStatus.COMPLETED, tag.getId(), 0, null);
     }
 }

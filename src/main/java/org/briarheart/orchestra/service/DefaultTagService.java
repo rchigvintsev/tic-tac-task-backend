@@ -39,11 +39,13 @@ public class DefaultTagService implements TagService {
     }
 
     @Override
-    public Flux<Task> getUncompletedTasks(Long tagId, String tagAuthor, Pageable pageable) {
-        return getTag(tagId, tagAuthor).flatMapMany(tag -> {
-            long offset = Pageables.getOffset(pageable);
-            Integer limit = Pageables.getLimit(pageable);
-            return taskRepository.findByStatusNotAndTagId(TaskStatus.COMPLETED, tagId, offset, limit);
+    public Mono<Tag> createTag(Tag tag, String author) {
+        Assert.notNull(tag, "Tag must not be null");
+        Assert.hasText(author, "Tag author must not be null or empty");
+        return Mono.defer(() -> {
+            Tag newTag = tag.copy();
+            newTag.setAuthor(author);
+            return tagRepository.save(newTag);
         });
     }
 
@@ -61,5 +63,14 @@ public class DefaultTagService implements TagService {
     public Mono<Void> deleteTag(Long id, String author) {
         return getTag(id, author).flatMap(tag -> taskTagRelationRepository.deleteByTagId(tag.getId())
                 .then(tagRepository.deleteByIdAndAuthor(id, author)));
+    }
+
+    @Override
+    public Flux<Task> getUncompletedTasks(Long tagId, String tagAuthor, Pageable pageable) {
+        return getTag(tagId, tagAuthor).flatMapMany(tag -> {
+            long offset = Pageables.getOffset(pageable);
+            Integer limit = Pageables.getLimit(pageable);
+            return taskRepository.findByStatusNotAndTagId(TaskStatus.COMPLETED, tagId, offset, limit);
+        });
     }
 }
