@@ -108,6 +108,44 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
+    public Mono<Task> createTask(Task task, String author) {
+        Assert.notNull(task, "Task must not be null");
+        Assert.hasText(author, "Task author must not be null or empty");
+        return Mono.defer(() -> {
+            Task newTask = task.copy();
+            newTask.setAuthor(author);
+            if (newTask.getStatus() == null) {
+                newTask.setStatus(TaskStatus.UNPROCESSED);
+            }
+            return taskRepository.save(newTask);
+        });
+    }
+
+    @Override
+    public Mono<Task> updateTask(Task task, Long id, String author) throws EntityNotFoundException {
+        Assert.notNull(task, "Task must not be null");
+        return getTask(id, author).flatMap(savedTask -> {
+            task.setId(savedTask.getId());
+            task.setAuthor(savedTask.getAuthor());
+            if (task.getStatus() == null) {
+                task.setStatus(savedTask.getStatus());
+            }
+            if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadline() != null) {
+                task.setStatus(TaskStatus.PROCESSED);
+            }
+            return taskRepository.save(task);
+        });
+    }
+
+    @Override
+    public Mono<Void> completeTask(Long id, String author) throws EntityNotFoundException {
+        return getTask(id, author).flatMap(task -> {
+            task.setStatus(TaskStatus.COMPLETED);
+            return taskRepository.save(task);
+        }).then();
+    }
+
+    @Override
     public Flux<Tag> getTags(Long taskId, String taskAuthor) throws EntityNotFoundException {
         return findTask(taskId, taskAuthor).flatMapMany(task -> {
             Mono<List<TaskTagRelation>> taskTagRelations = taskTagRelationRepository.findByTaskId(taskId).collectList();
@@ -158,44 +196,6 @@ public class DefaultTaskService implements TaskService {
             newComment.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
             return taskCommentRepository.save(newComment);
         });
-    }
-
-    @Override
-    public Mono<Task> createTask(Task task, String author) {
-        Assert.notNull(task, "Task must not be null");
-        Assert.hasText(author, "Task author must not be null or empty");
-        return Mono.defer(() -> {
-            Task newTask = task.copy();
-            newTask.setAuthor(author);
-            if (newTask.getStatus() == null) {
-                newTask.setStatus(TaskStatus.UNPROCESSED);
-            }
-            return taskRepository.save(newTask);
-        });
-    }
-
-    @Override
-    public Mono<Task> updateTask(Task task, Long id, String author) throws EntityNotFoundException {
-        Assert.notNull(task, "Task must not be null");
-        return getTask(id, author).flatMap(savedTask -> {
-            task.setId(savedTask.getId());
-            task.setAuthor(savedTask.getAuthor());
-            if (task.getStatus() == null) {
-                task.setStatus(savedTask.getStatus());
-            }
-            if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadline() != null) {
-                task.setStatus(TaskStatus.PROCESSED);
-            }
-            return taskRepository.save(task);
-        });
-    }
-
-    @Override
-    public Mono<Void> completeTask(Long id, String author) throws EntityNotFoundException {
-        return getTask(id, author).flatMap(task -> {
-            task.setStatus(TaskStatus.COMPLETED);
-            return taskRepository.save(task);
-        }).then();
     }
 
     private Mono<Task> findTask(Long id, String author) {

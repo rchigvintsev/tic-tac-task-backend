@@ -286,6 +286,127 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldCreateTask() {
+        Task task = Task.builder().title("New task").build();
+        Task result = taskService.createTask(task, "alice").block();
+        assertNotNull(result);
+        assertEquals(task.getTitle(), result.getTitle());
+        verify(taskRepository, times(1)).save(any());
+    }
+
+    @Test
+    void shouldSetAuthorFieldOnTaskCreate() {
+        Task task = Task.builder().title("New task").build();
+        String author = "alice";
+        Task result = taskService.createTask(task, author).block();
+        assertNotNull(result);
+        assertEquals(author, result.getAuthor());
+    }
+
+    @Test
+    void shouldSetTaskStatusToUnprocessedOnTaskCreate() {
+        Task task = Task.builder().title("New task").status(null).build();
+        Task result = taskService.createTask(task, "alice").block();
+        assertNotNull(result);
+        assertSame(TaskStatus.UNPROCESSED, result.getStatus());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskCreateWhenTaskIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(null, null));
+        assertEquals("Task must not be null", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskCreateWhenAuthorIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(Task.builder().title("New task").build(), null));
+        assertEquals("Task author must not be null or empty", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskCreateWhenAuthorIsEmpty() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(Task.builder().title("New task").build(), ""));
+        assertEquals("Task author must not be null or empty", exception.getMessage());
+    }
+
+    @Test
+    void shouldUpdateTask() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Task updatedTask = Task.builder().title("Updated test task").build();
+        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        assertEquals(updatedTask.getTitle(), result.getTitle());
+    }
+
+    @Test
+    void shouldSetIdFieldOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Task updatedTask = Task.builder().title("Updated test task").build();
+        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        assertEquals(task.getId(), result.getId());
+    }
+
+    @Test
+    void shouldSetAuthorFieldOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Task updatedTask = Task.builder().title("Updated test task").build();
+        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        assertEquals(task.getAuthor(), result.getAuthor());
+    }
+
+    @Test
+    void shouldSetStatusFieldOnTaskUpdate() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Task updatedTask = Task.builder().title("Updated test task").status(null).build();
+        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        assertSame(task.getStatus(), result.getStatus());
+    }
+
+    @Test
+    void shouldMarkTaskAsProcessedOnTaskUpdateWhenDeadlineDateIsNotNull() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        Task updatedTask = Task.builder()
+                .title("Updated test task")
+                .deadline(LocalDateTime.now().plus(3, ChronoUnit.DAYS))
+                .build();
+        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        assertNotNull(result);
+        assertSame(TaskStatus.PROCESSED, result.getStatus());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskUpdateWhenTaskIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskService.updateTask(null, null, null));
+        assertEquals("Task must not be null", exception.getMessage());
+    }
+
+    @Test
+    void shouldCompleteTask() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+
+        taskService.completeTask(task.getId(), task.getAuthor()).block();
+        assertSame(TaskStatus.COMPLETED, task.getStatus());
+    }
+
+    @Test
     void shouldReturnAllTagsForTask() {
         Task task = Task.builder().id(1L).title("Test task").author("alice").build();
         Tag tag = Tag.builder().id(2L).name("Test tag").author(task.getAuthor()).build();
@@ -480,126 +601,5 @@ class DefaultTaskServiceTest {
         when(taskRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class,
                 () -> taskService.getComments(1L, "alice", Pageable.unpaged()).blockFirst());
-    }
-
-    @Test
-    void shouldCreateTask() {
-        Task task = Task.builder().title("New task").build();
-        Task result = taskService.createTask(task, "alice").block();
-        assertNotNull(result);
-        assertEquals(task.getTitle(), result.getTitle());
-        verify(taskRepository, times(1)).save(any());
-    }
-
-    @Test
-    void shouldSetAuthorFieldOnTaskCreate() {
-        Task task = Task.builder().title("New task").build();
-        String author = "alice";
-        Task result = taskService.createTask(task, author).block();
-        assertNotNull(result);
-        assertEquals(author, result.getAuthor());
-    }
-
-    @Test
-    void shouldSetTaskStatusToUnprocessedOnTaskCreate() {
-        Task task = Task.builder().title("New task").status(null).build();
-        Task result = taskService.createTask(task, "alice").block();
-        assertNotNull(result);
-        assertSame(TaskStatus.UNPROCESSED, result.getStatus());
-    }
-
-    @Test
-    void shouldThrowExceptionOnTaskCreateWhenTaskIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(null, null));
-        assertEquals("Task must not be null", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowExceptionOnTaskCreateWhenAuthorIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(Task.builder().title("New task").build(), null));
-        assertEquals("Task author must not be null or empty", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowExceptionOnTaskCreateWhenAuthorIsEmpty() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(Task.builder().title("New task").build(), ""));
-        assertEquals("Task author must not be null or empty", exception.getMessage());
-    }
-
-    @Test
-    void shouldUpdateTask() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-
-        Task updatedTask = Task.builder().title("Updated test task").build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
-        assertNotNull(result);
-        assertEquals(updatedTask.getTitle(), result.getTitle());
-    }
-
-    @Test
-    void shouldSetIdFieldOnTaskUpdate() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-
-        Task updatedTask = Task.builder().title("Updated test task").build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
-        assertNotNull(result);
-        assertEquals(task.getId(), result.getId());
-    }
-
-    @Test
-    void shouldSetAuthorFieldOnTaskUpdate() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-
-        Task updatedTask = Task.builder().title("Updated test task").build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
-        assertNotNull(result);
-        assertEquals(task.getAuthor(), result.getAuthor());
-    }
-
-    @Test
-    void shouldSetStatusFieldOnTaskUpdate() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-
-        Task updatedTask = Task.builder().title("Updated test task").status(null).build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
-        assertNotNull(result);
-        assertSame(task.getStatus(), result.getStatus());
-    }
-
-    @Test
-    void shouldMarkTaskAsProcessedOnTaskUpdateWhenDeadlineDateIsNotNull() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-
-        Task updatedTask = Task.builder()
-                .title("Updated test task")
-                .deadline(LocalDateTime.now().plus(3, ChronoUnit.DAYS))
-                .build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
-        assertNotNull(result);
-        assertSame(TaskStatus.PROCESSED, result.getStatus());
-    }
-
-    @Test
-    void shouldThrowExceptionOnTaskUpdateWhenTaskIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskService.updateTask(null, null, null));
-        assertEquals("Task must not be null", exception.getMessage());
-    }
-
-    @Test
-    void shouldCompleteTask() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-
-        taskService.completeTask(task.getId(), task.getAuthor()).block();
-        assertSame(TaskStatus.COMPLETED, task.getStatus());
     }
 }

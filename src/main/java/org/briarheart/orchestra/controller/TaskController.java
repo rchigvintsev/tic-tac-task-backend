@@ -85,6 +85,30 @@ public class TaskController {
         return taskService.getTask(id, user.getName());
     }
 
+    @PostMapping
+    public Mono<ResponseEntity<Task>> createTask(@Valid @RequestBody Task task,
+                                                 Principal user,
+                                                 ServerHttpRequest request) {
+        return taskService.createTask(task, user.getName()).map(createdTask -> {
+            URI taskLocation = UriComponentsBuilder.fromHttpRequest(request)
+                    .path("/{id}")
+                    .buildAndExpand(createdTask.getId())
+                    .toUri();
+            return ResponseEntity.created(taskLocation).body(createdTask);
+        });
+    }
+
+    @PutMapping("/{id}")
+    public Mono<Task> updateTask(@Valid @RequestBody Task task, @PathVariable Long id, Principal user) {
+        return taskService.updateTask(task, id, user.getName());
+    }
+
+    @PutMapping("/completed/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> completeTask(@PathVariable Long id, Principal user) {
+        return taskService.completeTask(id, user.getName());
+    }
+
     @GetMapping("/{taskId}/tags")
     public Flux<Tag> getTags(@PathVariable("taskId") Long taskId, Principal user) {
         return taskService.getTags(taskId, user.getName());
@@ -117,29 +141,5 @@ public class TaskController {
                                         @Valid @RequestBody TaskComment comment,
                                         Principal user) {
         return taskService.addComment(taskId, user.getName(), comment);
-    }
-
-    @PostMapping
-    public Mono<ResponseEntity<Task>> createTask(@Valid @RequestBody Task task,
-                                                 Principal user,
-                                                 ServerHttpRequest request) {
-        return taskService.createTask(task, user.getName()).map(createdTask -> {
-            URI taskLocation = UriComponentsBuilder.fromHttpRequest(request)
-                    .path("/{id}")
-                    .buildAndExpand(createdTask.getId())
-                    .toUri();
-            return ResponseEntity.created(taskLocation).body(createdTask);
-        });
-    }
-
-    @PutMapping("/{id}")
-    public Mono<Task> updateTask(@Valid @RequestBody Task task, @PathVariable Long id, Principal user) {
-        return taskService.updateTask(task, id, user.getName());
-    }
-
-    @PutMapping("/completed/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> completeTask(@PathVariable Long id, Principal user) {
-        return taskService.completeTask(id, user.getName());
     }
 }
