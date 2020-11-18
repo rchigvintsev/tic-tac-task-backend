@@ -1,8 +1,8 @@
 package org.briarheart.orchestra.controller;
 
+import lombok.extern.slf4j.Slf4j;
+import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
@@ -20,9 +20,8 @@ import java.util.List;
  * @author Roman Chigvintsev
  */
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandlingControllerAdvice {
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandlingControllerAdvice.class);
-
     /**
      * Maps {@link EntityNotFoundException} to response with status code "404 Not found" and body containing error
      * message.
@@ -36,9 +35,23 @@ public class GlobalExceptionHandlingControllerAdvice {
     public ErrorResponse handleEntityNotFoundException(EntityNotFoundException e) {
         Assert.notNull(e, "Exception must not be null");
         log.debug(e.getMessage(), e);
-        ErrorResponse response = new ErrorResponse();
-        response.setErrors(List.of(e.getMessage()));
-        return response;
+        return exceptionToErrorResponse(e);
+    }
+
+    /**
+     * Maps {@link EntityAlreadyExistsException} to response with status code "400 Bad request" and body containing
+     * error message.
+     *
+     * @param e exception (must not be {@code null})
+     * @return instance of {@link ErrorResponse}
+     */
+    @ExceptionHandler(EntityAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ErrorResponse handleEntityAlreadyExistsException(EntityAlreadyExistsException e) {
+        Assert.notNull(e, "Exception must not be null");
+        log.warn(e.getMessage(), e);
+        return exceptionToErrorResponse(e);
     }
 
     /**
@@ -54,5 +67,11 @@ public class GlobalExceptionHandlingControllerAdvice {
         Assert.notNull(e, "Exception must not be null");
         log.debug(e.getMessage(), e);
         return ResponseEntity.status(e.getStatus()).body(new ConstraintViolationErrorResponse(e));
+    }
+
+    private ErrorResponse exceptionToErrorResponse(Exception e) {
+        ErrorResponse response = new ErrorResponse();
+        response.setErrors(List.of(e.getMessage()));
+        return response;
     }
 }

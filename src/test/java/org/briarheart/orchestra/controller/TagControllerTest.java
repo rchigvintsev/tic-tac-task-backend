@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
+import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
@@ -105,16 +106,62 @@ class TagControllerTest {
     }
 
     @Test
-    void shouldUpdateTag() {
+    void shouldCreateTag() {
+        String username = "alice";
         Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        when(authenticationMock.getName()).thenReturn(username);
+
+        Tag tag = Tag.builder().name("New tag").build();
+        Tag savedTag = tag.copy();
+        savedTag.setId(1L);
+        savedTag.setAuthor(username);
+
+        Mockito.when(tagService.createTag(tag, username)).thenReturn(Mono.just(savedTag));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tags")
+                .contentType(MediaType.APPLICATION_JSON).bodyValue(tag)
+                .exchange()
+
+                .expectStatus().isCreated()
+                .expectHeader().valueEquals("Location", "/tags/" + savedTag.getId())
+                .expectBody(Tag.class).isEqualTo(savedTag);
+    }
+
+    @Test
+    void shouldReturnBadRequestStatusCodeOnTagCreateWhenTagAlreadyExists() {
+        String username = "alice";
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        Tag tag = Tag.builder().name("New tag").build();
+        String errorMessage = "Tag already exists";
+        when(tagService.createTag(tag, username))
+                .thenReturn(Mono.error(new EntityAlreadyExistsException(errorMessage)));
+
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setErrors(List.of(errorMessage));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tags")
+                .contentType(MediaType.APPLICATION_JSON).bodyValue(tag)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
+    }
+
+    @Test
+    void shouldUpdateTag() {
+        String username = "alice";
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
 
         Tag tag = Tag.builder().id(1L).name("Test tag").build();
         Tag updatedTag = tag.copy();
         updatedTag.setId(1L);
         updatedTag.setName("Updated test tag");
-        Mockito.when(tagService.updateTag(tag, tag.getId(), authenticationMock.getName()))
-                .thenReturn(Mono.just(updatedTag));
+        Mockito.when(tagService.updateTag(tag, tag.getId(), username)).thenReturn(Mono.just(updatedTag));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).put()
                 .uri("/tags/" + tag.getId())
@@ -128,11 +175,12 @@ class TagControllerTest {
 
     @Test
     void shouldDeleteTag() {
+        String username = "alice";
         Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        when(authenticationMock.getName()).thenReturn(username);
 
         long tagId = 1L;
-        Mockito.when(tagService.deleteTag(tagId, authenticationMock.getName())).thenReturn(Mono.empty());
+        Mockito.when(tagService.deleteTag(tagId, username)).thenReturn(Mono.empty());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).delete()
                 .uri("/tags/" + tagId).exchange()

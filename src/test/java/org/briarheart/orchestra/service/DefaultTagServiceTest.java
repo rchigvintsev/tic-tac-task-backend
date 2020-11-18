@@ -1,9 +1,6 @@
 package org.briarheart.orchestra.service;
 
-import org.briarheart.orchestra.data.EntityNotFoundException;
-import org.briarheart.orchestra.data.TagRepository;
-import org.briarheart.orchestra.data.TaskRepository;
-import org.briarheart.orchestra.data.TaskTagRelationRepository;
+import org.briarheart.orchestra.data.*;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +24,7 @@ class DefaultTagServiceTest {
     @BeforeEach
     void setUp() {
         tagRepository = mock(TagRepository.class);
+        when(tagRepository.findByNameAndAuthor(anyString(), anyString())).thenReturn(Mono.empty());
         when(tagRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Tag.class)));
 
         taskTagRelationRepository = mock(TaskTagRelationRepository.class);
@@ -96,14 +94,25 @@ class DefaultTagServiceTest {
     }
 
     @Test
+    void shouldThrowExceptionOnTagCreateWhenTagAlreadyExists() {
+        String author = "alice";
+        Tag tag = Tag.builder().name("New tag").build();
+        when(tagRepository.findByNameAndAuthor(tag.getName(), author)).thenReturn(Mono.just(tag));
+        assertThrows(EntityAlreadyExistsException.class, () -> tagService.createTag(tag, author).block(),
+                "Tag with name \"" + tag.getName() + "\" already exists");
+    }
+
+    @Test
     void shouldUpdateTag() {
         Tag tag = Tag.builder().id(1L).author("alice").name("Test tag").build();
         when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
 
-        Tag updatedTag = Tag.builder().name("Updated test tag").build();
+        Tag updatedTag = tag.copy();
+        updatedTag.setColor(16777215);
+
         Tag result = tagService.updateTag(updatedTag, tag.getId(), tag.getAuthor()).block();
         assertNotNull(result);
-        assertEquals(updatedTag.getName(), result.getName());
+        assertEquals(updatedTag.getColor(), result.getColor());
     }
 
     @Test
@@ -142,6 +151,20 @@ class DefaultTagServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> tagService.updateTag(new Tag(), tagId, "alice").block());
         assertEquals("Tag with id " + tagId + " is not found", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTagUpdateWhenTagAlreadyExists() {
+        Tag tag = Tag.builder().id(1L).author("alice").name("Test tag").build();
+        Tag updatedTag = tag.copy();
+        updatedTag.setName("Updated test tag");
+
+        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
+        when(tagRepository.findByNameAndAuthor(updatedTag.getName(), tag.getAuthor()))
+                .thenReturn(Mono.just(updatedTag));
+        assertThrows(EntityAlreadyExistsException.class,
+                () -> tagService.updateTag(updatedTag, tag.getId(), tag.getAuthor()).block(),
+                "Tag with name \"" + updatedTag.getName() + "\" already exists");
     }
 
     @Test
