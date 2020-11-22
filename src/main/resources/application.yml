@@ -1,6 +1,6 @@
 spring:
   r2dbc:
-      url: r2dbc:${DATABASE_URL}
+    url: r2dbc:${DATABASE_URL}
 
   flyway:
     baseline-on-migrate: true

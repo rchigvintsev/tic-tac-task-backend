@@ -66,12 +66,14 @@ dependencies {
 	}
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation "io.r2dbc:r2dbc-h2:$r2dbcVersion"
 
 	testRuntimeOnly 'com.h2database:h2'
-	testRuntimeOnly "io.r2dbc:r2dbc-h2:$r2dbcVersion"
 }
 
 test {
-	environment 'DATABASE_URL', 'h2:mem:///testdb?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE'
+	environment 'DATABASE_URL', 'h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE'
+	environment 'DATABASE_USERNAME', 'sa'
+	environment 'DATABASE_PASSWORD', ''
 	useJUnitPlatform()
 }
