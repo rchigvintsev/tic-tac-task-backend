@@ -15,7 +15,7 @@ public interface AccessTokenService {
      * Creates new access token based on the given user entity.
      *
      * @param user     user for whom an access token should be created (must not be {@code null})
-     * @param exchange optional web exchange
+     * @param exchange web exchange (must not be {@code null})
      * @return new access token
      */
     Mono<? extends AccessToken> createAccessToken(User user, ServerWebExchange exchange);
