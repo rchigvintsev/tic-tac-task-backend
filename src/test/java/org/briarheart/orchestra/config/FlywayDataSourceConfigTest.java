@@ -51,7 +51,11 @@ class FlywayDataSourceConfigTest {
 
     @ExtendWith(SpringExtension.class)
     @ContextConfiguration(classes = FlywayDataSourceConfig.class)
-    @TestPropertySource(properties = "DATABASE_URL=postgresql://admin:secret@host:5432/test")
+    @TestPropertySource(properties = {
+            "DATABASE_URL=postgresql://admin:secret@host:5432/test",
+            "DATABASE_USERNAME=",
+            "DATABASE_PASSWORD="
+    })
     static class DatabaseUrlWithCredentialsTest {
         @Autowired
         @FlywayDataSource
@@ -68,7 +72,11 @@ class FlywayDataSourceConfigTest {
 
     @ExtendWith(SpringExtension.class)
     @ContextConfiguration(classes = FlywayDataSourceConfig.class)
-    @TestPropertySource(properties = "DATABASE_URL=postgresql://admin@host:5432/test")
+    @TestPropertySource(properties = {
+            "DATABASE_URL=postgresql://admin@host:5432/test",
+            "DATABASE_USERNAME=",
+            "DATABASE_PASSWORD="
+    })
     static class DatabaseUrlWithCredentialsWithoutPasswordTest {
         @Autowired
         @FlywayDataSource
