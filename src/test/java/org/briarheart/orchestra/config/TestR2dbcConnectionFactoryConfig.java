@@ -12,6 +12,6 @@ import org.springframework.context.annotation.Configuration;
 public class TestR2dbcConnectionFactoryConfig {
     @Bean
     public ConnectionFactory connectionFactory() {
-        return CustomH2ConnectionFactory.inMemory("testdb");
+        return CustomH2ConnectionFactory.inMemory("testdb").build();
     }
 }
