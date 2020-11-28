@@ -16,8 +16,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class TaskTagRelationCreatorImpl implements TaskTagRelationCreator {
     @SuppressWarnings("SqlResolve")
-    private static final String SQL_CREATE_TASK_TAG_RELATION = "INSERT INTO tasks_tags (task_id, tag_id) " +
-            "VALUES (:taskId, :tagId)";
+    private static final String SQL_CREATE_TASK_TAG_RELATION = "INSERT INTO tasks_tags (task_id, tag_id) VALUES (?, ?)";
 
     private final JdbcTemplate jdbcTemplate;
 
