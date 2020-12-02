@@ -26,6 +26,9 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
             + " LIMIT :limit OFFSET :offset")
     Flux<Task> findByStatusNotAndTagId(TaskStatus status, Long tagId, long offset, Integer limit);
 
+    @Query("SELECT * FROM task WHERE task_list_id = :taskListId AND author = :author LIMIT :limit OFFSET :offset")
+    Flux<Task> findByTaskListIdAndAuthor(Long taskListId, String author, long offset, Integer limit);
+
     @Query("SELECT * FROM task WHERE deadline IS NULL AND status = :status AND author = :author "
             + "LIMIT :limit OFFSET :offset")
     Flux<Task> findByDeadlineIsNullAndStatusAndAuthor(TaskStatus status, String author, long offset, Integer limit);

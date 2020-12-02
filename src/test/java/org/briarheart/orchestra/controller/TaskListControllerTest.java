@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
+import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
 import org.briarheart.orchestra.service.TaskListService;
 import org.junit.jupiter.api.AfterAll;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -148,5 +150,21 @@ class TaskListControllerTest {
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).delete()
                 .uri("/task-lists/" + taskListId).exchange()
                 .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldReturnTasksForTaskList() {
+        String username = "alice";
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        Task task = Task.builder().id(1L).taskListId(2L).author(username).title("Test task").build();
+        Mockito.when(taskListService.getTasks(task.getTaskListId(), username, PageRequest.of(0, 20)))
+                .thenReturn(Flux.just(task));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/task-lists/" + task.getTaskListId() + "/tasks").exchange()
+                .expectStatus().isOk()
+                .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
 }

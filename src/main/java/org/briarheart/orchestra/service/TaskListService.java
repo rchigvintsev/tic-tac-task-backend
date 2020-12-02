@@ -1,6 +1,9 @@
 package org.briarheart.orchestra.service;
 
+import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
+import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -33,6 +36,18 @@ public interface TaskListService {
      *
      * @param id task list id
      * @param author task list author
+     * @throws EntityNotFoundException if task list is not found by id and author
      */
-    Mono<Void> deleteTaskList(Long id, String author);
+    Mono<Void> deleteTaskList(Long id, String author) throws EntityNotFoundException;
+
+    /**
+     * Returns tasks for task list with the given id and belonging to the given author.
+     *
+     * @param taskListId task list id
+     * @param taskListAuthor task list author
+     * @param pageable paging restriction
+     * @return tasks from task list or empty stream when task list does not have any tasks
+     * @throws EntityNotFoundException if task list is not found by id and author
+     */
+    Flux<Task> getTasks(Long taskListId, String taskListAuthor, Pageable pageable) throws EntityNotFoundException;
 }

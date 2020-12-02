@@ -1,8 +1,10 @@
 package org.briarheart.orchestra.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
 import org.briarheart.orchestra.service.TaskListService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -48,5 +50,10 @@ public class TaskListController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteTaskList(@PathVariable Long id, Principal user) {
         return taskListService.deleteTaskList(id, user.getName());
+    }
+
+    @GetMapping("/{taskListId}/tasks")
+    public Flux<Task> getTasks(@PathVariable("taskListId") Long taskListId, Principal user, Pageable pageable) {
+        return taskListService.getTasks(taskListId, user.getName(), pageable);
     }
 }

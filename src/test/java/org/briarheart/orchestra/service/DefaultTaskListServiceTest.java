@@ -2,9 +2,13 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskListRepository;
+import org.briarheart.orchestra.data.TaskRepository;
+import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -18,6 +22,7 @@ import static org.mockito.Mockito.*;
  */
 class DefaultTaskListServiceTest {
     private TaskListRepository taskListRepository;
+    private TaskRepository taskRepository;
     private DefaultTaskListService taskListService;
 
     @BeforeEach
@@ -25,7 +30,8 @@ class DefaultTaskListServiceTest {
         taskListRepository = mock(TaskListRepository.class);
         when(taskListRepository.save(any()))
                 .thenAnswer(invocation -> Mono.just(invocation.getArgument(0, TaskList.class)));
-        taskListService = new DefaultTaskListService(taskListRepository);
+        taskRepository = mock(TaskRepository.class);
+        taskListService = new DefaultTaskListService(taskListRepository, taskRepository);
     }
 
     @Test
@@ -111,5 +117,33 @@ class DefaultTaskListServiceTest {
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> taskListService.deleteTaskList(taskListId, "alice").block());
         assertEquals("Task list with id " + taskListId + " is not found", exception.getMessage());
+    }
+
+    @Test
+    void shouldReturnTasksForTaskListWithPagingRestriction() {
+        PageRequest pageRequest = PageRequest.of(3, 50);
+
+        TaskList taskList = TaskList.builder().id(1L).name("Test task list").author("alice").build();
+        Task task = Task.builder()
+                .id(2L)
+                .taskListId(taskList.getId())
+                .author(taskList.getAuthor())
+                .title("Test task")
+                .build();
+        when(taskListRepository.findByIdAndAuthor(task.getTaskListId(), task.getAuthor()))
+                .thenReturn(Mono.just(taskList));
+        when(taskRepository.findByTaskListIdAndAuthor(task.getTaskListId(), task.getAuthor(), pageRequest.getOffset(),
+                pageRequest.getPageSize())).thenReturn(Flux.just(task));
+
+        taskListService.getTasks(taskList.getId(), taskList.getAuthor(), pageRequest).blockFirst();
+        verify(taskRepository, times(1)).findByTaskListIdAndAuthor(taskList.getId(), taskList.getAuthor(),
+                pageRequest.getOffset(), pageRequest.getPageSize());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTasksGetWhenTaskListIsNotFound() {
+        when(taskListRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class,
+                () -> taskListService.getTasks(1L, "alice", Pageable.unpaged()).blockFirst());
     }
 }

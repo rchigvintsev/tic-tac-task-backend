@@ -35,6 +35,7 @@ public class Task {
     private LocalDateTime deadline;
 
     private boolean deadlineTimeExplicitlySet;
+    private Long taskListId;
 
     /**
      * Creates copy of this task including all attributes except primary key.
@@ -49,6 +50,7 @@ public class Task {
         copy.setAuthor(author);
         copy.setDeadline(deadline);
         copy.setDeadlineTimeExplicitlySet(deadlineTimeExplicitlySet);
+        copy.setTaskListId(taskListId);
         return copy;
     }
 }
