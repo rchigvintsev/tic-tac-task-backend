@@ -23,6 +23,16 @@ public interface TaskListService {
     Flux<TaskList> getUncompletedTaskLists(String author);
 
     /**
+     * Returns task list with the given id and belonging to the given author.
+     *
+     * @param id     task list id
+     * @param author task list author
+     * @return requested task list
+     * @throws EntityNotFoundException if task list is not found by id and author
+     */
+    Mono<TaskList> getTaskList(Long id, String author) throws EntityNotFoundException;
+
+    /**
      * Creates new task list belonging to the given author.
      *
      * @param taskList task list to be created (must not be {@code null})

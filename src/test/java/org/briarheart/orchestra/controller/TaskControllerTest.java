@@ -239,7 +239,7 @@ class TaskControllerTest {
         when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/1").exchange()
+                .uri("/tasks/" + task.getId()).exchange()
                 .expectStatus().isOk()
                 .expectBody(Task.class).isEqualTo(task);
     }

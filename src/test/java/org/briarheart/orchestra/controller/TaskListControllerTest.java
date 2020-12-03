@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
+import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
 import org.briarheart.orchestra.service.TaskListService;
@@ -21,9 +22,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Locale;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
@@ -70,6 +72,42 @@ class TaskListControllerTest {
                 .uri("/task-lists/uncompleted").exchange()
                 .expectStatus().isOk()
                 .expectBody(TaskList[].class).isEqualTo(new TaskList[] {taskList});
+    }
+
+    @Test
+    void shouldReturnTaskListById() {
+        String username = "alice";
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        TaskList taskList = TaskList.builder().id(1L).name("Test task list").author(username).build();
+        when(taskListService.getTaskList(taskList.getId(), authenticationMock.getName()))
+                .thenReturn(Mono.just(taskList));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/task-lists/" + taskList.getId()).exchange()
+                .expectStatus().isOk()
+                .expectBody(TaskList.class).isEqualTo(taskList);
+    }
+
+    @Test
+    void shouldReturnNotFoundStatusCodeWhenTaskListIsNotFoundById() {
+        String username = "alice";
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        String errorMessage = "Task list is not found";
+
+        when(taskListService.getTaskList(anyLong(), anyString()))
+                .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
+
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setErrors(List.of(errorMessage));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/task-lists/1").exchange()
+                .expectStatus().isNotFound()
+                .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
     }
 
     @Test

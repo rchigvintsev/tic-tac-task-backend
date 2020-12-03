@@ -29,6 +29,7 @@ public class DefaultTaskListService implements TaskListService {
         return taskListRepository.findByCompletedAndAuthor(false, author);
     }
 
+    @Override
     public Mono<TaskList> getTaskList(Long id, String author) throws EntityNotFoundException {
         return taskListRepository.findByIdAndAuthor(id, author)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task list with id " + id + " is not found")));

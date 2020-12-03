@@ -33,6 +33,11 @@ public class TaskListController {
         return taskListService.getUncompletedTaskLists(user.getName());
     }
 
+    @GetMapping("/{id}")
+    public Mono<TaskList> getTaskList(@PathVariable("id") Long id, Principal user) {
+        return taskListService.getTaskList(id, user.getName());
+    }
+
     @PostMapping
     public Mono<ResponseEntity<TaskList>> createTaskList(@Valid @RequestBody TaskList taskList,
                                                          Principal user,
