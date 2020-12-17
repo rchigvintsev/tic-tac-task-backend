@@ -565,7 +565,7 @@ class TaskControllerTest {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
 
-        Task task = Task.builder().id(2L).title("Test task").author(authenticationMock.getName()).build();
+        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
         Task updatedTask = Task.builder().title("Updated test task").build();
         when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
         when(taskService.updateTask(updatedTask, task.getId(), authenticationMock.getName()))
@@ -574,7 +574,7 @@ class TaskControllerTest {
         testClient.mutateWith(csrf())
                 .mutateWith(mockAuthentication(authenticationMock))
                 .put()
-                .uri("/tasks/2")
+                .uri("/tasks/" + task.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(updatedTask)
                 .exchange()

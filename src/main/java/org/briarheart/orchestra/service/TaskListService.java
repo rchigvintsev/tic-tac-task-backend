@@ -42,6 +42,17 @@ public interface TaskListService {
     Mono<TaskList> createTaskList(TaskList taskList, String author);
 
     /**
+     * Updates task list with the given id and belonging to the given author.
+     *
+     * @param taskList task list to be updated (must not be {@code null})
+     * @param id task list id
+     * @param author task list author
+     * @return updated task list
+     * @throws EntityNotFoundException if task list is not found by id and author
+     */
+    Mono<TaskList> updateTaskList(TaskList taskList, Long id, String author) throws EntityNotFoundException;
+
+    /**
      * Deletes task list with the given id and belonging to the given author.
      *
      * @param id task list id

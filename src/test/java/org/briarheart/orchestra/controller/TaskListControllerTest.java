@@ -178,6 +178,34 @@ class TaskListControllerTest {
     }
 
     @Test
+    void shouldUpdateTaskList() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        TaskList taskList = TaskList.builder()
+                .id(1L)
+                .name("Test task list")
+                .author(authenticationMock.getName())
+                .build();
+        TaskList updatedTaskList = TaskList.builder().name("Updated test task list").build();
+        when(taskListService.getTaskList(taskList.getId(), authenticationMock.getName()))
+                .thenReturn(Mono.just(taskList));
+        when(taskListService.updateTaskList(updatedTaskList, taskList.getId(), authenticationMock.getName()))
+                .thenReturn(Mono.just(updatedTaskList));
+
+        testClient.mutateWith(csrf())
+                .mutateWith(mockAuthentication(authenticationMock))
+                .put()
+                .uri("/task-lists/" + taskList.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(updatedTaskList)
+                .exchange()
+
+                .expectStatus().isOk()
+                .expectBody(TaskList.class).isEqualTo(updatedTaskList);
+    }
+
+    @Test
     void shouldDeleteTaskList() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");

@@ -99,6 +99,52 @@ class DefaultTaskListServiceTest {
     }
 
     @Test
+    void shouldUpdateTaskList() {
+        TaskList taskList = TaskList.builder().id(1L).name("Test task list").author("alice").build();
+        when(taskListRepository.findByIdAndAuthor(taskList.getId(), taskList.getAuthor()))
+                .thenReturn(Mono.just(taskList));
+
+        TaskList updatedTaskList = TaskList.builder().name("Updated test task list").build();
+        TaskList result = taskListService.updateTaskList(updatedTaskList, taskList.getId(), taskList.getAuthor())
+                .block();
+        assertNotNull(result);
+        assertEquals(updatedTaskList.getName(), result.getName());
+    }
+
+    @Test
+    void shouldSetIdFieldOnTaskListUpdate() {
+        TaskList taskList = TaskList.builder().id(1L).name("Test task list").author("alice").build();
+        when(taskListRepository.findByIdAndAuthor(taskList.getId(), taskList.getAuthor()))
+                .thenReturn(Mono.just(taskList));
+
+        TaskList updatedTaskList = TaskList.builder().name("Updated test task list").build();
+        TaskList result = taskListService.updateTaskList(updatedTaskList, taskList.getId(), taskList.getAuthor())
+                .block();
+        assertNotNull(result);
+        assertEquals(taskList.getId(), result.getId());
+    }
+
+    @Test
+    void shouldSetAuthorFieldOnTaskListUpdate() {
+        TaskList taskList = TaskList.builder().id(1L).name("Test task list").author("alice").build();
+        when(taskListRepository.findByIdAndAuthor(taskList.getId(), taskList.getAuthor()))
+                .thenReturn(Mono.just(taskList));
+
+        TaskList updatedTaskList = TaskList.builder().name("Updated test task list").build();
+        TaskList result = taskListService.updateTaskList(updatedTaskList, taskList.getId(), taskList.getAuthor())
+                .block();
+        assertNotNull(result);
+        assertEquals(taskList.getAuthor(), result.getAuthor());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskListUpdateWhenTaskListIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskListService.updateTaskList(null, null, null));
+        assertEquals("Task list must not be null", exception.getMessage());
+    }
+
+    @Test
     void shouldDeleteTaskList() {
         TaskList taskList = TaskList.builder().id(1L).name("Test task list").author("alice").build();
 
