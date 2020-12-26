@@ -6,6 +6,7 @@ import org.briarheart.orchestra.data.TaskListRepository;
 import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
+import org.briarheart.orchestra.model.TaskStatus;
 import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,20 @@ public class DefaultTaskListService implements TaskListService {
             taskList.setAuthor(savedTaskList.getAuthor());
             return taskListRepository.save(taskList);
         });
+    }
+
+    @Override
+    public Mono<Void> completeTaskList(Long id, String author) throws EntityNotFoundException {
+        return getTaskList(id, author)
+                .zipWhen(taskList -> taskRepository.findByTaskListIdAndAuthor(id, author, 0, null).flatMap(task -> {
+                    task.setStatus(TaskStatus.COMPLETED);
+                    return taskRepository.save(task);
+                }).then(Mono.just(true)))
+                .flatMap(taskListAndFlag -> {
+                    TaskList taskList = taskListAndFlag.getT1();
+                    taskList.setCompleted(true);
+                    return taskListRepository.save(taskList).then();
+                });
     }
 
     @Override

@@ -206,6 +206,23 @@ class TaskListControllerTest {
     }
 
     @Test
+    void shouldCompleteTaskList() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        long taskListId = 1L;
+        Mockito.when(taskListService.completeTaskList(taskListId, authenticationMock.getName()))
+                .thenReturn(Mono.empty());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf())
+                .put().uri("/task-lists/completed/" + taskListId)
+                .exchange()
+
+                .expectStatus().isNoContent();
+    }
+
+    @Test
     void shouldDeleteTaskList() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");

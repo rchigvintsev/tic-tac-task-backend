@@ -53,6 +53,15 @@ public interface TaskListService {
     Mono<TaskList> updateTaskList(TaskList taskList, Long id, String author) throws EntityNotFoundException;
 
     /**
+     * Completes task list with the given id and belonging to the given author along with all tasks included in it.
+     *
+     * @param id task list id
+     * @param author task list author
+     * @throws EntityNotFoundException if task list is not found by id and author
+     */
+    Mono<Void> completeTaskList(Long id, String author) throws EntityNotFoundException;
+
+    /**
      * Deletes task list with the given id and belonging to the given author.
      *
      * @param id task list id

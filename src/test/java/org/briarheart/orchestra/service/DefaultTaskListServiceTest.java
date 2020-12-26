@@ -5,6 +5,7 @@ import org.briarheart.orchestra.data.TaskListRepository;
 import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
+import org.briarheart.orchestra.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +32,7 @@ class DefaultTaskListServiceTest {
         when(taskListRepository.save(any()))
                 .thenAnswer(invocation -> Mono.just(invocation.getArgument(0, TaskList.class)));
         taskRepository = mock(TaskRepository.class);
+        when(taskRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Task.class)));
         taskListService = new DefaultTaskListService(taskListRepository, taskRepository);
     }
 
@@ -142,6 +144,48 @@ class DefaultTaskListServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> taskListService.updateTaskList(null, null, null));
         assertEquals("Task list must not be null", exception.getMessage());
+    }
+
+    @Test
+    void shouldCompleteTaskList() {
+        TaskList taskList = TaskList.builder().id(1L).name("Test task list").author("alice").build();
+        TaskList completedTaskList = taskList.copy();
+        completedTaskList.setId(taskList.getId());
+        completedTaskList.setCompleted(true);
+
+        when(taskListRepository.findByIdAndAuthor(taskList.getId(), taskList.getAuthor()))
+                .thenReturn(Mono.just(taskList));
+        when(taskRepository.findByTaskListIdAndAuthor(taskList.getId(), taskList.getAuthor(), 0, null))
+                .thenReturn(Flux.empty());
+
+        taskListService.completeTaskList(taskList.getId(), taskList.getAuthor()).block();
+        verify(taskListRepository, times(1)).save(completedTaskList);
+    }
+
+    @Test
+    void shouldCompleteTasksOnTaskListComplete() {
+        String author = "alice";
+
+        TaskList taskList = TaskList.builder().id(1L).name("Test task list").author(author).build();
+        Task task = Task.builder().id(2L).title("Test task").author(author).taskListId(taskList.getId()).build();
+        Task completedTask = task.copy();
+        completedTask.setId(task.getId());
+        completedTask.setStatus(TaskStatus.COMPLETED);
+
+        when(taskListRepository.findByIdAndAuthor(taskList.getId(), author)).thenReturn(Mono.just(taskList));
+        when(taskRepository.findByTaskListIdAndAuthor(taskList.getId(), author, 0, null)).thenReturn(Flux.just(task));
+
+        taskListService.completeTaskList(taskList.getId(), taskList.getAuthor()).block();
+        verify(taskRepository, times(1)).save(completedTask);
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskListCompleteWhenTaskListIsNotFound() {
+        when(taskListRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        long taskListId = 1L;
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> taskListService.completeTaskList(taskListId, "alice").block());
+        assertEquals("Task list with id " + taskListId + " is not found", exception.getMessage());
     }
 
     @Test

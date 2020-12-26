@@ -56,6 +56,12 @@ public class TaskListController {
         return taskListService.updateTaskList(taskList, id, user.getName());
     }
 
+    @PutMapping("/completed/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> completeTaskList(@PathVariable Long id, Principal user) {
+        return taskListService.completeTaskList(id, user.getName());
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteTaskList(@PathVariable Long id, Principal user) {
