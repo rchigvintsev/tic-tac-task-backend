@@ -194,10 +194,28 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndAuthor(taskList.getId(), taskList.getAuthor()))
                 .thenReturn(Mono.just(taskList));
-        when(taskListRepository.deleteByIdAndAuthor(taskList.getId(), taskList.getAuthor())).thenReturn(Mono.empty());
+        when(taskListRepository.delete(taskList)).thenReturn(Mono.empty());
+        when(taskRepository.findByTaskListIdAndAuthor(taskList.getId(), taskList.getAuthor(), 0, null))
+                .thenReturn(Flux.empty());
 
         taskListService.deleteTaskList(taskList.getId(), taskList.getAuthor()).block();
-        verify(taskListRepository, times(1)).deleteByIdAndAuthor(taskList.getId(), taskList.getAuthor());
+        verify(taskListRepository, times(1)).delete(taskList);
+    }
+
+    @Test
+    void shouldDeleteTasksOnTaskListDelete() {
+        String author = "alice";
+
+        TaskList taskList = TaskList.builder().id(1L).name("Test task list").author(author).build();
+        Task task = Task.builder().id(2L).title("Test task").author(author).taskListId(taskList.getId()).build();
+
+        when(taskListRepository.findByIdAndAuthor(taskList.getId(), author)).thenReturn(Mono.just(taskList));
+        when(taskListRepository.delete(taskList)).thenReturn(Mono.empty());
+        when(taskRepository.findByTaskListIdAndAuthor(taskList.getId(), author, 0, null)).thenReturn(Flux.just(task));
+        when(taskRepository.delete(task)).thenReturn(Mono.empty());
+
+        taskListService.deleteTaskList(taskList.getId(), taskList.getAuthor()).block();
+        verify(taskRepository, times(1)).delete(task);
     }
 
     @Test

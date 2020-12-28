@@ -15,7 +15,4 @@ public interface TaskListRepository extends ReactiveCrudRepository<TaskList, Lon
 
     @Query("SELECT * FROM task_list WHERE id = :id AND author = :author")
     Mono<TaskList> findByIdAndAuthor(Long id, String author);
-
-    @Query("DELETE FROM task_list WHERE id = :id AND author = :author")
-    Mono<Void> deleteByIdAndAuthor(Long id, String author);
 }

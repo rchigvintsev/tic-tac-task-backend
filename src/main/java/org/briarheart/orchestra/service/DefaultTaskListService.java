@@ -73,7 +73,14 @@ public class DefaultTaskListService implements TaskListService {
 
     @Override
     public Mono<Void> deleteTaskList(Long id, String author) throws EntityNotFoundException {
-        return getTaskList(id, author).flatMap(list -> taskListRepository.deleteByIdAndAuthor(id, author));
+        return getTaskList(id, author)
+                .zipWhen(taskList -> taskRepository.findByTaskListIdAndAuthor(id, author, 0, null)
+                        .flatMap(taskRepository::delete)
+                        .then(Mono.just(true)))
+                .flatMap(taskListAndFlag -> {
+                    TaskList taskList = taskListAndFlag.getT1();
+                    return taskListRepository.delete(taskList);
+                });
     }
 
     @Override

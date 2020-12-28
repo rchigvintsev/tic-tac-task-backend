@@ -62,7 +62,7 @@ public interface TaskListService {
     Mono<Void> completeTaskList(Long id, String author) throws EntityNotFoundException;
 
     /**
-     * Deletes task list with the given id and belonging to the given author.
+     * Deletes task list with the given id and belonging to the given author along with all tasks included in it.
      *
      * @param id task list id
      * @param author task list author
