@@ -109,6 +109,12 @@ public class TaskController {
         return taskService.completeTask(id, user.getName());
     }
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> deleteTask(@PathVariable Long id, Principal user) {
+        return taskService.deleteTask(id, user.getName());
+    }
+
     @GetMapping("/{taskId}/tags")
     public Flux<Tag> getTags(@PathVariable("taskId") Long taskId, Principal user) {
         return taskService.getTags(taskId, user.getName());

@@ -264,175 +264,6 @@ class TaskControllerTest {
     }
 
     @Test
-    void shouldReturnTagsForTask() {
-        String username = "alice";
-        Long taskId = 1L;
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
-
-        Tag tag = Tag.builder().id(2L).author(username).name("Test tag").build();
-        Mockito.when(taskService.getTags(taskId, username)).thenReturn(Flux.just(tag));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/" + taskId + "/tags").exchange()
-                .expectStatus().isOk()
-                .expectBody(Tag[].class).isEqualTo(new Tag[]{tag});
-    }
-
-    @Test
-    void shouldAssignTagToTask() {
-        Long taskId = 1L;
-        Long tagId = 2L;
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
-
-        when(taskService.assignTag(taskId, tagId, username)).thenReturn(Mono.empty());
-
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).put()
-                .uri("/tasks/" + taskId + "/tags/" + tagId)
-                .exchange()
-
-                .expectStatus().isNoContent();
-    }
-
-    @Test
-    void shouldRemoveTagFromTask() {
-        Long taskId = 1L;
-        Long tagId = 2L;
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
-
-        when(taskService.removeTag(taskId, username, tagId)).thenReturn(Mono.empty());
-
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).delete()
-                .uri("/tasks/" + taskId + "/tags/" + tagId)
-                .exchange()
-
-                .expectStatus().isNoContent();
-    }
-
-    @Test
-    void shouldReturnCommentsForTask() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-
-        TaskComment comment = TaskComment.builder().id(1L).taskId(2L).commentText("Test comment").build();
-        Mockito.when(taskService.getComments(
-                comment.getTaskId(),
-                authenticationMock.getName(),
-                PageRequest.of(0, 20)
-        )).thenReturn(Flux.just(comment));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/" + comment.getTaskId() + "/comments").exchange()
-                .expectStatus().isOk()
-                .expectBody(TaskComment[].class).isEqualTo(new TaskComment[]{comment});
-    }
-
-    @Test
-    void shouldAddCommentToTask() {
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
-
-        Long taskId = 1L;
-        TaskComment comment = TaskComment.builder().commentText("Test comment").build();
-        TaskComment savedComment = TaskComment.builder()
-                .id(2L)
-                .taskId(taskId)
-                .commentText(comment.getCommentText())
-                .author(username)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        when(taskService.addComment(taskId, username, comment)).thenReturn(Mono.just(savedComment));
-
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf())
-                .post().uri("/tasks/" + taskId + "/comments")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
-                .exchange()
-
-                .expectStatus().isCreated()
-                .expectBody(TaskComment.class).isEqualTo(savedComment);
-    }
-
-    @Test
-    void shouldRejectCommentAddingWhenCommentTextIsNull() {
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
-
-        TaskComment comment = TaskComment.builder().build();
-
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf())
-                .post().uri("/tasks/1/comments")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
-                .exchange()
-
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
-    }
-
-    @Test
-    void shouldRejectCommentAddingWhenCommentTextIsBlank() {
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
-
-        TaskComment comment = TaskComment.builder().commentText(" ").build();
-
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf())
-                .post().uri("/tasks/1/comments")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
-                .exchange()
-
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
-    }
-
-    @Test
-    void shouldRejectCommentAddingWhenCommentTextIsTooLong() {
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
-
-        TaskComment comment = TaskComment.builder().commentText("L" + "o".repeat(9993) + "ng text").build();
-
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf())
-                .post().uri("/tasks/1/comments")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
-                .exchange()
-
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value length must not be greater than 10000");
-    }
-
-    @Test
     void shouldCreateTask() {
         Authentication authenticationMock = mock(Authentication.class);
         when(authenticationMock.getName()).thenReturn("alice");
@@ -599,5 +430,192 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldDeleteTask() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
+
+        when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
+        when(taskService.deleteTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.empty());
+
+        testClient.mutateWith(csrf())
+                .mutateWith(mockAuthentication(authenticationMock))
+                .delete().uri("/tasks/" + task.getId())
+                .exchange()
+
+                .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldReturnTagsForTask() {
+        String username = "alice";
+        Long taskId = 1L;
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        Tag tag = Tag.builder().id(2L).author(username).name("Test tag").build();
+        Mockito.when(taskService.getTags(taskId, username)).thenReturn(Flux.just(tag));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/" + taskId + "/tags").exchange()
+                .expectStatus().isOk()
+                .expectBody(Tag[].class).isEqualTo(new Tag[]{tag});
+    }
+
+    @Test
+    void shouldAssignTagToTask() {
+        Long taskId = 1L;
+        Long tagId = 2L;
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        when(taskService.assignTag(taskId, tagId, username)).thenReturn(Mono.empty());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).put()
+                .uri("/tasks/" + taskId + "/tags/" + tagId)
+                .exchange()
+
+                .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldRemoveTagFromTask() {
+        Long taskId = 1L;
+        Long tagId = 2L;
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        when(taskService.removeTag(taskId, username, tagId)).thenReturn(Mono.empty());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf()).delete()
+                .uri("/tasks/" + taskId + "/tags/" + tagId)
+                .exchange()
+
+                .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldReturnCommentsForTask() {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn("alice");
+
+        TaskComment comment = TaskComment.builder().id(1L).taskId(2L).commentText("Test comment").build();
+        Mockito.when(taskService.getComments(
+                comment.getTaskId(),
+                authenticationMock.getName(),
+                PageRequest.of(0, 20)
+        )).thenReturn(Flux.just(comment));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
+                .uri("/tasks/" + comment.getTaskId() + "/comments").exchange()
+                .expectStatus().isOk()
+                .expectBody(TaskComment[].class).isEqualTo(new TaskComment[]{comment});
+    }
+
+    @Test
+    void shouldAddCommentToTask() {
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        Long taskId = 1L;
+        TaskComment comment = TaskComment.builder().commentText("Test comment").build();
+        TaskComment savedComment = TaskComment.builder()
+                .id(2L)
+                .taskId(taskId)
+                .commentText(comment.getCommentText())
+                .author(username)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(taskService.addComment(taskId, username, comment)).thenReturn(Mono.just(savedComment));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf())
+                .post().uri("/tasks/" + taskId + "/comments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isCreated()
+                .expectBody(TaskComment.class).isEqualTo(savedComment);
+    }
+
+    @Test
+    void shouldRejectCommentAddingWhenCommentTextIsNull() {
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        TaskComment comment = TaskComment.builder().build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf())
+                .post().uri("/tasks/1/comments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
+    }
+
+    @Test
+    void shouldRejectCommentAddingWhenCommentTextIsBlank() {
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        TaskComment comment = TaskComment.builder().commentText(" ").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf())
+                .post().uri("/tasks/1/comments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
+    }
+
+    @Test
+    void shouldRejectCommentAddingWhenCommentTextIsTooLong() {
+        String username = "alice";
+
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(username);
+
+        TaskComment comment = TaskComment.builder().commentText("L" + "o".repeat(9993) + "ng text").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .mutateWith(csrf())
+                .post().uri("/tasks/1/comments")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(comment)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value length must not be greater than 10000");
     }
 }

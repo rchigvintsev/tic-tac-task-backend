@@ -146,6 +146,11 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
+    public Mono<Void> deleteTask(Long id, String author) throws EntityNotFoundException {
+        return getTask(id, author).flatMap(taskRepository::delete);
+    }
+
+    @Override
     public Flux<Tag> getTags(Long taskId, String taskAuthor) throws EntityNotFoundException {
         return findTask(taskId, taskAuthor).flatMapMany(task -> {
             Mono<List<TaskTagRelation>> taskTagRelations = taskTagRelationRepository.findByTaskId(taskId).collectList();

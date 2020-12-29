@@ -134,6 +134,15 @@ public interface TaskService {
     Mono<Void> completeTask(Long id, String author) throws EntityNotFoundException;
 
     /**
+     * Deletes task with the given id and belonging to the given author.
+     *
+     * @param id task id
+     * @param author task author
+     * @throws EntityNotFoundException if task is not found by id and author
+     */
+    Mono<Void> deleteTask(Long id, String author) throws EntityNotFoundException;
+
+    /**
      * Returns tags for task with the given id and belonging to the given author.
      *
      * @param taskId task id

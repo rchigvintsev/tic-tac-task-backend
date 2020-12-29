@@ -392,9 +392,17 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskUpdateWhenTaskIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskService.updateTask(null, null, null));
-        assertEquals("Task must not be null", exception.getMessage());
+        assertThrows(IllegalArgumentException.class, () -> taskService.updateTask(null, null, null),
+                "Task must not be null");
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskUpdateWhenTaskIsNotFound() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class,
+                () -> taskService.updateTask(task, task.getId(), task.getAuthor()).block(),
+                "Task with id " + task.getId() + " is not found");
     }
 
     @Test
@@ -404,6 +412,34 @@ class DefaultTaskServiceTest {
 
         taskService.completeTask(task.getId(), task.getAuthor()).block();
         assertSame(TaskStatus.COMPLETED, task.getStatus());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskCompleteWhenTaskIsNotFound() {
+        long taskId = 1L;
+        String taskAuthor = "alice";
+        when(taskRepository.findByIdAndAuthor(taskId, taskAuthor)).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.completeTask(taskId, taskAuthor).block(),
+                "Task with id " + taskId + " is not found");
+    }
+
+    @Test
+    void shouldDeleteTask() {
+        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
+        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.delete(task)).thenReturn(Mono.empty());
+
+        taskService.deleteTask(task.getId(), task.getAuthor()).block();
+        verify(taskRepository, times(1)).delete(task);
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskDeleteWhenTaskIsNotFound() {
+        long taskId = 1L;
+        String taskAuthor = "alice";
+        when(taskRepository.findByIdAndAuthor(taskId, taskAuthor)).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.deleteTask(taskId, taskAuthor).block(),
+                "Task with id " + taskId + " is not found");
     }
 
     @Test
