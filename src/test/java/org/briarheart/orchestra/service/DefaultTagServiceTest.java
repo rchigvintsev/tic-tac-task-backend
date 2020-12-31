@@ -1,6 +1,9 @@
 package org.briarheart.orchestra.service;
 
-import org.briarheart.orchestra.data.*;
+import org.briarheart.orchestra.data.EntityAlreadyExistsException;
+import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.data.TagRepository;
+import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +20,6 @@ import static org.mockito.Mockito.*;
  */
 class DefaultTagServiceTest {
     private TagRepository tagRepository;
-    private TaskTagRelationRepository taskTagRelationRepository;
     private TaskRepository taskRepository;
     private DefaultTagService tagService;
 
@@ -27,9 +29,8 @@ class DefaultTagServiceTest {
         when(tagRepository.findByNameAndAuthor(anyString(), anyString())).thenReturn(Mono.empty());
         when(tagRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0, Tag.class)));
 
-        taskTagRelationRepository = mock(TaskTagRelationRepository.class);
         taskRepository = mock(TaskRepository.class);
-        tagService = new DefaultTagService(tagRepository, taskTagRelationRepository, taskRepository);
+        tagService = new DefaultTagService(tagRepository, taskRepository);
     }
 
     @Test
@@ -172,11 +173,10 @@ class DefaultTagServiceTest {
         Tag tag = Tag.builder().id(1L).name("Test tag").author("alice").build();
 
         when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
-        when(taskTagRelationRepository.deleteByTagId(tag.getId())).thenReturn(Mono.empty());
-        when(tagRepository.deleteByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.empty());
+        when(tagRepository.delete(tag)).thenReturn(Mono.empty());
 
         tagService.deleteTag(tag.getId(), tag.getAuthor()).block();
-        verify(tagRepository, times(1)).deleteByIdAndAuthor(tag.getId(), tag.getAuthor());
+        verify(tagRepository, times(1)).delete(tag);
     }
 
     @Test
