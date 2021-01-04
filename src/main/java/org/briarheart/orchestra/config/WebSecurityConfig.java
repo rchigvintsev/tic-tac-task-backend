@@ -20,9 +20,13 @@ import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2Clien
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.endpoint.ReactiveOAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.WebClientReactiveAuthorizationCodeTokenResponseClient;
@@ -47,6 +51,8 @@ import org.springframework.security.web.server.authentication.logout.HttpStatusR
 import org.springframework.security.web.server.authentication.logout.ServerLogoutHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
+import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
@@ -54,6 +60,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
@@ -77,6 +84,7 @@ public class WebSecurityConfig {
             ServerAuthenticationFailureHandler authenticationFailureHandler,
             ServerLogoutHandler logoutHandler,
             AuthenticationWebFilter accessTokenAuthenticationWebFilter,
+            AuthenticationWebFilter httpBasicAuthenticationWebFilter,
             ServerSecurityContextRepository securityContextRepository
     ) {
         return http.cors().configurationSource(createCorsConfigurationSource())
@@ -90,7 +98,6 @@ public class WebSecurityConfig {
                         .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
                 .and()
                     .oauth2Login()
-                        .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                         .authenticationConverter(authenticationConverter)
                         .authenticationSuccessHandler(authenticationSuccessHandler)
                         .authenticationFailureHandler(authenticationFailureHandler)
@@ -101,6 +108,7 @@ public class WebSecurityConfig {
                         .logoutSuccessHandler(new HttpStatusReturningServerLogoutSuccessHandler(HttpStatus.OK))
                 .and()
                     .addFilterBefore(accessTokenAuthenticationWebFilter, SecurityWebFiltersOrder.HTTP_BASIC)
+                    .addFilterAt(httpBasicAuthenticationWebFilter, SecurityWebFiltersOrder.HTTP_BASIC)
                 .build();
     }
 
@@ -182,6 +190,23 @@ public class WebSecurityConfig {
         AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
         filter.setServerAuthenticationConverter(new AccessTokenServerAuthenticationConverter(accessTokenRepository));
         filter.setSecurityContextRepository(securityContextRepository);
+        return filter;
+    }
+
+    @Bean
+    public AuthenticationWebFilter httpBasicAuthenticationWebFilter(
+            ServerAuthenticationFailureHandler authenticationFailureHandler,
+            ServerSecurityContextRepository securityContextRepository
+    ) {
+        ReactiveUserDetailsService userDetailsService = new MapReactiveUserDetailsService(new HashMap<>());
+        ReactiveAuthenticationManager authenticationManager
+                = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
+        ServerWebExchangeMatcher matcher = new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST);
+
+        AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
+        filter.setAuthenticationFailureHandler(authenticationFailureHandler);
+        filter.setSecurityContextRepository(securityContextRepository);
+        filter.setRequiresAuthenticationMatcher(matcher);
         return filter;
     }
 
