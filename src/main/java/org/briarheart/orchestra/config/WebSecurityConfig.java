@@ -1,10 +1,12 @@
 package org.briarheart.orchestra.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.briarheart.orchestra.data.UserAuthorityRelationRepository;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.security.oauth2.client.endpoint.ReactiveAccessTokenTypeWebClientFilter;
 import org.briarheart.orchestra.security.oauth2.client.userinfo.*;
 import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
+import org.briarheart.orchestra.security.oauth2.core.userdetails.DatabaseReactiveUserDetailsService;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenReactiveAuthenticationManager;
 import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationConverter;
 import org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationFailureHandler;
@@ -20,13 +22,13 @@ import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2Clien
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.endpoint.ReactiveOAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.WebClientReactiveAuthorizationCodeTokenResponseClient;
@@ -60,10 +62,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
+import static org.springframework.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder;
 
 /**
  * @author Roman Chigvintsev
@@ -195,12 +197,15 @@ public class WebSecurityConfig {
 
     @Bean
     public AuthenticationWebFilter httpBasicAuthenticationWebFilter(
+            ReactiveUserDetailsService userDetailsService,
             ServerAuthenticationFailureHandler authenticationFailureHandler,
             ServerSecurityContextRepository securityContextRepository
     ) {
-        ReactiveUserDetailsService userDetailsService = new MapReactiveUserDetailsService(new HashMap<>());
-        ReactiveAuthenticationManager authenticationManager
+        UserDetailsRepositoryReactiveAuthenticationManager authenticationManager
                 = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
+        DelegatingPasswordEncoder passwordEncoder = (DelegatingPasswordEncoder) createDelegatingPasswordEncoder();
+        passwordEncoder.setDefaultPasswordEncoderForMatches(new NeverMatchesPasswordEncoder());
+        authenticationManager.setPasswordEncoder(passwordEncoder);
         ServerWebExchangeMatcher matcher = new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST);
 
         AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
@@ -225,6 +230,14 @@ public class WebSecurityConfig {
         JwtService tokenService = new JwtService(accessTokenRepository, accessTokenSigningKey);
         tokenService.setAccessTokenValiditySeconds(accessTokenValiditySeconds);
         return tokenService;
+    }
+
+    @Bean
+    public ReactiveUserDetailsService userDetailsService(
+            UserRepository userRepository,
+            UserAuthorityRelationRepository userAuthorityRelationRepository
+    ) {
+        return new DatabaseReactiveUserDetailsService(userRepository, userAuthorityRelationRepository);
     }
 
     @Bean
@@ -265,5 +278,20 @@ public class WebSecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    /**
+     * Default {@link PasswordEncoder} whose method {@link #matches(CharSequence, String)} always returns {@code false}.
+     */
+    private static class NeverMatchesPasswordEncoder implements PasswordEncoder {
+        @Override
+        public String encode(CharSequence rawPassword) {
+            throw new UnsupportedOperationException("Password encoding is not supported");
+        }
+
+        @Override
+        public boolean matches(CharSequence rawPassword, String prefixEncodedPassword) {
+            return false;
+        }
     }
 }
