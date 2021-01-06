@@ -198,7 +198,6 @@ public class WebSecurityConfig {
     @Bean
     public AuthenticationWebFilter httpBasicAuthenticationWebFilter(
             ReactiveUserDetailsService userDetailsService,
-            ServerAuthenticationFailureHandler authenticationFailureHandler,
             ServerSecurityContextRepository securityContextRepository
     ) {
         UserDetailsRepositoryReactiveAuthenticationManager authenticationManager
@@ -209,7 +208,6 @@ public class WebSecurityConfig {
         ServerWebExchangeMatcher matcher = new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST);
 
         AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
-        filter.setAuthenticationFailureHandler(authenticationFailureHandler);
         filter.setSecurityContextRepository(securityContextRepository);
         filter.setRequiresAuthenticationMatcher(matcher);
         return filter;
