@@ -7,10 +7,7 @@ import org.briarheart.orchestra.security.oauth2.client.endpoint.ReactiveAccessTo
 import org.briarheart.orchestra.security.oauth2.client.userinfo.*;
 import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
 import org.briarheart.orchestra.security.oauth2.core.userdetails.DatabaseReactiveUserDetailsService;
-import org.briarheart.orchestra.security.web.server.authentication.AccessTokenReactiveAuthenticationManager;
-import org.briarheart.orchestra.security.web.server.authentication.AccessTokenServerAuthenticationConverter;
-import org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationFailureHandler;
-import org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationSuccessHandler;
+import org.briarheart.orchestra.security.web.server.authentication.*;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.ServerAccessTokenRepository;
 import org.briarheart.orchestra.security.web.server.authentication.jwt.CookieJwtRepository;
@@ -82,8 +79,8 @@ public class WebSecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(
             ServerHttpSecurity http,
             ServerAuthenticationConverter authenticationConverter,
-            ServerAuthenticationSuccessHandler authenticationSuccessHandler,
-            ServerAuthenticationFailureHandler authenticationFailureHandler,
+            ServerAuthenticationSuccessHandler auth2LoginAuthenticationSuccessHandler,
+            ServerAuthenticationFailureHandler auth2LoginAuthenticationFailureHandler,
             ServerLogoutHandler logoutHandler,
             AuthenticationWebFilter accessTokenAuthenticationWebFilter,
             AuthenticationWebFilter httpBasicAuthenticationWebFilter,
@@ -101,8 +98,8 @@ public class WebSecurityConfig {
                 .and()
                     .oauth2Login()
                         .authenticationConverter(authenticationConverter)
-                        .authenticationSuccessHandler(authenticationSuccessHandler)
-                        .authenticationFailureHandler(authenticationFailureHandler)
+                        .authenticationSuccessHandler(auth2LoginAuthenticationSuccessHandler)
+                        .authenticationFailureHandler(auth2LoginAuthenticationFailureHandler)
                         .authorizationRequestRepository(authorizationRequestRepository())
                 .and()
                     .logout()
@@ -133,7 +130,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ServerAuthenticationSuccessHandler authenticationSuccessHandler(
+    public ServerAuthenticationSuccessHandler auth2LoginAuthenticationSuccessHandler(
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
             UserRepository userRepository,
             AccessTokenService accessTokenService,
@@ -148,7 +145,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ServerAuthenticationFailureHandler authenticationFailureHandler(
+    public ServerAuthenticationFailureHandler auth2LoginAuthenticationFailureHandler(
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
             ServerRedirectStrategy redirectStrategy
     ) {
@@ -156,6 +153,13 @@ public class WebSecurityConfig {
         handler = new ClientRedirectUriServerAuthenticationFailureHandler(authorizationRequestRepository);
         handler.setRedirectStrategy(redirectStrategy);
         return handler;
+    }
+
+    @Bean
+    public ServerAuthenticationSuccessHandler httpBasicAuthenticationSuccessHandler(
+            AccessTokenService accessTokenService
+    ) {
+        return new HttpBasicServerAuthenticationSuccessHandler(accessTokenService);
     }
 
     @Bean
@@ -198,7 +202,8 @@ public class WebSecurityConfig {
     @Bean
     public AuthenticationWebFilter httpBasicAuthenticationWebFilter(
             ReactiveUserDetailsService userDetailsService,
-            ServerSecurityContextRepository securityContextRepository
+            ServerSecurityContextRepository securityContextRepository,
+            ServerAuthenticationSuccessHandler httpBasicAuthenticationSuccessHandler
     ) {
         UserDetailsRepositoryReactiveAuthenticationManager authenticationManager
                 = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
@@ -210,6 +215,7 @@ public class WebSecurityConfig {
         AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
         filter.setSecurityContextRepository(securityContextRepository);
         filter.setRequiresAuthenticationMatcher(matcher);
+        filter.setAuthenticationSuccessHandler(httpBasicAuthenticationSuccessHandler);
         return filter;
     }
 
