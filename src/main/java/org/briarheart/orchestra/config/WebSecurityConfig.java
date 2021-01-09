@@ -157,9 +157,10 @@ public class WebSecurityConfig {
 
     @Bean
     public ServerAuthenticationSuccessHandler httpBasicAuthenticationSuccessHandler(
-            AccessTokenService accessTokenService
+            AccessTokenService accessTokenService,
+            ObjectMapper objectMapper
     ) {
-        return new HttpBasicServerAuthenticationSuccessHandler(accessTokenService);
+        return new HttpBasicServerAuthenticationSuccessHandler(accessTokenService, objectMapper);
     }
 
     @Bean

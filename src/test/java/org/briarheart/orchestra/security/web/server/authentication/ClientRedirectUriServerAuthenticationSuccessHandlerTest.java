@@ -97,7 +97,7 @@ class ClientRedirectUriServerAuthenticationSuccessHandlerTest {
         URI location = webFilterExchangeMock.getExchange().getResponse().getHeaders().getLocation();
         assertNotNull(location);
         MultiValueMap<String, String> queryParams = UriComponentsBuilder.fromUri(location).build().getQueryParams();
-        assertNotNull(queryParams.get("claims"));
+        assertNotNull(queryParams.get("access_token_claims"));
     }
 
     @Test

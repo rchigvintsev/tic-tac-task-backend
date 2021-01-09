@@ -84,7 +84,7 @@ public class ClientRedirectUriServerAuthenticationSuccessHandler
         return Mono.fromCallable(() -> {
             byte[] claims = objectMapper.writeValueAsBytes(accessToken.getClaims());
             return UriComponentsBuilder.fromUriString(redirectLocation)
-                    .queryParam("claims", Base64.getUrlEncoder().encodeToString(claims))
+                    .queryParam("access_token_claims", Base64.getUrlEncoder().encodeToString(claims))
                     .build(Collections.emptyMap());
         });
     }
