@@ -44,6 +44,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.server.DefaultServerRedirectStrategy;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
 import org.springframework.security.web.server.ServerRedirectStrategy;
 import org.springframework.security.web.server.authentication.*;
 import org.springframework.security.web.server.authentication.logout.HttpStatusReturningServerLogoutSuccessHandler;
@@ -61,7 +62,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectUriServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
+import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 import static org.springframework.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder;
 
 /**
@@ -83,7 +84,7 @@ public class WebSecurityConfig {
             ServerAuthenticationFailureHandler auth2LoginAuthenticationFailureHandler,
             ServerLogoutHandler logoutHandler,
             AuthenticationWebFilter accessTokenAuthenticationWebFilter,
-            AuthenticationWebFilter httpBasicAuthenticationWebFilter,
+            AuthenticationWebFilter formLoginAuthenticationWebFilter,
             ServerSecurityContextRepository securityContextRepository
     ) {
         return http.cors().configurationSource(createCorsConfigurationSource())
@@ -106,8 +107,8 @@ public class WebSecurityConfig {
                         .logoutHandler(logoutHandler)
                         .logoutSuccessHandler(new HttpStatusReturningServerLogoutSuccessHandler(HttpStatus.OK))
                 .and()
-                    .addFilterBefore(accessTokenAuthenticationWebFilter, SecurityWebFiltersOrder.HTTP_BASIC)
-                    .addFilterAt(httpBasicAuthenticationWebFilter, SecurityWebFiltersOrder.HTTP_BASIC)
+                    .addFilterAt(formLoginAuthenticationWebFilter, SecurityWebFiltersOrder.FORM_LOGIN)
+                    .addFilterAt(accessTokenAuthenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 
@@ -137,8 +138,8 @@ public class WebSecurityConfig {
             ObjectMapper objectMapper,
             ServerRedirectStrategy redirectStrategy
     ) {
-        ClientRedirectUriServerAuthenticationSuccessHandler handler;
-        handler = new ClientRedirectUriServerAuthenticationSuccessHandler(authorizationRequestRepository,
+        ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler handler;
+        handler = new ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler(authorizationRequestRepository,
                 userRepository, accessTokenService, objectMapper);
         handler.setRedirectStrategy(redirectStrategy);
         return handler;
@@ -149,18 +150,18 @@ public class WebSecurityConfig {
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
             ServerRedirectStrategy redirectStrategy
     ) {
-        ClientRedirectUriServerAuthenticationFailureHandler handler;
-        handler = new ClientRedirectUriServerAuthenticationFailureHandler(authorizationRequestRepository);
+        ClientRedirectOAuth2LoginServerAuthenticationFailureHandler handler;
+        handler = new ClientRedirectOAuth2LoginServerAuthenticationFailureHandler(authorizationRequestRepository);
         handler.setRedirectStrategy(redirectStrategy);
         return handler;
     }
 
     @Bean
-    public ServerAuthenticationSuccessHandler httpBasicAuthenticationSuccessHandler(
+    public ServerAuthenticationSuccessHandler formLoginAuthenticationSuccessHandler(
             AccessTokenService accessTokenService,
             ObjectMapper objectMapper
     ) {
-        return new HttpBasicServerAuthenticationSuccessHandler(accessTokenService, objectMapper);
+        return new HttpStatusFormLoginServerAuthenticationSuccessHandler(accessTokenService, objectMapper);
     }
 
     @Bean
@@ -189,34 +190,41 @@ public class WebSecurityConfig {
     @Bean
     public AuthenticationWebFilter accessTokenAuthenticationWebFilter(
             AccessTokenService accessTokenService,
-            ServerAccessTokenRepository accessTokenRepository,
-            ServerSecurityContextRepository securityContextRepository
+            ServerAccessTokenRepository accessTokenRepository
     ) {
         AccessTokenReactiveAuthenticationManager authenticationManager
                 = new AccessTokenReactiveAuthenticationManager(accessTokenService);
         AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
         filter.setServerAuthenticationConverter(new AccessTokenServerAuthenticationConverter(accessTokenRepository));
-        filter.setSecurityContextRepository(securityContextRepository);
         return filter;
     }
 
     @Bean
-    public AuthenticationWebFilter httpBasicAuthenticationWebFilter(
+    public AuthenticationWebFilter formLoginAuthenticationWebFilter(
             ReactiveUserDetailsService userDetailsService,
-            ServerSecurityContextRepository securityContextRepository,
-            ServerAuthenticationSuccessHandler httpBasicAuthenticationSuccessHandler
+            ServerAuthenticationSuccessHandler formLoginAuthenticationSuccessHandler
     ) {
         UserDetailsRepositoryReactiveAuthenticationManager authenticationManager
                 = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
+
         DelegatingPasswordEncoder passwordEncoder = (DelegatingPasswordEncoder) createDelegatingPasswordEncoder();
         passwordEncoder.setDefaultPasswordEncoderForMatches(new NeverMatchesPasswordEncoder());
         authenticationManager.setPasswordEncoder(passwordEncoder);
-        ServerWebExchangeMatcher matcher = new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST);
+
+        ServerAuthenticationConverter authenticationConverter = new ServerFormLoginAuthenticationConverter();
+
+        ServerWebExchangeMatcher requiresAuthenticationMatcher
+                = new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST);
+
+        ServerAuthenticationEntryPoint entryPoint = new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED);
+        ServerAuthenticationFailureHandler failureHandler
+                = new ServerAuthenticationEntryPointFailureHandler(entryPoint);
 
         AuthenticationWebFilter filter = new AuthenticationWebFilter(authenticationManager);
-        filter.setSecurityContextRepository(securityContextRepository);
-        filter.setRequiresAuthenticationMatcher(matcher);
-        filter.setAuthenticationSuccessHandler(httpBasicAuthenticationSuccessHandler);
+        filter.setServerAuthenticationConverter(authenticationConverter);
+        filter.setRequiresAuthenticationMatcher(requiresAuthenticationMatcher);
+        filter.setAuthenticationSuccessHandler(formLoginAuthenticationSuccessHandler);
+        filter.setAuthenticationFailureHandler(failureHandler);
         return filter;
     }
 

@@ -27,10 +27,10 @@ import static org.mockito.Mockito.*;
 /**
  * @author Roman Chigvintsev
  */
-class HttpBasicServerAuthenticationSuccessHandlerTest {
+class HttpStatusFormLoginServerAuthenticationSuccessHandlerTest {
     private static final String SUBJECT = "alice";
 
-    private HttpBasicServerAuthenticationSuccessHandler handler;
+    private HttpStatusFormLoginServerAuthenticationSuccessHandler handler;
     private AccessTokenService accessTokenService;
 
     @BeforeEach
@@ -41,7 +41,7 @@ class HttpBasicServerAuthenticationSuccessHandlerTest {
         accessTokenService = mock(AccessTokenService.class);
         doReturn(Mono.just(accessToken)).when(accessTokenService).createAccessToken(any(), any());
 
-        handler = new HttpBasicServerAuthenticationSuccessHandler(accessTokenService, new ObjectMapper());
+        handler = new HttpStatusFormLoginServerAuthenticationSuccessHandler(accessTokenService, new ObjectMapper());
     }
 
     @Test

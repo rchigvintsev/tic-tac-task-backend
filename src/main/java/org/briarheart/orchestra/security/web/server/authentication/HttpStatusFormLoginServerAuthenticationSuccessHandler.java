@@ -15,12 +15,13 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
- * This handler issues an access token and then sends HTTP status code "200 OK" as a response.
+ * This handler issues an access token and then writes access token claims to HTTP response body along with setting
+ * HTTP status code to "200 OK".
  *
  * @author Roman Chigvintsev
  */
 @RequiredArgsConstructor
-public class HttpBasicServerAuthenticationSuccessHandler implements ServerAuthenticationSuccessHandler {
+public class HttpStatusFormLoginServerAuthenticationSuccessHandler implements ServerAuthenticationSuccessHandler {
     private final AccessTokenService accessTokenService;
     private final ObjectMapper objectMapper;
 

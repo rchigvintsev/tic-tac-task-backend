@@ -27,18 +27,19 @@ import java.util.Collections;
 /**
  * This handler issues an access token and then performs a redirect passing token value in the response.
  * Additionally it includes BASE64-encoded JSON-representation of access token claims in redirect URI as
- * a query parameter with name "claims".
+ * a query parameter with name "access_token_claims".
  *
  * @author Roman Chigvintsev
  * @see OAuth2AuthorizationRequest
  */
-public class ClientRedirectUriServerAuthenticationSuccessHandler
-        extends AbstractClientRedirectUriServerAuthenticationHandler implements ServerAuthenticationSuccessHandler {
+public class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler
+        extends AbstractClientRedirectOAuth2LoginServerAuthenticationHandler
+        implements ServerAuthenticationSuccessHandler {
     private final UserRepository userRepository;
     private final AccessTokenService accessTokenService;
     private final ObjectMapper objectMapper;
 
-    public ClientRedirectUriServerAuthenticationSuccessHandler(
+    public ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler(
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
             UserRepository userRepository,
             AccessTokenService accessTokenService,

@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.util.Map;
 
-import static org.briarheart.orchestra.security.web.server.authentication.AbstractClientRedirectUriServerAuthenticationHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
+import static org.briarheart.orchestra.security.web.server.authentication.AbstractClientRedirectOAuth2LoginServerAuthenticationHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -26,15 +26,15 @@ import static org.mockito.Mockito.when;
 /**
  * @author Roman Chigvintsev
  */
-class ClientRedirectUriServerAuthenticationFailureHandlerTest {
+class ClientRedirectOAuth2LoginServerAuthenticationFailureHandlerTest {
     private ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepositoryMock;
-    private ClientRedirectUriServerAuthenticationFailureHandler handler;
+    private ClientRedirectOAuth2LoginServerAuthenticationFailureHandler handler;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
         authorizationRequestRepositoryMock = mock(ServerAuthorizationRequestRepository.class);
-        handler = new ClientRedirectUriServerAuthenticationFailureHandler(authorizationRequestRepositoryMock);
+        handler = new ClientRedirectOAuth2LoginServerAuthenticationFailureHandler(authorizationRequestRepositoryMock);
         handler.setClientRedirectUriParameterName(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME);
     }
 

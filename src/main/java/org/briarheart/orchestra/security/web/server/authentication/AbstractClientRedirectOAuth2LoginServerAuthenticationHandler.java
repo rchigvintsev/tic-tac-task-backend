@@ -28,7 +28,7 @@ import java.util.Objects;
  * @author Roman Chigvintsev
  */
 @RequiredArgsConstructor
-public abstract class AbstractClientRedirectUriServerAuthenticationHandler {
+public abstract class AbstractClientRedirectOAuth2LoginServerAuthenticationHandler {
     public static final String DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME = "client-redirect-uri";
 
     private final ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository;

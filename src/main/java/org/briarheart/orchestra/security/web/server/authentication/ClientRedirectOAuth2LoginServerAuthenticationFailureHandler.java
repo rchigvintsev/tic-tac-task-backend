@@ -23,10 +23,10 @@ import java.util.Collections;
  *
  * @author Roman Chigvintsev
  */
-public class ClientRedirectUriServerAuthenticationFailureHandler
-        extends AbstractClientRedirectUriServerAuthenticationHandler
+public class ClientRedirectOAuth2LoginServerAuthenticationFailureHandler
+        extends AbstractClientRedirectOAuth2LoginServerAuthenticationHandler
         implements ServerAuthenticationFailureHandler {
-    public ClientRedirectUriServerAuthenticationFailureHandler(
+    public ClientRedirectOAuth2LoginServerAuthenticationFailureHandler(
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository
     ) {
         super(authorizationRequestRepository);
