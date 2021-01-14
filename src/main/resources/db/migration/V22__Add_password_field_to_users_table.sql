@@ -1,1 +1,1 @@
-ALTER TABLE users ADD password VARCHAR(50);
+ALTER TABLE users ADD password VARCHAR(255);
