@@ -8,6 +8,8 @@ import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -21,17 +23,24 @@ import java.util.Collections;
 @Table("users")
 public class User implements UserDetails {
     @Id
+    @NotBlank
+    @Size(max = 255)
     private String email;
 
     @Version
     private long version;
 
+    @NotBlank
+    @Size(max = 50)
     private String password;
 
     @Builder.Default
     private boolean enabled = true;
 
+    @Size(max = 255)
     private String fullName;
+
+    @Size(max = 2_000)
     private String imageUrl;
 
     @Builder.Default

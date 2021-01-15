@@ -62,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static org.briarheart.orchestra.security.authorization.UnauthenticatedReactiveAuthorizationManager.unauthenticated;
 import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
 import static org.springframework.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder;
 
@@ -92,7 +93,9 @@ public class WebSecurityConfig {
                     .securityContextRepository(securityContextRepository)
                     .requestCache().disable()
                     .csrf().disable()
-                    .authorizeExchange().anyExchange().authenticated()
+                    .authorizeExchange()
+                        .pathMatchers(HttpMethod.POST, "/users").access(unauthenticated())
+                        .anyExchange().authenticated()
                 .and()
                     .exceptionHandling()
                         .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
@@ -202,13 +205,11 @@ public class WebSecurityConfig {
     @Bean
     public AuthenticationWebFilter formLoginAuthenticationWebFilter(
             ReactiveUserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder,
             ServerAuthenticationSuccessHandler formLoginAuthenticationSuccessHandler
     ) {
         UserDetailsRepositoryReactiveAuthenticationManager authenticationManager
                 = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
-
-        DelegatingPasswordEncoder passwordEncoder = (DelegatingPasswordEncoder) createDelegatingPasswordEncoder();
-        passwordEncoder.setDefaultPasswordEncoderForMatches(new NeverMatchesPasswordEncoder());
         authenticationManager.setPasswordEncoder(passwordEncoder);
 
         ServerAuthenticationConverter authenticationConverter = new ServerFormLoginAuthenticationConverter();
@@ -271,6 +272,13 @@ public class WebSecurityConfig {
     @Bean
     public ServerRedirectStrategy redirectStrategy() {
         return new DefaultServerRedirectStrategy();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        DelegatingPasswordEncoder passwordEncoder = (DelegatingPasswordEncoder) createDelegatingPasswordEncoder();
+        passwordEncoder.setDefaultPasswordEncoderForMatches(new NeverMatchesPasswordEncoder());
+        return passwordEncoder;
     }
 
     private CorsConfigurationSource createCorsConfigurationSource() {
