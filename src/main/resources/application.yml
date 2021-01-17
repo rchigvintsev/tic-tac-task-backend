@@ -34,6 +34,13 @@ spring:
             userInfoUri: https://api.vk.com/method/users.get
             userNameAttribute: id
 
+  jackson.visibility:
+    getter: none
+    isGetter: none
+    setter: none
+    field: any
+
+
 management:
   endpoint:
     health:
