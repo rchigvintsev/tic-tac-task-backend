@@ -10,5 +10,11 @@ import reactor.core.publisher.Mono;
  * @see User
  */
 public interface UserService {
+    /**
+     * Creates new user.
+     *
+     * @param user user to be created (must not be {@code null})
+     * @return created user
+     */
     Mono<User> createUser(User user);
 }

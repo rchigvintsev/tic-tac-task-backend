@@ -37,6 +37,10 @@ public class DefaultUserService implements UserService {
                     u.setPassword(passwordEncoder.encode(u.getPassword()));
                     return u;
                 })
-                .flatMap(userRepository::save);
+                .flatMap(userRepository::save)
+                .map(u -> {
+                    u.setPassword(null);
+                    return u;
+                });
     }
 }

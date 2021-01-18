@@ -5,16 +5,10 @@ import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -24,14 +18,15 @@ import static org.mockito.Mockito.*;
 class DefaultUserServiceTest {
     private DefaultUserService service;
     private UserRepository userRepository;
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        Map<String, PasswordEncoder> passwordEncoders = Map.of("bcrypt", new BCryptPasswordEncoder());
-        PasswordEncoder passwordEncoder = new DelegatingPasswordEncoder("bcrypt", passwordEncoders);
+        passwordEncoder = mock(PasswordEncoder.class);
+        when(passwordEncoder.encode(anyString())).thenAnswer(args -> args.getArgument(0));
         service = new DefaultUserService(userRepository, passwordEncoder);
     }
 
@@ -48,10 +43,16 @@ class DefaultUserServiceTest {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
         when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
         service.createUser(newUser).block();
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository, times(1)).save(userCaptor.capture());
-        User savedUser = userCaptor.getValue();
-        assertTrue(savedUser.getPassword().startsWith("{bcrypt}"));
+        verify(passwordEncoder, times(1)).encode(newUser.getPassword());
+    }
+
+    @Test
+    void shouldClearPasswordOnUserCreateWhenUserIsSaved() {
+        User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
+        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        User result = service.createUser(newUser).block();
+        assertNotNull(result);
+        assertNull(result.getPassword());
     }
 
     @Test
