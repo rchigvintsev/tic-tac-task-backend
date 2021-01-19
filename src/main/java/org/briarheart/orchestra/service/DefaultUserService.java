@@ -30,6 +30,7 @@ public class DefaultUserService implements UserService {
                 })
                 .switchIfEmpty(Mono.fromCallable(() -> User.builder()
                         .email(user.getEmail())
+                        .emailConfirmed(false)
                         .password(user.getPassword())
                         .fullName(user.getFullName())
                         .enabled(false)

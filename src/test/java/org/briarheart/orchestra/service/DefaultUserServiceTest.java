@@ -65,6 +65,15 @@ class DefaultUserServiceTest {
     }
 
     @Test
+    void shouldSetEmailConfirmationFlagToFalseOnUserCreate() {
+        User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
+        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        User result = service.createUser(newUser).block();
+        assertNotNull(result);
+        assertFalse(result.isEmailConfirmed());
+    }
+
+    @Test
     void shouldThrowExceptionOnUserCreateWhenUserIsNull() {
         assertThrows(IllegalArgumentException.class, () -> service.createUser(null), "User must not be null");
     }

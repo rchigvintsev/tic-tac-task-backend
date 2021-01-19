@@ -27,6 +27,9 @@ public class User implements UserDetails {
     @Size(max = 255)
     private String email;
 
+    @Builder.Default
+    private boolean emailConfirmed = true;
+
     @Version
     private long version;
 
