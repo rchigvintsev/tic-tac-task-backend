@@ -56,6 +56,15 @@ class DefaultUserServiceTest {
     }
 
     @Test
+    void shouldDisableNewUserOnUserCreate() {
+        User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
+        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        User result = service.createUser(newUser).block();
+        assertNotNull(result);
+        assertFalse(result.isEnabled());
+    }
+
+    @Test
     void shouldThrowExceptionOnUserCreateWhenUserIsNull() {
         assertThrows(IllegalArgumentException.class, () -> service.createUser(null), "User must not be null");
     }

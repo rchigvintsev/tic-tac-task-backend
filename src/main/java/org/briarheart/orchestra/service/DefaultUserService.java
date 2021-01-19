@@ -32,6 +32,7 @@ public class DefaultUserService implements UserService {
                         .email(user.getEmail())
                         .password(user.getPassword())
                         .fullName(user.getFullName())
+                        .enabled(false)
                         .build()))
                 .map(u -> {
                     u.setPassword(passwordEncoder.encode(u.getPassword()));
