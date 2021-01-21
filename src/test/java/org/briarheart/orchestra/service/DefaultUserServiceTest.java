@@ -3,8 +3,10 @@ package org.briarheart.orchestra.service;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
+import org.briarheart.orchestra.service.event.UserCreateEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Mono;
 
@@ -19,6 +21,7 @@ class DefaultUserServiceTest {
     private DefaultUserService service;
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
+    private ApplicationEventPublisher eventPublisher;
 
     @BeforeEach
     void setUp() {
@@ -27,7 +30,10 @@ class DefaultUserServiceTest {
 
         passwordEncoder = mock(PasswordEncoder.class);
         when(passwordEncoder.encode(anyString())).thenAnswer(args -> args.getArgument(0));
-        service = new DefaultUserService(userRepository, passwordEncoder);
+
+        eventPublisher = mock(ApplicationEventPublisher.class);
+
+        service = new DefaultUserService(userRepository, passwordEncoder, eventPublisher);
     }
 
     @Test
@@ -71,6 +77,14 @@ class DefaultUserServiceTest {
         User result = service.createUser(newUser).block();
         assertNotNull(result);
         assertFalse(result.isEmailConfirmed());
+    }
+
+    @Test
+    void shouldPublishEventOnUserCreate() {
+        User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
+        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        service.createUser(newUser).block();
+        verify(eventPublisher, times(1)).publishEvent(any(UserCreateEvent.class));
     }
 
     @Test
