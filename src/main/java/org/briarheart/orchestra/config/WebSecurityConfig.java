@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.data.UserAuthorityRelationRepository;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.security.oauth2.client.endpoint.ReactiveAccessTokenTypeWebClientFilter;
@@ -13,7 +14,6 @@ import org.briarheart.orchestra.security.web.server.authentication.accesstoken.S
 import org.briarheart.orchestra.security.web.server.authentication.jwt.CookieJwtRepository;
 import org.briarheart.orchestra.security.web.server.authentication.jwt.JwtService;
 import org.briarheart.orchestra.security.web.server.authentication.logout.AccessTokenLogoutHandler;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesRegistrationAdapter;
 import org.springframework.context.annotation.Bean;
@@ -70,12 +70,9 @@ import static org.springframework.security.crypto.factory.PasswordEncoderFactori
  * @author Roman Chigvintsev
  */
 @EnableWebFluxSecurity
+@RequiredArgsConstructor
 public class WebSecurityConfig {
-    @Value("${application.security.authentication.access-token.signing-key}")
-    private String accessTokenSigningKey;
-
-    @Value("${application.security.authentication.access-token.validity-seconds}")
-    private long accessTokenValiditySeconds;
+    private final ApplicationSecurityProperties securityProperties;
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(
@@ -241,8 +238,10 @@ public class WebSecurityConfig {
 
     @Bean
     public AccessTokenService accessTokenService(ServerAccessTokenRepository accessTokenRepository) {
-        JwtService tokenService = new JwtService(accessTokenRepository, accessTokenSigningKey);
-        tokenService.setAccessTokenValiditySeconds(accessTokenValiditySeconds);
+        String signingKey = securityProperties.getAuthentication().getAccessToken().getSigningKey();
+        long accessTokenValidity = securityProperties.getAuthentication().getAccessToken().getValiditySeconds();
+        JwtService tokenService = new JwtService(accessTokenRepository, signingKey);
+        tokenService.setAccessTokenValiditySeconds(accessTokenValidity);
         return tokenService;
     }
 
