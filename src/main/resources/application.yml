@@ -40,6 +40,18 @@ spring:
     setter: none
     field: any
 
+  mail:
+    protocol: smtps
+    host: smtp.gmail.com
+    port: 465
+    username: ${SECURITY_MAIL_USERNAME}
+    password: ${SECURITY_MAIL_PASSWORD}
+    properties.mail.smtp:
+      auth: true
+      starttls.enable: true
+      starttls.required: true
+      ssl.enable: true
+    test-connection: true
 
 management:
   endpoint:
@@ -54,11 +66,10 @@ info:
   application:
     name: Orchestra
     version: 0.0.1-SNAPSHOT
+    url: http://localhost:4200
 
 application:
-  security:
-    authentication:
-      access-token:
-        # seven days
-        validity-seconds: 604800
-        signing-key: ${SECURITY_ACCESS_TOKEN_SIGNING_KEY}
+  security.authentication.access-token:
+    # seven days
+    validity-seconds: 604800
+    signing-key: ${SECURITY_ACCESS_TOKEN_SIGNING_KEY}

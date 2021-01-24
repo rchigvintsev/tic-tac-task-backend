@@ -1,12 +1,12 @@
 package org.briarheart.orchestra.service;
 
+import org.briarheart.orchestra.data.EmailConfirmationTokenRepository;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
+import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
-import org.briarheart.orchestra.service.event.UserCreateEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Mono;
 
@@ -20,20 +20,28 @@ import static org.mockito.Mockito.*;
 class DefaultUserServiceTest {
     private DefaultUserService service;
     private UserRepository userRepository;
+    private EmailConfirmationTokenRepository emailConfirmationTokenRepository;
+    private EmailConfirmationLinkSender emailConfirmationLinkSender;
     private PasswordEncoder passwordEncoder;
-    private ApplicationEventPublisher eventPublisher;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
+        emailConfirmationTokenRepository = mock(EmailConfirmationTokenRepository.class);
+        when(emailConfirmationTokenRepository.save(any(EmailConfirmationToken.class)))
+                .thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        emailConfirmationLinkSender = mock(EmailConfirmationLinkSender.class);
+        when(emailConfirmationLinkSender.sendEmailConfirmationLink(any(User.class), any(EmailConfirmationToken.class)))
+                .thenReturn(Mono.just(true).then());
+
         passwordEncoder = mock(PasswordEncoder.class);
         when(passwordEncoder.encode(anyString())).thenAnswer(args -> args.getArgument(0));
 
-        eventPublisher = mock(ApplicationEventPublisher.class);
-
-        service = new DefaultUserService(userRepository, passwordEncoder, eventPublisher);
+        service = new DefaultUserService(userRepository, emailConfirmationTokenRepository, emailConfirmationLinkSender,
+                passwordEncoder);
     }
 
     @Test
@@ -80,11 +88,20 @@ class DefaultUserServiceTest {
     }
 
     @Test
-    void shouldPublishEventOnUserCreate() {
+    void shouldCreateEmailConfirmationTokenOnUserCreate() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
         when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
         service.createUser(newUser).block();
-        verify(eventPublisher, times(1)).publishEvent(any(UserCreateEvent.class));
+        verify(emailConfirmationTokenRepository, times(1)).save(any(EmailConfirmationToken.class));
+    }
+
+    @Test
+    void shouldSendEmailConfirmationLinkToUserOnUserCreate() {
+        User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
+        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        service.createUser(newUser).block();
+        verify(emailConfirmationLinkSender, times(1))
+                .sendEmailConfirmationLink(any(User.class), any(EmailConfirmationToken.class));
     }
 
     @Test

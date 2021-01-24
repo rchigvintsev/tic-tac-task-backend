@@ -20,7 +20,7 @@ public class EmailConfirmationToken {
     private Long id;
 
     private String email;
-    private String value;
+    private String tokenValue;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
 

@@ -2,14 +2,21 @@ package org.briarheart.orchestra.service;
 
 import io.jsonwebtoken.lang.Assert;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.briarheart.orchestra.data.EmailConfirmationTokenRepository;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
+import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
-import org.briarheart.orchestra.service.event.UserCreateEvent;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 /**
  * Default implementation of {@link UserService}.
@@ -19,20 +26,27 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class DefaultUserService implements UserService {
+    private static final Duration DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT = Duration.of(24, ChronoUnit.HOURS);
+
     private final UserRepository userRepository;
+    private final EmailConfirmationTokenRepository tokenRepository;
+    private final EmailConfirmationLinkSender emailConfirmationLinkSender;
     private final PasswordEncoder passwordEncoder;
-    private final ApplicationEventPublisher eventPublisher;
+
+    @Setter
+    private Duration emailConfirmationTokenExpirationTimeout = DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT;
 
     @Override
     public Mono<User> createUser(User user) throws EntityAlreadyExistsException {
         Assert.notNull(user, "User must not be null");
-        return userRepository.findById(user.getEmail())
+        String email = user.getEmail();
+        return userRepository.findById(email)
                 .flatMap(u -> {
-                    String errorMessage = "User with email \"" + user.getEmail() + "\" is already registered";
+                    String errorMessage = "User with email \"" + email + "\" is already registered";
                     return Mono.<User>error(new EntityAlreadyExistsException(errorMessage));
                 })
                 .switchIfEmpty(Mono.fromCallable(() -> User.builder()
-                        .email(user.getEmail())
+                        .email(email)
                         .emailConfirmed(false)
                         .password(user.getPassword())
                         .fullName(user.getFullName())
@@ -41,7 +55,13 @@ public class DefaultUserService implements UserService {
                 .map(this::encodePassword)
                 .flatMap(userRepository::save)
                 .map(this::clearPassword)
-                .map(this::publishUserCreateEvent);
+                .zipWhen(u -> this.createEmailConfirmationToken(email))
+                .flatMap(userAndToken -> {
+                    EmailConfirmationToken token = userAndToken.getT2();
+                    User savedUser = userAndToken.getT1();
+                    return emailConfirmationLinkSender.sendEmailConfirmationLink(savedUser, token)
+                            .thenReturn(savedUser);
+                });
     }
 
     private User encodePassword(User user) {
@@ -54,8 +74,15 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    private User publishUserCreateEvent(User user) {
-        eventPublisher.publishEvent(new UserCreateEvent(user));
-        return user;
+    private Mono<EmailConfirmationToken> createEmailConfirmationToken(String email) {
+        LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC);
+        LocalDateTime expiresAt = createdAt.plus(emailConfirmationTokenExpirationTimeout);
+        EmailConfirmationToken token = EmailConfirmationToken.builder()
+                .email(email)
+                .tokenValue(UUID.randomUUID().toString())
+                .createdAt(createdAt)
+                .expiresAt(expiresAt)
+                .build();
+        return tokenRepository.save(token);
     }
 }
