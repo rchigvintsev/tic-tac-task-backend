@@ -1,5 +1,3 @@
-application:
-  security:
-    authentication:
-      access-token:
-        signing-key: /oCUiKbT+Db1HLagb/1HrbKUCGoSl6nkUlk1Hw3fs/0khVpdEmNbNouNeg9peMi7XCrMawHxqMy/3qSbc4pMUw==
+application.security.authentication.access-token.signing-key: /oCUiKbT+Db1HLagb/1HrbKUCGoSl6nkUlk1Hw3fs/0khVpdEmNbNouNeg9peMi7XCrMawHxqMy/3qSbc4pMUw==
+
+spring.mail.test-connection: false

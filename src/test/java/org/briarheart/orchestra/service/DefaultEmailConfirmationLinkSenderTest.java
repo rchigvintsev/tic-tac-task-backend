@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
@@ -88,5 +89,16 @@ class DefaultEmailConfirmationLinkSenderTest {
         User user = User.builder().email("alice@mail.com").fullName("Alice").build();
         assertThrows(IllegalArgumentException.class, () -> sender.sendEmailConfirmationLink(user, null),
                 "Email confirmation token must not be null");
+    }
+
+    @Test
+    void shouldThrowExceptionOnEmailConfirmationLinkSendWhenMailExceptionIsThrown() {
+        User user = User.builder().email("alice@mail.com").fullName("Alice").build();
+        EmailConfirmationToken token = EmailConfirmationToken.builder()
+                .email(user.getEmail())
+                .tokenValue(UUID.randomUUID().toString())
+                .build();
+        doThrow(new MailSendException("Something went wrong")).when(javaMailSender).send(any(SimpleMailMessage.class));
+        assertThrows(UnableToSendMessageException.class, () -> sender.sendEmailConfirmationLink(user, token).block());
     }
 }

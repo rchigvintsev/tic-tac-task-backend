@@ -15,6 +15,7 @@ public interface EmailConfirmationLinkSender {
      *
      * @param user user to which email confirmation link should be sent (must not be {@code null})
      * @param token email confirmation token that will be used to activate user's account (must not be {@code null})
+     * @throws UnableToSendMessageException if error occurred while trying to send confirmation link
      */
-    Mono<Void> sendEmailConfirmationLink(User user, EmailConfirmationToken token);
+    Mono<Void> sendEmailConfirmationLink(User user, EmailConfirmationToken token) throws UnableToSendMessageException;
 }

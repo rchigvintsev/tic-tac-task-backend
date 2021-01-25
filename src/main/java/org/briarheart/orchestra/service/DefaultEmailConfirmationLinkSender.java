@@ -6,6 +6,7 @@ import org.briarheart.orchestra.config.ApplicationInfoProperties;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
 import org.springframework.context.support.MessageSourceAccessor;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,8 @@ public class DefaultEmailConfirmationLinkSender implements EmailConfirmationLink
     private final JavaMailSender mailSender;
 
     @Override
-    public Mono<Void> sendEmailConfirmationLink(User user, EmailConfirmationToken token) {
+    public Mono<Void> sendEmailConfirmationLink(User user, EmailConfirmationToken token)
+            throws UnableToSendMessageException {
         Assert.notNull(user, "User must not be null");
         Assert.notNull(token, "Email confirmation token must not be null");
 
@@ -47,6 +49,10 @@ public class DefaultEmailConfirmationLinkSender implements EmailConfirmationLink
             message.setSubject(subject);
             message.setText(text);
             mailSender.send(message);
-        });
+        }).onErrorMap(MailException.class, e -> {
+            String errorMessage = messages.getMessage("user.registration.email-confirmation.message.unable-to-send",
+                    new Object[]{user.getEmail()});
+            return new UnableToSendMessageException(errorMessage, e);
+        }).then();
     }
 }
