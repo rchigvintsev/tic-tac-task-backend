@@ -7,6 +7,8 @@ import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.support.MessageSourceAccessor;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Mono;
 
@@ -40,8 +42,12 @@ class DefaultUserServiceTest {
         passwordEncoder = mock(PasswordEncoder.class);
         when(passwordEncoder.encode(anyString())).thenAnswer(args -> args.getArgument(0));
 
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        MessageSourceAccessor messages = new MessageSourceAccessor(messageSource);
+
         service = new DefaultUserService(userRepository, emailConfirmationTokenRepository, emailConfirmationLinkSender,
-                passwordEncoder);
+                passwordEncoder, messages);
     }
 
     @Test

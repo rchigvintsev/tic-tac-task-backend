@@ -8,6 +8,7 @@ import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
+import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -32,6 +33,7 @@ public class DefaultUserService implements UserService {
     private final EmailConfirmationTokenRepository tokenRepository;
     private final EmailConfirmationLinkSender emailConfirmationLinkSender;
     private final PasswordEncoder passwordEncoder;
+    private final MessageSourceAccessor messages;
 
     @Setter
     private Duration emailConfirmationTokenExpirationTimeout = DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT;
@@ -42,7 +44,8 @@ public class DefaultUserService implements UserService {
         String email = user.getEmail();
         return userRepository.findById(email)
                 .flatMap(u -> {
-                    String errorMessage = "User with email \"" + email + "\" is already registered";
+                    String errorMessage = messages.getMessage("user.registration.user-already-registered",
+                            new Object[]{email});
                     return Mono.<User>error(new EntityAlreadyExistsException(errorMessage));
                 })
                 .switchIfEmpty(Mono.fromCallable(() -> User.builder()
