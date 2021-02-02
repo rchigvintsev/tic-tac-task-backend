@@ -8,6 +8,7 @@ import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -41,11 +43,14 @@ public class DefaultUserService implements UserService {
     @Override
     public Mono<User> createUser(User user) throws EntityAlreadyExistsException {
         Assert.notNull(user, "User must not be null");
+
         String email = user.getEmail();
+        Locale locale = LocaleContextHolder.getLocale();
+
         return userRepository.findById(email)
                 .flatMap(u -> {
                     String errorMessage = messages.getMessage("user.registration.user-already-registered",
-                            new Object[]{email});
+                            new Object[]{email}, locale);
                     return Mono.<User>error(new EntityAlreadyExistsException(errorMessage));
                 })
                 .switchIfEmpty(Mono.fromCallable(() -> User.builder()

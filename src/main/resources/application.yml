@@ -53,6 +53,8 @@ spring:
       ssl.enable: true
     test-connection: true
 
+  messages.fallback-to-system-locale: false
+
 management:
   endpoint:
     health:
