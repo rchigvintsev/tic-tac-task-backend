@@ -8,7 +8,6 @@ import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,12 +40,10 @@ public class DefaultUserService implements UserService {
     private Duration emailConfirmationTokenExpirationTimeout = DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT;
 
     @Override
-    public Mono<User> createUser(User user) throws EntityAlreadyExistsException {
+    public Mono<User> createUser(User user, Locale locale) throws EntityAlreadyExistsException {
         Assert.notNull(user, "User must not be null");
 
         String email = user.getEmail();
-        Locale locale = LocaleContextHolder.getLocale();
-
         return userRepository.findById(email)
                 .flatMap(u -> {
                     String errorMessage = messages.getMessage("user.registration.user-already-registered",
@@ -67,7 +64,7 @@ public class DefaultUserService implements UserService {
                 .flatMap(userAndToken -> {
                     EmailConfirmationToken token = userAndToken.getT2();
                     User savedUser = userAndToken.getT1();
-                    return emailConfirmationLinkSender.sendEmailConfirmationLink(savedUser, token)
+                    return emailConfirmationLinkSender.sendEmailConfirmationLink(savedUser, token, locale)
                             .thenReturn(savedUser);
                 });
     }

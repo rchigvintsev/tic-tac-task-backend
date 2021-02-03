@@ -14,6 +14,8 @@ import org.springframework.util.Assert;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
+import java.util.Locale;
+
 /**
  * @author Roman Chigvintsev
  */
@@ -28,7 +30,7 @@ public class DefaultEmailConfirmationLinkSender implements EmailConfirmationLink
     private final JavaMailSender mailSender;
 
     @Override
-    public Mono<Void> sendEmailConfirmationLink(User user, EmailConfirmationToken token)
+    public Mono<Void> sendEmailConfirmationLink(User user, EmailConfirmationToken token, Locale locale)
             throws UnableToSendMessageException {
         Assert.notNull(user, "User must not be null");
         Assert.notNull(token, "Email confirmation token must not be null");
@@ -40,9 +42,9 @@ public class DefaultEmailConfirmationLinkSender implements EmailConfirmationLink
                     .toUriString();
 
             String subject = messages.getMessage("user.registration.email-confirmation.message.subject",
-                    new Object[]{applicationInfo.getName()});
+                    new Object[]{applicationInfo.getName()}, locale);
             String text = messages.getMessage("user.registration.email-confirmation.message.text",
-                    new Object[]{user.getFullName(), applicationInfo.getName(), confirmationLink});
+                    new Object[]{user.getFullName(), applicationInfo.getName(), confirmationLink}, locale);
 
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(user.getEmail());

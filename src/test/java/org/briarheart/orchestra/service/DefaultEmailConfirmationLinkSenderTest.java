@@ -12,6 +12,7 @@ import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -51,7 +52,7 @@ class DefaultEmailConfirmationLinkSenderTest {
                 .tokenValue(UUID.randomUUID().toString())
                 .build();
 
-        sender.sendEmailConfirmationLink(user, token).block();
+        sender.sendEmailConfirmationLink(user, token, Locale.ENGLISH).block();
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender, times(1)).send(messageCaptor.capture());
         SimpleMailMessage message = messageCaptor.getValue();
@@ -67,7 +68,7 @@ class DefaultEmailConfirmationLinkSenderTest {
                 .build();
         String confirmationLink = APPLICATION_URL + "?token=" + token.getTokenValue();
 
-        sender.sendEmailConfirmationLink(user, token).block();
+        sender.sendEmailConfirmationLink(user, token, Locale.ENGLISH).block();
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender, times(1)).send(messageCaptor.capture());
         SimpleMailMessage message = messageCaptor.getValue();
@@ -80,14 +81,15 @@ class DefaultEmailConfirmationLinkSenderTest {
                 .email("alice@mail.com")
                 .tokenValue(UUID.randomUUID().toString())
                 .build();
-        assertThrows(IllegalArgumentException.class, () -> sender.sendEmailConfirmationLink(null, token),
+        assertThrows(IllegalArgumentException.class,
+                () -> sender.sendEmailConfirmationLink(null, token, Locale.ENGLISH),
                 "User must not be null");
     }
 
     @Test
     void shouldThrowExceptionOnEmailConfirmationLinkSendWhenEmailConfirmationTokenIsNull() {
         User user = User.builder().email("alice@mail.com").fullName("Alice").build();
-        assertThrows(IllegalArgumentException.class, () -> sender.sendEmailConfirmationLink(user, null),
+        assertThrows(IllegalArgumentException.class, () -> sender.sendEmailConfirmationLink(user, null, Locale.ENGLISH),
                 "Email confirmation token must not be null");
     }
 
@@ -99,6 +101,7 @@ class DefaultEmailConfirmationLinkSenderTest {
                 .tokenValue(UUID.randomUUID().toString())
                 .build();
         doThrow(new MailSendException("Something went wrong")).when(javaMailSender).send(any(SimpleMailMessage.class));
-        assertThrows(UnableToSendMessageException.class, () -> sender.sendEmailConfirmationLink(user, token).block());
+        assertThrows(UnableToSendMessageException.class,
+                () -> sender.sendEmailConfirmationLink(user, token, Locale.ENGLISH).block());
     }
 }

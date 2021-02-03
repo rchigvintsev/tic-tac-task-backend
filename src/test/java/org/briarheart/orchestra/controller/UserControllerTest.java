@@ -14,6 +14,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import java.util.Locale;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 
@@ -33,11 +35,12 @@ class UserControllerTest {
     @Test
     void shouldCreateUser() {
         User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userService.createUser(user)).thenReturn(Mono.just(user));
+        when(userService.createUser(user, Locale.ENGLISH)).thenReturn(Mono.just(user));
 
         testClient.mutateWith(csrf()).post()
                 .uri("/users")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("Accept-Language", "en")
                 .bodyValue(user)
                 .exchange()
 

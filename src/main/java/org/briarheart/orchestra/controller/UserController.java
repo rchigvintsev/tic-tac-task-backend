@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import java.util.Locale;
 
 /**
  * @author Roman Chigvintsev
@@ -20,7 +21,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<User> createUser(@Valid @RequestBody User user) {
-        return userService.createUser(user);
+    public Mono<User> createUser(@Valid @RequestBody User user, Locale locale) {
+        return userService.createUser(user, locale);
     }
 }
