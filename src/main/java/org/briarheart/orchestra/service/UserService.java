@@ -17,7 +17,7 @@ public interface UserService {
      * Creates new user.
      *
      * @param user user to be created (must not be {@code null})
-     * @param @param locale current user locale
+     * @param locale current user's locale
      * @return created user
      * @throws EntityAlreadyExistsException if user with the given email already exists
      */
