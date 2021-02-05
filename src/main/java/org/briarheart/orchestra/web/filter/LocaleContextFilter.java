@@ -7,7 +7,9 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 /**
- * This filter sets current locale context obtained from the given {@link ServerWebExchange}.
+ * This filter sets current locale context obtained from the given {@link ServerWebExchange}. It is required for
+ * correct translation of bean validation messages
+ * (see {@link org.springframework.validation.beanvalidation.LocaleContextMessageInterpolator} for details).
  *
  * @author Roman Chigvintsev
  * @see LocaleContextHolder
