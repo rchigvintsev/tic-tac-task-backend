@@ -18,7 +18,7 @@ import java.time.ZoneOffset;
 public class EmailConfirmationToken {
     @Id
     private Long id;
-
+    private Long userId;
     private String email;
     private String tokenValue;
     private LocalDateTime createdAt;

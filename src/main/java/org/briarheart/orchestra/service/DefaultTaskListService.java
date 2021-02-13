@@ -7,6 +7,7 @@ import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
 import org.briarheart.orchestra.model.TaskStatus;
+import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,44 +27,41 @@ public class DefaultTaskListService implements TaskListService {
     private final TaskRepository taskRepository;
 
     @Override
-    public Flux<TaskList> getUncompletedTaskLists(String author) {
-        return taskListRepository.findByCompletedAndAuthor(false, author);
+    public Flux<TaskList> getUncompletedTaskLists(User user) {
+        Assert.notNull(user, "User must not be null");
+        return taskListRepository.findByCompletedAndUserId(false, user.getId());
     }
 
     @Override
-    public Mono<TaskList> getTaskList(Long id, String author) throws EntityNotFoundException {
-        return taskListRepository.findByIdAndAuthor(id, author)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task list with id " + id + " is not found")));
+    public Mono<TaskList> getTaskList(Long id, User user) throws EntityNotFoundException {
+        Assert.notNull(user, "User must not be null");
+        return findTaskList(id, user.getId());
     }
 
     @Override
-    public Mono<TaskList> createTaskList(TaskList taskList, String author) {
+    public Mono<TaskList> createTaskList(TaskList taskList) {
         Assert.notNull(taskList, "Task list must not be null");
-        Assert.hasText(author, "Task list author must not be null or empty");
-        return Mono.defer(() -> {
-            TaskList newTaskList = taskList.copy();
-            newTaskList.setAuthor(author);
-            return taskListRepository.save(newTaskList);
-        });
+        return Mono.defer(() -> taskListRepository.save(taskList.copy()));
     }
 
     @Override
-    public Mono<TaskList> updateTaskList(TaskList taskList, Long id, String author) throws EntityNotFoundException {
+    public Mono<TaskList> updateTaskList(TaskList taskList) throws EntityNotFoundException {
         Assert.notNull(taskList, "Task list must not be null");
-        return getTaskList(id, author).flatMap(savedTaskList -> {
-            taskList.setId(savedTaskList.getId());
-            taskList.setAuthor(savedTaskList.getAuthor());
-            return taskListRepository.save(taskList);
-        });
+        return findTaskList(taskList.getId(), taskList.getUserId())
+                .flatMap(existingTaskList -> taskListRepository.save(taskList));
     }
 
     @Override
-    public Mono<Void> completeTaskList(Long id, String author) throws EntityNotFoundException {
-        return getTaskList(id, author)
-                .zipWhen(taskList -> taskRepository.findByTaskListIdAndAuthor(id, author, 0, null).flatMap(task -> {
-                    task.setStatus(TaskStatus.COMPLETED);
-                    return taskRepository.save(task);
-                }).then(Mono.just(true)))
+    public Mono<Void> completeTaskList(Long id, User user) throws EntityNotFoundException {
+        Assert.notNull(user, "User must not be null");
+        return getTaskList(id, user)
+                .zipWhen(taskList -> {
+                    Flux<Task> taskFlux = taskRepository.findByTaskListIdAndUserId(id, user.getId(), 0, null);
+                    return taskFlux.flatMap(task -> {
+                        task.setStatus(TaskStatus.COMPLETED);
+                        return taskRepository.save(task);
+                    }).then(Mono.just(true));
+                })
                 .flatMap(taskListAndFlag -> {
                     TaskList taskList = taskListAndFlag.getT1();
                     taskList.setCompleted(true);
@@ -72,9 +70,10 @@ public class DefaultTaskListService implements TaskListService {
     }
 
     @Override
-    public Mono<Void> deleteTaskList(Long id, String author) throws EntityNotFoundException {
-        return getTaskList(id, author)
-                .zipWhen(taskList -> taskRepository.findByTaskListIdAndAuthor(id, author, 0, null)
+    public Mono<Void> deleteTaskList(Long id, User user) throws EntityNotFoundException {
+        Assert.notNull(user, "User must not be null");
+        return getTaskList(id, user)
+                .zipWhen(taskList -> taskRepository.findByTaskListIdAndUserId(id, user.getId(), 0, null)
                         .flatMap(taskRepository::delete)
                         .then(Mono.just(true)))
                 .flatMap(taskListAndFlag -> {
@@ -84,11 +83,17 @@ public class DefaultTaskListService implements TaskListService {
     }
 
     @Override
-    public Flux<Task> getTasks(Long taskListId, String author, Pageable pageable) throws EntityNotFoundException {
-        return getTaskList(taskListId, author).flatMapMany(taskList -> {
+    public Flux<Task> getTasks(Long taskListId, User user, Pageable pageable) throws EntityNotFoundException {
+        return getTaskList(taskListId, user).flatMapMany(taskList -> {
             long offset = Pageables.getOffset(pageable);
             Integer limit = Pageables.getLimit(pageable);
-            return taskRepository.findByTaskListIdAndAuthor(taskList.getId(), taskList.getAuthor(), offset, limit);
+            return taskRepository.findByTaskListIdAndUserId(taskList.getId(), user.getId(), offset, limit);
         });
+    }
+
+    private Mono<TaskList> findTaskList(Long taskListId, Long userId) {
+        return taskListRepository.findByIdAndUserId(taskListId, userId)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task list with id " + taskListId
+                        + " is not found")));
     }
 }

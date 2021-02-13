@@ -16,12 +16,10 @@ import javax.validation.constraints.Size;
 public class TaskList {
     @Id
     private Long id;
-
+    private Long userId;
     @NotBlank
     @Size(max = 255)
     private String name;
-
-    private String author;
     private boolean completed;
 
     /**
@@ -31,8 +29,9 @@ public class TaskList {
      */
     public TaskList copy() {
         TaskList copy = new TaskList();
+        copy.setUserId(userId);
         copy.setName(name);
-        copy.setAuthor(author);
+        copy.setCompleted(completed);
         return copy;
     }
 }

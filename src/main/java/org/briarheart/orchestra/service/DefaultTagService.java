@@ -8,6 +8,7 @@ import org.briarheart.orchestra.data.TaskRepository;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskStatus;
+import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,63 +28,61 @@ public class DefaultTagService implements TagService {
     private final TaskRepository taskRepository;
 
     @Override
-    public Flux<Tag> getTags(String author) {
-        return tagRepository.findByAuthor(author);
+    public Flux<Tag> getTags(User user) {
+        Assert.notNull(user, "User must not be null");
+        return tagRepository.findByUserId(user.getId());
     }
 
     @Override
-    public Mono<Tag> getTag(Long id, String author) throws EntityNotFoundException {
-        return tagRepository.findByIdAndAuthor(id, author)
+    public Mono<Tag> getTag(Long id, User user) throws EntityNotFoundException {
+        Assert.notNull(user, "User must not be null");
+        return tagRepository.findByIdAndUserId(id, user.getId())
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")));
     }
 
     @Override
-    public Mono<Tag> createTag(Tag tag, String author) throws EntityAlreadyExistsException {
+    public Mono<Tag> createTag(Tag tag) throws EntityAlreadyExistsException {
         Assert.notNull(tag, "Tag must not be null");
-        Assert.hasText(author, "Tag author must not be null or empty");
-        return tagRepository.findByNameAndAuthor(tag.getName(), author)
+        return tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())
                 .flatMap(t -> {
                     String message = "Tag with name \"" + tag.getName() + "\" already exists";
                     return Mono.<Tag>error(new EntityAlreadyExistsException(message));
                 })
-                .switchIfEmpty(Mono.defer(() -> {
-                    Tag newTag = tag.copy();
-                    newTag.setAuthor(author);
-                    return tagRepository.save(newTag);
-                }));
+                .switchIfEmpty(Mono.defer(() -> tagRepository.save(tag.copy())));
     }
 
     @Override
-    public Mono<Tag> updateTag(Tag tag, Long id, String author)
+    public Mono<Tag> updateTag(Tag tag)
             throws EntityNotFoundException, EntityAlreadyExistsException {
         Assert.notNull(tag, "Tag must not be null");
-        return getTag(id, author)
+        return getTag(tag.getId(), tag.getUserId())
                 .flatMap(t -> {
                     if (!t.getName().equals(tag.getName())) {
-                        return tagRepository.findByNameAndAuthor(tag.getName(), author);
+                        return tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId());
                     }
                     return Mono.empty();
                 }).flatMap(t -> {
                     String message = "Tag with name \"" + tag.getName() + "\" already exists";
                     return Mono.<Tag>error(new EntityAlreadyExistsException(message));
-                }).switchIfEmpty(Mono.defer(() -> {
-                    tag.setId(id);
-                    tag.setAuthor(author);
-                    return tagRepository.save(tag);
-                }));
+                }).switchIfEmpty(Mono.defer(() -> tagRepository.save(tag)));
     }
 
     @Override
-    public Mono<Void> deleteTag(Long id, String author) throws EntityNotFoundException {
-        return getTag(id, author).flatMap(tagRepository::delete);
+    public Mono<Void> deleteTag(Long id, User user) throws EntityNotFoundException {
+        return getTag(id, user).flatMap(tagRepository::delete);
     }
 
     @Override
-    public Flux<Task> getUncompletedTasks(Long tagId, String tagAuthor, Pageable pageable) {
-        return getTag(tagId, tagAuthor).flatMapMany(tag -> {
+    public Flux<Task> getUncompletedTasks(Long tagId, User user, Pageable pageable) {
+        return getTag(tagId, user).flatMapMany(tag -> {
             long offset = Pageables.getOffset(pageable);
             Integer limit = Pageables.getLimit(pageable);
             return taskRepository.findByStatusNotAndTagId(TaskStatus.COMPLETED, tagId, offset, limit);
         });
+    }
+
+    private Mono<Tag> getTag(Long tagId, Long userId) throws EntityNotFoundException {
+        return tagRepository.findByIdAndUserId(tagId, userId)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + tagId + " is not found")));
     }
 }

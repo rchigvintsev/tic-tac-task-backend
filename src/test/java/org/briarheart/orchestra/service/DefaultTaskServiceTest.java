@@ -14,7 +14,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 /**
@@ -51,62 +52,63 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfAllUnprocessedTasks() {
-        String author = "alice";
-        when(taskRepository.countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author)).thenReturn(Mono.empty());
-        taskService.getUnprocessedTaskCount(author).block();
-        verify(taskRepository, times(1)).countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
+        User user = User.builder().id(1L).build();
+        when(taskRepository.countAllByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId())).thenReturn(Mono.empty());
+        taskService.getUnprocessedTaskCount(user).block();
+        verify(taskRepository, times(1)).countAllByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId());
     }
 
     @Test
     void shouldReturnAllUnprocessedTasks() {
-        String author = "alice";
-        when(taskRepository.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, 0, null))
+        User user = User.builder().id(1L).build();
+        when(taskRepository.findByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId(), 0, null))
                 .thenReturn(Flux.empty());
 
-        taskService.getUnprocessedTasks(author, Pageable.unpaged()).blockFirst();
-        verify(taskRepository, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, 0, null);
+        taskService.getUnprocessedTasks(user, Pageable.unpaged()).blockFirst();
+        verify(taskRepository, times(1)).findByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId(), 0, null);
     }
 
     @Test
     void shouldReturnAllUnprocessedTasksWithPagingRestriction() {
-        String author = "alice";
+        User user = User.builder().id(1L).build();
         PageRequest pageRequest = PageRequest.of(3, 50);
 
-        when(taskRepository.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, pageRequest.getOffset(),
+        when(taskRepository.findByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId(), pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.empty());
 
-        taskService.getUnprocessedTasks(author, pageRequest).blockFirst();
-        verify(taskRepository, times(1)).findByStatusAndAuthor(TaskStatus.UNPROCESSED, author,
+        taskService.getUnprocessedTasks(user, pageRequest).blockFirst();
+        verify(taskRepository, times(1)).findByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId(),
                 pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
     @Test
     void shouldReturnNumberOfAllProcessedTasks() {
-        String author = "alice";
-        when(taskRepository.countAllByStatusAndAuthor(TaskStatus.PROCESSED, author)).thenReturn(Mono.empty());
-        taskService.getProcessedTaskCount(author).block();
-        verify(taskRepository, times(1)).countAllByStatusAndAuthor(TaskStatus.PROCESSED, author);
+        User user = User.builder().id(1L).build();
+        when(taskRepository.countAllByStatusAndUserId(TaskStatus.PROCESSED, user.getId())).thenReturn(Mono.empty());
+        taskService.getProcessedTaskCount(user).block();
+        verify(taskRepository, times(1)).countAllByStatusAndUserId(TaskStatus.PROCESSED, user.getId());
     }
 
     @Test
     void shouldReturnAllProcessedTasks() {
-        String author = "alice";
-        when(taskRepository.findByStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null)).thenReturn(Flux.empty());
+        User user = User.builder().id(1L).build();
+        when(taskRepository.findByStatusAndUserId(TaskStatus.PROCESSED, user.getId(), 0, null))
+                .thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(author, Pageable.unpaged()).blockFirst();
-        verify(taskRepository, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null);
+        taskService.getProcessedTasks(user, Pageable.unpaged()).blockFirst();
+        verify(taskRepository, times(1)).findByStatusAndUserId(TaskStatus.PROCESSED, user.getId(), 0, null);
     }
 
     @Test
     void shouldReturnAllProcessedTasksWithPagingRestriction() {
-        String author = "alice";
+        User user = User.builder().id(1L).build();
         PageRequest pageRequest = PageRequest.of(3, 50);
 
-        when(taskRepository.findByStatusAndAuthor(TaskStatus.PROCESSED, author, pageRequest.getOffset(),
+        when(taskRepository.findByStatusAndUserId(TaskStatus.PROCESSED, user.getId(), pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(author, pageRequest).blockFirst();
-        verify(taskRepository, times(1)).findByStatusAndAuthor(TaskStatus.PROCESSED, author,
+        taskService.getProcessedTasks(user, pageRequest).blockFirst();
+        verify(taskRepository, times(1)).findByStatusAndUserId(TaskStatus.PROCESSED, user.getId(),
                 pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
@@ -114,199 +116,192 @@ class DefaultTaskServiceTest {
     void shouldReturnNumberOfProcessedTasksWithDeadlineDateBetween() {
         LocalDateTime deadlineFrom = LocalDateTime.now();
         LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
-        String author = "alice";
+        User user = User.builder().id(1L).build();
 
-        when(taskRepository.countAllByDeadlineBetweenAndStatusAndAuthor(
+        when(taskRepository.countAllByDeadlineBetweenAndStatusAndUserId(
                 deadlineFrom,
                 deadlineTo,
                 TaskStatus.PROCESSED,
-                author
+                user.getId()
         )).thenReturn(Mono.empty());
 
-        taskService.getProcessedTaskCount(deadlineFrom, deadlineTo, author).block();
-        verify(taskRepository, times(1)).countAllByDeadlineBetweenAndStatusAndAuthor(deadlineFrom,
-                deadlineTo, TaskStatus.PROCESSED, author);
+        taskService.getProcessedTaskCount(deadlineFrom, deadlineTo, user).block();
+        verify(taskRepository, times(1)).countAllByDeadlineBetweenAndStatusAndUserId(deadlineFrom,
+                deadlineTo, TaskStatus.PROCESSED, user.getId());
     }
 
     @Test
     void shouldReturnProcessedTasksWithDeadlineDateBetween() {
         LocalDateTime deadlineFrom = LocalDateTime.now();
         LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
-        String author = "alice";
+        User user = User.builder().id(1L).build();
 
-        when(taskRepository.findByDeadlineBetweenAndStatusAndAuthor(
+        when(taskRepository.findByDeadlineBetweenAndStatusAndUserId(
                 deadlineFrom,
                 deadlineTo,
                 TaskStatus.PROCESSED,
-                author,
+                user.getId(),
                 0,
                 null
         )).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(deadlineFrom, deadlineTo, author, null).blockFirst();
-        verify(taskRepository, times(1)).findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo,
-                TaskStatus.PROCESSED, author, 0, null);
+        taskService.getProcessedTasks(deadlineFrom, deadlineTo, user, null).blockFirst();
+        verify(taskRepository, times(1)).findByDeadlineBetweenAndStatusAndUserId(deadlineFrom, deadlineTo,
+                TaskStatus.PROCESSED, user.getId(), 0, null);
     }
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadlineDateLessThanOrEqual() {
         LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
-        String author = "alice";
+        User user = User.builder().id(1L).build();
 
-        when(taskRepository.countAllByDeadlineLessThanEqualAndStatusAndAuthor(
+        when(taskRepository.countAllByDeadlineLessThanEqualAndStatusAndUserId(
                 deadlineTo,
                 TaskStatus.PROCESSED,
-                author
+                user.getId()
         )).thenReturn(Mono.empty());
 
-        taskService.getProcessedTaskCount(null, deadlineTo, author).block();
-        verify(taskRepository, times(1)).countAllByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo,
-                TaskStatus.PROCESSED, author);
+        taskService.getProcessedTaskCount(null, deadlineTo, user).block();
+        verify(taskRepository, times(1)).countAllByDeadlineLessThanEqualAndStatusAndUserId(deadlineTo,
+                TaskStatus.PROCESSED, user.getId());
     }
 
     @Test
     void shouldReturnProcessedTasksWithDeadlineDateLessThanOrEqual() {
         LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
-        String author = "alice";
+        User user = User.builder().id(1L).build();
 
-        when(taskRepository.findByDeadlineLessThanEqualAndStatusAndAuthor(
+        when(taskRepository.findByDeadlineLessThanEqualAndStatusAndUserId(
                 deadlineTo,
                 TaskStatus.PROCESSED,
-                author,
+                user.getId(),
                 0,
                 null
         )).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(null, deadlineTo, author, null).blockFirst();
-        verify(taskRepository, times(1)).findByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo,
-                TaskStatus.PROCESSED, author, 0, null);
+        taskService.getProcessedTasks(null, deadlineTo, user, null).blockFirst();
+        verify(taskRepository, times(1)).findByDeadlineLessThanEqualAndStatusAndUserId(deadlineTo,
+                TaskStatus.PROCESSED, user.getId(), 0, null);
     }
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
         LocalDateTime deadlineFrom = LocalDateTime.now();
-        String author = "alice";
+        User user = User.builder().id(1L).build();
 
-        when(taskRepository.countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(
+        when(taskRepository.countAllByDeadlineGreaterThanEqualAndStatusAndUserId(
                 deadlineFrom,
                 TaskStatus.PROCESSED,
-                author
+                user.getId()
         )).thenReturn(Mono.empty());
 
-        taskService.getProcessedTaskCount(deadlineFrom, null, author).block();
-        verify(taskRepository, times(1)).countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom,
-                TaskStatus.PROCESSED, author);
+        taskService.getProcessedTaskCount(deadlineFrom, null, user).block();
+        verify(taskRepository, times(1)).countAllByDeadlineGreaterThanEqualAndStatusAndUserId(deadlineFrom,
+                TaskStatus.PROCESSED, user.getId());
     }
 
     @Test
     void shouldReturnProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
         LocalDateTime deadlineFrom = LocalDateTime.now();
-        String author = "alice";
+        User user = User.builder().id(1L).build();
 
-        when(taskRepository.findByDeadlineGreaterThanEqualAndStatusAndAuthor(
+        when(taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserId(
                 deadlineFrom,
                 TaskStatus.PROCESSED,
-                author,
+                user.getId(),
                 0,
                 null
         )).thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(deadlineFrom, null, author, null).blockFirst();
-        verify(taskRepository, times(1)).findByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom,
-                TaskStatus.PROCESSED, author, 0, null);
+        taskService.getProcessedTasks(deadlineFrom, null, user, null).blockFirst();
+        verify(taskRepository, times(1)).findByDeadlineGreaterThanEqualAndStatusAndUserId(deadlineFrom,
+                TaskStatus.PROCESSED, user.getId(), 0, null);
     }
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithoutDeadlineDate() {
-        String author = "alice";
-        when(taskRepository.countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author))
+        User user = User.builder().id(1L).build();
+        when(taskRepository.countAllByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId()))
                 .thenReturn(Mono.empty());
 
-        taskService.getProcessedTaskCount(null, null, author).block();
-        verify(taskRepository, times(1)).countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+        taskService.getProcessedTaskCount(null, null, user).block();
+        verify(taskRepository, times(1)).countAllByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId());
     }
 
     @Test
     void shouldReturnProcessedTasksWithoutDeadlineDate() {
-        String author = "alice";
-        when(taskRepository.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author, 0, null))
+        User user = User.builder().id(1L).build();
+        when(taskRepository.findByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId(), 0, null))
                 .thenReturn(Flux.empty());
 
-        taskService.getProcessedTasks(null, null, author, null).blockFirst();
-        verify(taskRepository, times(1)).findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author,
+        taskService.getProcessedTasks(null, null, user, null).blockFirst();
+        verify(taskRepository, times(1)).findByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId(),
                 0, null);
     }
 
     @Test
     void shouldReturnNumberOfAllUncompletedTasks() {
-        String author = "alice";
-        when(taskRepository.countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author)).thenReturn(Mono.empty());
+        User user = User.builder().id(1L).build();
+        when(taskRepository.countAllByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId())).thenReturn(Mono.empty());
 
-        taskService.getUncompletedTaskCount(author).block();
-        verify(taskRepository, times(1)).countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author);
+        taskService.getUncompletedTaskCount(user).block();
+        verify(taskRepository, times(1)).countAllByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId());
     }
 
     @Test
     void shouldReturnAllUncompletedTasks() {
-        String author = "alice";
-        when(taskRepository.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null))
+        User user = User.builder().id(1L).build();
+        when(taskRepository.findByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId(), 0, null))
                 .thenReturn(Flux.empty());
 
-        taskService.getUncompletedTasks(author, Pageable.unpaged()).blockFirst();
-        verify(taskRepository, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, 0, null);
+        taskService.getUncompletedTasks(user, Pageable.unpaged()).blockFirst();
+        verify(taskRepository, times(1)).findByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId(), 0, null);
     }
 
     @Test
     void shouldReturnUncompletedTasksWithPagingRestriction() {
-        String author = "alice";
+        User user = User.builder().id(1L).build();
         PageRequest pageRequest = PageRequest.of(3, 50);
 
-        when(taskRepository.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, pageRequest.getOffset(),
+        when(taskRepository.findByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId(), pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.empty());
 
-        taskService.getUncompletedTasks(author, pageRequest).blockFirst();
-        verify(taskRepository, times(1)).findByStatusNotAndAuthor(TaskStatus.COMPLETED, author,
+        taskService.getUncompletedTasks(user, pageRequest).blockFirst();
+        verify(taskRepository, times(1)).findByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId(),
                 pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
     @Test
     void shouldReturnTaskById() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        User user = User.builder().id(1L).build();
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
 
-        Task result = taskService.getTask(task.getId(), task.getAuthor()).block();
+        Task result = taskService.getTask(task.getId(), user).block();
         assertNotNull(result);
         assertEquals(task, result);
     }
 
     @Test
     void shouldThrowExceptionOnTaskGetWhenTaskIsNotFound() {
-        when(taskRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.getTask(1L, "alice").block());
+        when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
+        User user = User.builder().id(1L).build();
+        assertThrows(EntityNotFoundException.class, () -> taskService.getTask(2L, user).block());
     }
 
     @Test
     void shouldCreateTask() {
-        Task task = Task.builder().title("New task").build();
-        Task result = taskService.createTask(task, "alice").block();
+        Task task = Task.builder().title("New task").userId(1L).build();
+        Task result = taskService.createTask(task).block();
         assertNotNull(result);
         assertEquals(task.getTitle(), result.getTitle());
         verify(taskRepository, times(1)).save(any());
     }
 
     @Test
-    void shouldSetAuthorFieldOnTaskCreate() {
-        Task task = Task.builder().title("New task").build();
-        String author = "alice";
-        Task result = taskService.createTask(task, author).block();
-        assertNotNull(result);
-        assertEquals(author, result.getAuthor());
-    }
-
-    @Test
     void shouldSetTaskStatusToUnprocessedOnTaskCreate() {
-        Task task = Task.builder().title("New task").status(null).build();
-        Task result = taskService.createTask(task, "alice").block();
+        Task task = Task.builder().title("New task").userId(1L).status(null).build();
+        Task result = taskService.createTask(task).block();
         assertNotNull(result);
         assertSame(TaskStatus.UNPROCESSED, result.getStatus());
     }
@@ -314,328 +309,299 @@ class DefaultTaskServiceTest {
     @Test
     void shouldThrowExceptionOnTaskCreateWhenTaskIsNull() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(null, null));
+                () -> taskService.createTask(null));
         assertEquals("Task must not be null", exception.getMessage());
     }
 
     @Test
-    void shouldThrowExceptionOnTaskCreateWhenAuthorIsNull() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(Task.builder().title("New task").build(), null));
-        assertEquals("Task author must not be null or empty", exception.getMessage());
-    }
-
-    @Test
-    void shouldThrowExceptionOnTaskCreateWhenAuthorIsEmpty() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(Task.builder().title("New task").build(), ""));
-        assertEquals("Task author must not be null or empty", exception.getMessage());
-    }
-
-    @Test
     void shouldUpdateTask() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        Task existingTask = Task.builder().id(1L).title("Test task").userId(2L).build();
 
-        Task updatedTask = Task.builder().title("Updated test task").build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        when(taskRepository.findByIdAndUserId(existingTask.getId(), existingTask.getUserId()))
+                .thenReturn(Mono.just(existingTask));
+
+        Task updatedTask = existingTask.copy();
+        updatedTask.setId(existingTask.getId());
+        updatedTask.setTitle("Updated test task");
+
+        Task result = taskService.updateTask(updatedTask).block();
         assertNotNull(result);
         assertEquals(updatedTask.getTitle(), result.getTitle());
     }
 
     @Test
-    void shouldSetIdFieldOnTaskUpdate() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-
-        Task updatedTask = Task.builder().title("Updated test task").build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
-        assertNotNull(result);
-        assertEquals(task.getId(), result.getId());
-    }
-
-    @Test
-    void shouldSetAuthorFieldOnTaskUpdate() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-
-        Task updatedTask = Task.builder().title("Updated test task").build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
-        assertNotNull(result);
-        assertEquals(task.getAuthor(), result.getAuthor());
-    }
-
-    @Test
     void shouldSetStatusFieldOnTaskUpdate() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        Task existingTask = Task.builder().id(1L).title("Test task").userId(2L).status(TaskStatus.UNPROCESSED).build();
+        when(taskRepository.findByIdAndUserId(existingTask.getId(), existingTask.getUserId()))
+                .thenReturn(Mono.just(existingTask));
 
-        Task updatedTask = Task.builder().title("Updated test task").status(null).build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        Task updatedTask = existingTask.copy();
+        updatedTask.setId(existingTask.getId());
+        updatedTask.setTitle("Updated test task");
+        updatedTask.setStatus(null);
+
+        Task result = taskService.updateTask(updatedTask).block();
         assertNotNull(result);
-        assertSame(task.getStatus(), result.getStatus());
+        assertSame(existingTask.getStatus(), result.getStatus());
     }
 
     @Test
     void shouldMarkTaskAsProcessedOnTaskUpdateWhenDeadlineDateIsNotNull() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").status(TaskStatus.UNPROCESSED).build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        Task existingTask = Task.builder().id(1L).title("Test task").userId(2L).status(TaskStatus.UNPROCESSED).build();
+        when(taskRepository.findByIdAndUserId(existingTask.getId(), existingTask.getUserId()))
+                .thenReturn(Mono.just(existingTask));
 
-        Task updatedTask = Task.builder()
-                .title("Updated test task")
-                .deadline(LocalDateTime.now().plus(3, ChronoUnit.DAYS))
-                .build();
-        Task result = taskService.updateTask(updatedTask, task.getId(), task.getAuthor()).block();
+        Task updatedTask = existingTask.copy();
+        updatedTask.setId(existingTask.getId());
+        updatedTask.setTitle("Updated test task");
+        updatedTask.setDeadline(LocalDateTime.now().plus(3, ChronoUnit.DAYS));
+
+        Task result = taskService.updateTask(updatedTask).block();
         assertNotNull(result);
         assertSame(TaskStatus.PROCESSED, result.getStatus());
     }
 
     @Test
     void shouldThrowExceptionOnTaskUpdateWhenTaskIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.updateTask(null, null, null),
-                "Task must not be null");
+        assertThrows(IllegalArgumentException.class, () -> taskService.updateTask(null), "Task must not be null");
     }
 
     @Test
     void shouldThrowExceptionOnTaskUpdateWhenTaskIsNotFound() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class,
-                () -> taskService.updateTask(task, task.getId(), task.getAuthor()).block(),
+        Task task = Task.builder().id(1L).title("Test task").userId(2L).build();
+        when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.updateTask(task).block(),
                 "Task with id " + task.getId() + " is not found");
     }
 
     @Test
     void shouldCompleteTask() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        User user = User.builder().id(1L).build();
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
 
-        taskService.completeTask(task.getId(), task.getAuthor()).block();
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+
+        taskService.completeTask(task.getId(), user).block();
         assertSame(TaskStatus.COMPLETED, task.getStatus());
     }
 
     @Test
     void shouldThrowExceptionOnTaskCompleteWhenTaskIsNotFound() {
-        long taskId = 1L;
-        String taskAuthor = "alice";
-        when(taskRepository.findByIdAndAuthor(taskId, taskAuthor)).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.completeTask(taskId, taskAuthor).block(),
+        User user = User.builder().id(1L).build();
+        long taskId = 2L;
+
+        when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.completeTask(taskId, user).block(),
                 "Task with id " + taskId + " is not found");
     }
 
     @Test
     void shouldDeleteTask() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        User user = User.builder().id(1L).build();
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskRepository.delete(task)).thenReturn(Mono.empty());
 
-        taskService.deleteTask(task.getId(), task.getAuthor()).block();
+        taskService.deleteTask(task.getId(), user).block();
         verify(taskRepository, times(1)).delete(task);
     }
 
     @Test
     void shouldThrowExceptionOnTaskDeleteWhenTaskIsNotFound() {
-        long taskId = 1L;
-        String taskAuthor = "alice";
-        when(taskRepository.findByIdAndAuthor(taskId, taskAuthor)).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.deleteTask(taskId, taskAuthor).block(),
+        User user = User.builder().id(1L).build();
+        long taskId = 2L;
+
+        when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.deleteTask(taskId, user).block(),
                 "Task with id " + taskId + " is not found");
     }
 
     @Test
     void shouldReturnAllTagsForTask() {
-        Task task = Task.builder().id(1L).title("Test task").author("alice").build();
-        Tag tag = Tag.builder().id(2L).name("Test tag").author(task.getAuthor()).build();
+        User user = User.builder().id(1L).build();
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        Tag tag = Tag.builder().id(3L).name("Test tag").userId(user.getId()).build();
 
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskTagRelationRepository.findByTaskId(task.getId()))
                 .thenReturn(Flux.just(new TaskTagRelation(task.getId(), tag.getId())));
         when(tagRepository.findByIdIn(Set.of(tag.getId()))).thenReturn(Flux.just(tag));
 
-        taskService.getTags(task.getId(), task.getAuthor()).blockFirst();
+        taskService.getTags(task.getId(), user).blockFirst();
         verify(tagRepository, times(1)).findByIdIn(Set.of(tag.getId()));
     }
 
     @Test
     void shouldThrowExceptionOnTagsGetWhenTaskIsNotFound() {
-        when(taskRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.getTags(1L, "alice").blockFirst());
+        when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
+        User user = User.builder().id(1L).build();
+        assertThrows(EntityNotFoundException.class, () -> taskService.getTags(2L, user).blockFirst());
     }
 
     @Test
     void shouldAssignTagToTask() {
-        String author = "alice";
-        Task task = Task.builder().id(1L).title("Test task").author(author).build();
-        Tag tag = Tag.builder().id(2L).name("Test tag").author(author).build();
+        User user = User.builder().id(1L).build();
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        Tag tag = Tag.builder().id(3L).name("Test tag").userId(user.getId()).build();
 
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
         when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), tag.getId())).thenReturn(Mono.empty());
 
-        taskService.assignTag(task.getId(), tag.getId(), author).block();
+        taskService.assignTag(task.getId(), tag.getId(), user).block();
         verify(taskTagRelationRepository, times(1)).create(task.getId(), tag.getId());
     }
 
     @Test
     void shouldThrowExceptionOnTagAssignWhenTaskIsNotFound() {
-        Long taskId = 1L;
-        String author = "alice";
-        Tag tag = Tag.builder().id(2L).name("Test tag").author(author).build();
+        User user = User.builder().id(1L).build();
+        Tag tag = Tag.builder().id(2L).name("Test tag").userId(user.getId()).build();
+        long taskId = 3L;
 
-        when(taskRepository.findByIdAndAuthor(taskId, author)).thenReturn(Mono.empty());
-        when(tagRepository.findByIdAndAuthor(tag.getId(), tag.getAuthor())).thenReturn(Mono.just(tag));
+        when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
+        when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
 
-        assertThrows(EntityNotFoundException.class,
-                () -> taskService.assignTag(taskId, tag.getId(), author).block(),
+        assertThrows(EntityNotFoundException.class, () -> taskService.assignTag(taskId, tag.getId(), user).block(),
                 "Task with id " + taskId + "is not found");
     }
 
     @Test
     void shouldThrowExceptionOnTagAssignWhenTagIsNotFound() {
-        Long tagId = 2L;
-        String author = "alice";
-        Task task = Task.builder().id(1L).title("Test task").author(author).build();
+        User user = User.builder().id(1L).build();
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        Long tagId = 3L;
 
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        when(tagRepository.findByIdAndAuthor(tagId, author)).thenReturn(Mono.empty());
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(tagRepository.findByIdAndUserId(tagId, user.getId())).thenReturn(Mono.empty());
 
-        assertThrows(EntityNotFoundException.class,
-                () -> taskService.assignTag(task.getId(), tagId, author).block(),
+        assertThrows(EntityNotFoundException.class, () -> taskService.assignTag(task.getId(), tagId, user).block(),
                 "Tag with id " + tagId + " is not found");
     }
 
     @Test
     void shouldRemoveTagFromTask() {
-        String author = "alice";
-        Task task = Task.builder().id(1L).title("Test task").author(author).build();
-        Tag tag = Tag.builder().id(2L).name("Test tag").author(author).build();
+        User user = User.builder().id(1L).build();
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        Tag tag = Tag.builder().id(3L).name("Test tag").userId(user.getId()).build();
 
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskTagRelationRepository.deleteByTaskIdAndTagId(task.getId(), tag.getId()))
                 .thenReturn(Mono.empty().then());
 
-        taskService.removeTag(task.getId(), author, tag.getId()).block();
+        taskService.removeTag(task.getId(), tag.getId(), user).block();
         verify(taskTagRelationRepository, times(1)).deleteByTaskIdAndTagId(task.getId(), tag.getId());
     }
 
     @Test
     void shouldThrowExceptionOnTagRemoveWhenTaskIsNotFound() {
-        Long taskId = 1L;
-        Long tagId = 2L;
-        String author = "alice";
-        when(taskRepository.findByIdAndAuthor(taskId, author)).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.removeTag(taskId, author, tagId).block(),
+        User user = User.builder().id(1L).build();
+        Long taskId = 2L;
+        Long tagId = 3L;
+
+        when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.removeTag(taskId, tagId, user).block(),
                 "Task with id " + taskId + "is not found");
     }
 
     @Test
     void shouldReturnAllCommentsForTask() {
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        User user = User.builder().id(1L).build();
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
+
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(task.getId(), 0, null))
                 .thenReturn(Flux.empty());
 
-        taskService.getComments(task.getId(), task.getAuthor(), Pageable.unpaged()).blockFirst();
+        taskService.getComments(task.getId(), user, Pageable.unpaged()).blockFirst();
         verify(taskCommentRepository, times(1)).findByTaskIdOrderByCreatedAtDesc(task.getId(), 0, null);
     }
 
     @Test
     void shouldAddCommentToTask() {
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        long userId = 1L;
+        Task task = Task.builder().id(2L).userId(userId).title("Test task").build();
+
+        when(taskRepository.findByIdAndUserId(task.getId(), userId)).thenReturn(Mono.just(task));
         when(taskCommentRepository.save(any())).thenAnswer(invocation -> {
             TaskComment comment = invocation.getArgument(0, TaskComment.class);
-            comment.setId(2L);
+            comment.setId(3L);
             return Mono.just(comment);
         });
-        TaskComment newComment = TaskComment.builder().commentText("New comment").build();
 
-        taskService.addComment(task.getId(), task.getAuthor(), newComment).block();
+        TaskComment newComment = TaskComment.builder()
+                .commentText("New comment")
+                .userId(userId)
+                .taskId(task.getId())
+                .build();
+
+        taskService.addComment(newComment).block();
         verify(taskCommentRepository, times(1)).save(any());
     }
 
     @Test
-    void shouldSetTaskIdFieldOnCommentAdd() {
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        when(taskCommentRepository.save(any())).thenAnswer(invocation -> {
-            TaskComment comment = invocation.getArgument(0, TaskComment.class);
-            comment.setId(2L);
-            return Mono.just(comment);
-        });
-        TaskComment newComment = TaskComment.builder().commentText("New comment").build();
-
-        TaskComment result = taskService.addComment(task.getId(), task.getAuthor(), newComment).block();
-        assertNotNull(result);
-        assertEquals(task.getId(), result.getTaskId());
-    }
-
-    @Test
-    void shouldSetAuthorFieldOnCommentAdd() {
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
-        when(taskCommentRepository.save(any())).thenAnswer(invocation -> {
-            TaskComment comment = invocation.getArgument(0, TaskComment.class);
-            comment.setId(2L);
-            return Mono.just(comment);
-        });
-        TaskComment newComment = TaskComment.builder().commentText("New comment").build();
-
-        TaskComment result = taskService.addComment(task.getId(), task.getAuthor(), newComment).block();
-        assertNotNull(result);
-        assertEquals(task.getAuthor(), result.getAuthor());
-    }
-
-    @Test
     void shouldSetCreatedAtFieldOnCommentAdd() {
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        long userId = 1L;
+        Task task = Task.builder().id(2L).userId(userId).title("Test task").build();
+
+        when(taskRepository.findByIdAndUserId(task.getId(), userId)).thenReturn(Mono.just(task));
         when(taskCommentRepository.save(any())).thenAnswer(invocation -> {
             TaskComment comment = invocation.getArgument(0, TaskComment.class);
-            comment.setId(2L);
+            comment.setId(3L);
             return Mono.just(comment);
         });
-        TaskComment newComment = TaskComment.builder().commentText("New comment").build();
 
-        TaskComment result = taskService.addComment(task.getId(), task.getAuthor(), newComment).block();
+        TaskComment newComment = TaskComment.builder()
+                .commentText("New comment")
+                .userId(userId)
+                .taskId(task.getId())
+                .build();
+
+        TaskComment result = taskService.addComment(newComment).block();
         assertNotNull(result);
         assertNotNull(result.getCreatedAt());
     }
 
     @Test
     void shouldThrowExceptionOnCommentAddWhenCommentIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.addComment(1L, "alice", null),
+        assertThrows(IllegalArgumentException.class, () -> taskService.addComment(null),
                 "Task comment must not be null");
     }
 
     @Test
     void shouldThrowExceptionOnCommentAddWhenTaskIsNotFound() {
-        Long taskId = 1L;
-        String author = "alice";
-        TaskComment comment = TaskComment.builder().commentText("New comment").build();
-        when(taskRepository.findByIdAndAuthor(taskId, author)).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.addComment(taskId, author, comment).block(),
+        long userId = 1L;
+        long taskId = 2L;
+        TaskComment comment = TaskComment.builder()
+                .commentText("New comment")
+                .userId(userId)
+                .taskId(taskId)
+                .build();
+        when(taskRepository.findByIdAndUserId(taskId, userId)).thenReturn(Mono.empty());
+        assertThrows(EntityNotFoundException.class, () -> taskService.addComment(comment).block(),
                 "Task with id " + taskId + "is not found");
     }
 
     @Test
     void shouldReturnCommentsForTaskWithPagingRestriction() {
+        User user = User.builder().id(1L).build();
         PageRequest pageRequest = PageRequest.of(3, 50);
 
-        Task task = Task.builder().id(1L).author("alice").title("Test task").build();
-        when(taskRepository.findByIdAndAuthor(task.getId(), task.getAuthor())).thenReturn(Mono.just(task));
+        Task task = Task.builder().id(1L).userId(user.getId()).title("Test task").build();
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(task.getId(), pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.empty());
 
-        taskService.getComments(task.getId(), task.getAuthor(), pageRequest).blockFirst();
+        taskService.getComments(task.getId(), user, pageRequest).blockFirst();
         verify(taskCommentRepository, times(1)).findByTaskIdOrderByCreatedAtDesc(task.getId(),
                 pageRequest.getOffset(), pageRequest.getPageSize());
     }
 
     @Test
     void shouldThrowExceptionOnCommentsGetWhenTaskIsNotFound() {
-        when(taskRepository.findByIdAndAuthor(anyLong(), anyString())).thenReturn(Mono.empty());
+        when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
+        User user = User.builder().id(1L).build();
         assertThrows(EntityNotFoundException.class,
-                () -> taskService.getComments(1L, "alice", Pageable.unpaged()).blockFirst());
+                () -> taskService.getComments(1L, user, Pageable.unpaged()).blockFirst());
     }
 }

@@ -2,6 +2,7 @@ package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.model.TaskComment;
+import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.TaskCommentService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -20,6 +21,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Locale;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
@@ -52,37 +54,49 @@ class TaskCommentControllerTest {
 
     @Test
     void shouldUpdateComment() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).build();
+        Authentication authentication = createAuthentication(user);
 
-        TaskComment comment = TaskComment.builder().id(1L).commentText("Test comment").build();
-        TaskComment updatedComment = comment.copy();
-        updatedComment.setId(1L);
-        updatedComment.setCommentText("Updated test comment");
-        Mockito.when(taskCommentService.updateComment(comment, comment.getId(), authenticationMock.getName()))
-                .thenReturn(Mono.just(updatedComment));
+        TaskComment comment = TaskComment.builder().commentText("Updated comment text").build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).put()
-                .uri("/task-comments/" + comment.getId())
+        long commentId = 1L;
+
+        TaskComment responseBody = comment.copy();
+        responseBody.setId(commentId);
+        responseBody.setUserId(user.getId());
+
+        Mockito.when(taskCommentService.updateComment(any(TaskComment.class)))
+                .thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        testClient.mutateWith(mockAuthentication(authentication)).mutateWith(csrf())
+                .put().uri("/task-comments/" + commentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TaskComment.class).isEqualTo(updatedComment);
+                .expectBody(TaskComment.class).isEqualTo(responseBody);
     }
 
     @Test
     void shouldDeleteComment() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).build();
+        Authentication authentication = createAuthentication(user);
 
         long commentId = 1L;
-        Mockito.when(taskCommentService.deleteComment(commentId, authenticationMock.getName()))
-                .thenReturn(Mono.empty());
+        Mockito.when(taskCommentService.deleteComment(commentId, user)).thenReturn(Mono.just(true).then());
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).delete()
-                .uri("/task-comments/" + commentId).exchange()
+        testClient.mutateWith(mockAuthentication(authentication)).mutateWith(csrf())
+                .delete().uri("/task-comments/" + commentId)
+                .exchange()
+
                 .expectStatus().isNoContent();
+    }
+
+    private Authentication createAuthentication(User user) {
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn(user.getEmail());
+        when(authentication.getPrincipal()).thenReturn(user);
+        return authentication;
     }
 }

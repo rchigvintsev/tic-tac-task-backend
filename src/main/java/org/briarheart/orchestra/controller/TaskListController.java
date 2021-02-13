@@ -3,11 +3,13 @@ package org.briarheart.orchestra.controller;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
+import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.TaskListService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -15,7 +17,6 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.net.URI;
-import java.security.Principal;
 
 /**
  * REST-controller for task list managing.
@@ -29,20 +30,21 @@ public class TaskListController {
     private final TaskListService taskListService;
 
     @GetMapping("/uncompleted")
-    public Flux<TaskList> getUncompletedTaskLists(Principal user) {
-        return taskListService.getUncompletedTaskLists(user.getName());
+    public Flux<TaskList> getUncompletedTaskLists(Authentication authentication) {
+        return taskListService.getUncompletedTaskLists(getUser(authentication));
     }
 
     @GetMapping("/{id}")
-    public Mono<TaskList> getTaskList(@PathVariable("id") Long id, Principal user) {
-        return taskListService.getTaskList(id, user.getName());
+    public Mono<TaskList> getTaskList(@PathVariable("id") Long id, Authentication authentication) {
+        return taskListService.getTaskList(id, getUser(authentication));
     }
 
     @PostMapping
     public Mono<ResponseEntity<TaskList>> createTaskList(@Valid @RequestBody TaskList taskList,
-                                                         Principal user,
+                                                         Authentication authentication,
                                                          ServerHttpRequest request) {
-        return taskListService.createTaskList(taskList, user.getName()).map(createdTaskList -> {
+        taskList.setUserId(getUser(authentication).getId());
+        return taskListService.createTaskList(taskList).map(createdTaskList -> {
             URI taskListLocation = UriComponentsBuilder.fromHttpRequest(request)
                     .path("/{id}")
                     .buildAndExpand(createdTaskList.getId())
@@ -52,24 +54,34 @@ public class TaskListController {
     }
 
     @PutMapping("/{id}")
-    public Mono<TaskList> updateTaskList(@Valid @RequestBody TaskList taskList, @PathVariable Long id, Principal user) {
-        return taskListService.updateTaskList(taskList, id, user.getName());
+    public Mono<TaskList> updateTaskList(@Valid @RequestBody TaskList taskList,
+                                         @PathVariable Long id,
+                                         Authentication authentication) {
+        taskList.setId(id);
+        taskList.setUserId(getUser(authentication).getId());
+        return taskListService.updateTaskList(taskList);
     }
 
     @PutMapping("/completed/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> completeTaskList(@PathVariable Long id, Principal user) {
-        return taskListService.completeTaskList(id, user.getName());
+    public Mono<Void> completeTaskList(@PathVariable Long id, Authentication authentication) {
+        return taskListService.completeTaskList(id, getUser(authentication));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> deleteTaskList(@PathVariable Long id, Principal user) {
-        return taskListService.deleteTaskList(id, user.getName());
+    public Mono<Void> deleteTaskList(@PathVariable Long id, Authentication authentication) {
+        return taskListService.deleteTaskList(id, getUser(authentication));
     }
 
     @GetMapping("/{taskListId}/tasks")
-    public Flux<Task> getTasks(@PathVariable("taskListId") Long taskListId, Principal user, Pageable pageable) {
-        return taskListService.getTasks(taskListId, user.getName(), pageable);
+    public Flux<Task> getTasks(@PathVariable("taskListId") Long taskListId,
+                               Authentication authentication,
+                               Pageable pageable) {
+        return taskListService.getTasks(taskListId, getUser(authentication), pageable);
+    }
+
+    private User getUser(Authentication authentication) {
+        return (User) authentication.getPrincipal();
     }
 }

@@ -56,7 +56,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldCreateUser() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
         service.createUser(newUser, Locale.ENGLISH).block();
         verify(userRepository, times(1)).save(any(User.class));
     }
@@ -64,7 +64,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldEncodePasswordOnUserCreate() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
         service.createUser(newUser, Locale.ENGLISH).block();
         verify(passwordEncoder, times(1)).encode(newUser.getPassword());
     }
@@ -72,7 +72,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldClearPasswordOnUserCreateWhenUserIsSaved() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
         User result = service.createUser(newUser, Locale.ENGLISH).block();
         assertNotNull(result);
         assertNull(result.getPassword());
@@ -81,7 +81,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldDisableNewUserOnUserCreate() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
         User result = service.createUser(newUser, Locale.ENGLISH).block();
         assertNotNull(result);
         assertFalse(result.isEnabled());
@@ -90,7 +90,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldSetEmailConfirmationFlagToFalseOnUserCreate() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
         User result = service.createUser(newUser, Locale.ENGLISH).block();
         assertNotNull(result);
         assertFalse(result.isEmailConfirmed());
@@ -99,7 +99,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldCreateEmailConfirmationTokenOnUserCreate() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
         service.createUser(newUser, Locale.ENGLISH).block();
         verify(emailConfirmationTokenRepository, times(1)).save(any(EmailConfirmationToken.class));
     }
@@ -107,7 +107,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldSendEmailConfirmationLinkToUserOnUserCreate() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findById(newUser.getEmail())).thenReturn(Mono.empty());
+        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
         service.createUser(newUser, Locale.ENGLISH).block();
         verify(emailConfirmationLinkSender, times(1))
                 .sendEmailConfirmationLink(any(User.class), any(EmailConfirmationToken.class), eq(Locale.ENGLISH));
@@ -122,7 +122,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldThrowExceptionOnUserCreateWhenUserAlreadyExists() {
         User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findById(user.getEmail())).thenReturn(Mono.just(user));
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
         assertThrows(EntityAlreadyExistsException.class, () -> service.createUser(user, Locale.ENGLISH).block(),
                 "User with email \"" + user.getEmail() + "\" is already registered");
     }

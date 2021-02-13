@@ -9,6 +9,6 @@ import reactor.core.publisher.Flux;
  * @author Roman Chigvintsev
  */
 public interface UserAuthorityRelationRepository extends ReactiveCrudRepository<UserAuthorityRelation, Void> {
-    @Query("SELECT * FROM authorities WHERE email = :email")
-    Flux<UserAuthorityRelation> findByEmail(String email);
+    @Query("SELECT * FROM authorities WHERE user_id = :userId")
+    Flux<UserAuthorityRelation> findByUserId(Long userId);
 }

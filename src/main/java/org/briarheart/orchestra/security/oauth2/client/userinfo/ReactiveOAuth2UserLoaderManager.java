@@ -60,7 +60,7 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
                         // TODO: compare current authentication provider with the one saved in the database since
                         //  user may at first sign up with Facebook and then sign up again with Google while using
                         //  the same email.
-                        return userRepository.findById(attrAccessor.getEmail())
+                        return userRepository.findByEmail(attrAccessor.getEmail())
                                 .switchIfEmpty(Mono.defer(() -> createNewUser(attrAccessor)))
                                 .flatMap(u -> updateUserIfNecessary(attrAccessor, u));
                     }).map(Tuple2::getT1);

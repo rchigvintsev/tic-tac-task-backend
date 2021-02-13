@@ -13,9 +13,9 @@ public interface TaskCommentRepository extends ReactiveCrudRepository<TaskCommen
     @Query("SELECT * FROM task_comment WHERE task_id = :taskId ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
     Flux<TaskComment> findByTaskIdOrderByCreatedAtDesc(Long taskId, long offset, Integer limit);
 
-    @Query("SELECT * FROM task_comment WHERE id = :id AND author = :author")
-    Mono<TaskComment> findByIdAndAuthor(Long id, String author);
+    @Query("SELECT * FROM task_comment WHERE id = :id AND user_id = :userId")
+    Mono<TaskComment> findByIdAndUserId(Long id, Long userId);
 
-    @Query("DELETE FROM task_comment WHERE id = :id AND author = :author")
-    Mono<Void> deleteByIdAndAuthor(Long id, String author);
+    @Query("DELETE FROM task_comment WHERE id = :id AND user_id = :userId")
+    Mono<Void> deleteByIdAndUserId(Long id, Long userId);
 }

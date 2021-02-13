@@ -13,40 +13,40 @@ import java.time.LocalDateTime;
  * @author Roman Chigvintsev
  */
 public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
-    @Query("SELECT * FROM task WHERE id = :id AND author = :author")
-    Mono<Task> findByIdAndAuthor(Long id, String author);
+    @Query("SELECT * FROM task WHERE id = :id AND user_id = :userId")
+    Mono<Task> findByIdAndUserId(Long id, Long userId);
 
-    @Query("SELECT * FROM task WHERE status = :status AND author = :author LIMIT :limit OFFSET :offset")
-    Flux<Task> findByStatusAndAuthor(TaskStatus status, String author, long offset, Integer limit);
+    @Query("SELECT * FROM task WHERE status = :status AND user_id = :userId LIMIT :limit OFFSET :offset")
+    Flux<Task> findByStatusAndUserId(TaskStatus status, Long userId, long offset, Integer limit);
 
-    @Query("SELECT * FROM task WHERE status <> :status AND author = :author LIMIT :limit OFFSET :offset")
-    Flux<Task> findByStatusNotAndAuthor(TaskStatus status, String author, long offset, Integer limit);
+    @Query("SELECT * FROM task WHERE status <> :status AND user_id = :userId LIMIT :limit OFFSET :offset")
+    Flux<Task> findByStatusNotAndUserId(TaskStatus status, Long userId, long offset, Integer limit);
 
     @Query("SELECT * FROM task WHERE status <> :status AND id IN (SELECT task_id FROM tasks_tags WHERE tag_id = :tagId)"
             + " LIMIT :limit OFFSET :offset")
     Flux<Task> findByStatusNotAndTagId(TaskStatus status, Long tagId, long offset, Integer limit);
 
-    @Query("SELECT * FROM task WHERE task_list_id = :taskListId AND author = :author LIMIT :limit OFFSET :offset")
-    Flux<Task> findByTaskListIdAndAuthor(Long taskListId, String author, long offset, Integer limit);
+    @Query("SELECT * FROM task WHERE task_list_id = :taskListId AND user_id = :userId LIMIT :limit OFFSET :offset")
+    Flux<Task> findByTaskListIdAndUserId(Long taskListId, Long userId, long offset, Integer limit);
 
-    @Query("SELECT * FROM task WHERE deadline IS NULL AND status = :status AND author = :author "
+    @Query("SELECT * FROM task WHERE deadline IS NULL AND status = :status AND user_id = :userId "
             + "LIMIT :limit OFFSET :offset")
-    Flux<Task> findByDeadlineIsNullAndStatusAndAuthor(TaskStatus status, String author, long offset, Integer limit);
+    Flux<Task> findByDeadlineIsNullAndStatusAndUserId(TaskStatus status, Long userId, long offset, Integer limit);
 
-    @Query("SELECT * FROM task WHERE deadline <= :deadline AND status = :status AND author = :author "
+    @Query("SELECT * FROM task WHERE deadline <= :deadline AND status = :status AND user_id = :userId "
             + "LIMIT :limit OFFSET :offset")
-    Flux<Task> findByDeadlineLessThanEqualAndStatusAndAuthor(LocalDateTime deadline,
+    Flux<Task> findByDeadlineLessThanEqualAndStatusAndUserId(LocalDateTime deadline,
                                                              TaskStatus status,
-                                                             String author,
+                                                             Long userId,
                                                              long offset,
                                                              Integer limit);
 
 
-    @Query("SELECT * FROM task WHERE deadline >= :deadline AND status = :status AND author = :author "
+    @Query("SELECT * FROM task WHERE deadline >= :deadline AND status = :status AND user_id = :userId "
             + "LIMIT :limit OFFSET :offset")
-    Flux<Task> findByDeadlineGreaterThanEqualAndStatusAndAuthor(LocalDateTime deadline,
+    Flux<Task> findByDeadlineGreaterThanEqualAndStatusAndUserId(LocalDateTime deadline,
                                                                 TaskStatus status,
-                                                                String author,
+                                                                Long userId,
                                                                 long offset,
                                                                 Integer limit);
 
@@ -54,41 +54,41 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
             + "FROM task "
             + "WHERE (deadline BETWEEN :deadlineFrom AND :deadlineTo) "
             + "AND status = :status "
-            + "AND author = :author "
+            + "AND user_id = :userId "
             + "LIMIT :limit OFFSET :offset")
-    Flux<Task> findByDeadlineBetweenAndStatusAndAuthor(LocalDateTime deadlineFrom,
+    Flux<Task> findByDeadlineBetweenAndStatusAndUserId(LocalDateTime deadlineFrom,
                                                        LocalDateTime deadlineTo,
                                                        TaskStatus status,
-                                                       String author,
+                                                       Long userId,
                                                        long offset,
                                                        Integer limit);
 
-    @Query("SELECT COUNT(*) FROM task WHERE status = :status AND author = :author")
-    Mono<Long> countAllByStatusAndAuthor(TaskStatus status, String author);
+    @Query("SELECT COUNT(*) FROM task WHERE status = :status AND user_id = :userId")
+    Mono<Long> countAllByStatusAndUserId(TaskStatus status, Long userId);
 
-    @Query("SELECT COUNT(*) FROM task WHERE status <> :status AND author = :author")
-    Mono<Long> countAllByStatusNotAndAuthor(TaskStatus status, String author);
+    @Query("SELECT COUNT(*) FROM task WHERE status <> :status AND user_id = :userId")
+    Mono<Long> countAllByStatusNotAndUserId(TaskStatus status, Long userId);
 
-    @Query("SELECT COUNT(*) FROM task WHERE deadline IS NULL AND status = :status AND author = :author")
-    Mono<Long> countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus status, String author);
+    @Query("SELECT COUNT(*) FROM task WHERE deadline IS NULL AND status = :status AND user_id = :userId")
+    Mono<Long> countAllByDeadlineIsNullAndStatusAndUserId(TaskStatus status, Long userId);
 
-    @Query("SELECT COUNT(*) FROM task WHERE deadline <= :deadline AND status = :status AND author = :author")
-    Mono<Long> countAllByDeadlineLessThanEqualAndStatusAndAuthor(LocalDateTime deadline,
+    @Query("SELECT COUNT(*) FROM task WHERE deadline <= :deadline AND status = :status AND user_id = :userId")
+    Mono<Long> countAllByDeadlineLessThanEqualAndStatusAndUserId(LocalDateTime deadline,
                                                                  TaskStatus status,
-                                                                 String author);
+                                                                 Long userId);
 
-    @Query("SELECT COUNT(*) FROM task WHERE deadline >= :deadline AND status = :status AND author = :author")
-    Mono<Long> countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(LocalDateTime deadline,
+    @Query("SELECT COUNT(*) FROM task WHERE deadline >= :deadline AND status = :status AND user_id = :userId")
+    Mono<Long> countAllByDeadlineGreaterThanEqualAndStatusAndUserId(LocalDateTime deadline,
                                                                     TaskStatus status,
-                                                                    String author);
+                                                                    Long userId);
 
     @Query("SELECT COUNT(*) "
             + "FROM task "
             + "WHERE (deadline BETWEEN :deadlineFrom AND :deadlineTo) "
             + "AND status = :status "
-            + "AND author = :author")
-    Mono<Long> countAllByDeadlineBetweenAndStatusAndAuthor(LocalDateTime deadlineFrom,
+            + "AND user_id = :userId")
+    Mono<Long> countAllByDeadlineBetweenAndStatusAndUserId(LocalDateTime deadlineFrom,
                                                            LocalDateTime deadlineTo,
                                                            TaskStatus status,
-                                                           String author);
+                                                           Long userId);
 }

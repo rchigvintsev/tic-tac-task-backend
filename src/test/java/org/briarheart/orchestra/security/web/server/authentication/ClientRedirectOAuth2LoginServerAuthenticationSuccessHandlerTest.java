@@ -67,7 +67,7 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
-        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(new User()));
+        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.just(new User()));
 
         WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
         Authentication authenticationMock = mockAuthentication();
@@ -88,7 +88,7 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
         User user = new User();
-        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(user));
+        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.just(user));
 
         WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
         Authentication authenticationMock = mockAuthentication();
@@ -110,7 +110,7 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
         User user = new User();
-        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(user));
+        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.just(user));
 
         WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
         Authentication authenticationMock = mockAuthentication();
@@ -156,7 +156,7 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
-        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.empty());
+        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.empty());
 
         WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
         Authentication authenticationMock = mockAuthentication();
@@ -175,7 +175,7 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
-        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(new User()));
+        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.just(new User()));
         doThrow(new JsonGenerationException("Could not generate JSON", (JsonGenerator) null))
                 .when(objectMapperMock).writeValueAsBytes(any());
 

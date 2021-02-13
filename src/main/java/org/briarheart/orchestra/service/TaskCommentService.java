@@ -2,6 +2,7 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.TaskComment;
+import org.briarheart.orchestra.model.User;
 import reactor.core.publisher.Mono;
 
 /**
@@ -12,21 +13,19 @@ import reactor.core.publisher.Mono;
  */
 public interface TaskCommentService {
     /**
-     * Updates comment with the given id and belonging to the given author.
+     * Updates comment.
      *
      * @param comment comment to be updated (must not be {@code null})
-     * @param id comment id
-     * @param author comment author
      * @return updated comment
-     * @throws EntityNotFoundException if comment is not found by id and author
+     * @throws EntityNotFoundException if comment is not found
      */
-    Mono<TaskComment> updateComment(TaskComment comment, Long id, String author) throws EntityNotFoundException;
+    Mono<TaskComment> updateComment(TaskComment comment) throws EntityNotFoundException;
 
     /**
-     * Deletes comment with the given id and belonging to the given author.
+     * Deletes comment with the given id and belonging to the given user.
      *
      * @param id comment id
-     * @param author comment author
+     * @param user comment author (must not be {@code null})
      */
-    Mono<Void> deleteComment(Long id, String author) throws EntityNotFoundException;
+    Mono<Void> deleteComment(Long id, User user) throws EntityNotFoundException;
 }

@@ -10,9 +10,9 @@ import reactor.core.publisher.Mono;
  * @author Roman Chigvintsev
  */
 public interface TaskListRepository extends ReactiveCrudRepository<TaskList, Long> {
-    @Query("SELECT * FROM task_list WHERE completed = :completed AND author = :author")
-    Flux<TaskList> findByCompletedAndAuthor(boolean completed, String author);
+    @Query("SELECT * FROM task_list WHERE completed = :completed AND user_id = :userId")
+    Flux<TaskList> findByCompletedAndUserId(boolean completed, Long userId);
 
-    @Query("SELECT * FROM task_list WHERE id = :id AND author = :author")
-    Mono<TaskList> findByIdAndAuthor(Long id, String author);
+    @Query("SELECT * FROM task_list WHERE id = :id AND user_id = :userId")
+    Mono<TaskList> findByIdAndUserId(Long id, Long userId);
 }

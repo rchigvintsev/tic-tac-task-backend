@@ -16,12 +16,10 @@ import javax.validation.constraints.Size;
 public class Tag {
     @Id
     private Long id;
-
+    private Long userId;
     @NotBlank
     @Size(max = 50)
     private String name;
-
-    private String author;
     private Integer color;
 
     /**
@@ -31,8 +29,8 @@ public class Tag {
      */
     public Tag copy() {
         Tag copy = new Tag();
+        copy.setUserId(userId);
         copy.setName(name);
-        copy.setAuthor(author);
         copy.setColor(color);
         return copy;
     }

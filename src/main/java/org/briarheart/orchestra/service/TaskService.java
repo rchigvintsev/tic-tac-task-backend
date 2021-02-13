@@ -4,6 +4,7 @@ import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskComment;
+import org.briarheart.orchestra.model.User;
 import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,179 +19,174 @@ import java.time.LocalDateTime;
  */
 public interface TaskService {
     /**
-     * Returns number of all unprocessed tasks belonging to the given author.
+     * Returns number of all unprocessed tasks belonging to the given user.
      *
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @return number of unprocessed tasks or empty stream when there is no task meeting the given criteria
      */
-    Mono<Long> getUnprocessedTaskCount(String author);
+    Mono<Long> getUnprocessedTaskCount(User user);
 
     /**
-     * Returns all unprocessed tasks belonging to the given author.
+     * Returns all unprocessed tasks belonging to the given user.
      *
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @param pageable paging restriction
      * @return unprocessed tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getUnprocessedTasks(String author, Pageable pageable);
+    Flux<Task> getUnprocessedTasks(User user, Pageable pageable);
 
     /**
-     * Returns number of all processed tasks belonging to the given author.
+     * Returns number of all processed tasks belonging to the given user.
      *
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @return number of processed tasks or empty stream when there is no task meeting the given criteria
      */
-    Mono<Long> getProcessedTaskCount(String author);
+    Mono<Long> getProcessedTaskCount(User user);
 
     /**
-     * Returns all processed tasks belonging to the given author.
+     * Returns all processed tasks belonging to the given user.
      *
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @param pageable paging restriction
      * @return processed tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getProcessedTasks(String author, Pageable pageable);
+    Flux<Task> getProcessedTasks(User user, Pageable pageable);
 
     /**
      * Returns number of processed tasks optionally falling within the given deadline bounds and belonging to the given
-     * author. If deadline bounds are not specified this method returns number of processed tasks without deadline.
+     * user. If deadline bounds are not specified this method returns number of processed tasks without deadline.
      *
      * @param deadlineFrom optional deadline from bound
      * @param deadlineTo optional deadline to bound
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @return number of processed tasks or empty stream when there is no task meeting the given criteria
      */
-    Mono<Long> getProcessedTaskCount(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, String author);
+    Mono<Long> getProcessedTaskCount(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, User user);
 
     /**
-     * Returns processed tasks optionally falling within the given deadline bounds and belonging to the given author.
+     * Returns processed tasks optionally falling within the given deadline bounds and belonging to the given user.
      * If deadline bounds are not specified this method returns processed tasks without deadline.
      *
      * @param deadlineFrom optional deadline from bound
      * @param deadlineTo optional deadline to bound
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @param pageable paging restriction
      * @return processed tasks or empty stream when there is no task meeting the given criteria
      */
     Flux<Task> getProcessedTasks(LocalDateTime deadlineFrom,
                                  LocalDateTime deadlineTo,
-                                 String author,
+                                 User user,
                                  Pageable pageable);
 
     /**
-     * Returns number of all uncompleted tasks (either unprocessed or processed) belonging to the given author.
+     * Returns number of all uncompleted tasks (either unprocessed or processed) belonging to the given user.
      *
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @return number of uncompleted tasks or empty stream when there is no task meeting the given criteria
      */
-    Mono<Long> getUncompletedTaskCount(String author);
+    Mono<Long> getUncompletedTaskCount(User user);
 
     /**
-     * Returns uncompleted tasks (either unprocessed or processed) belonging to the given author.
+     * Returns uncompleted tasks (either unprocessed or processed) belonging to the given user.
      *
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @param pageable paging restriction
      * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getUncompletedTasks(String author, Pageable pageable);
+    Flux<Task> getUncompletedTasks(User user, Pageable pageable);
 
     /**
-     * Returns task with the given id and belonging to the given author.
+     * Returns task with the given id and belonging to the given user.
      *
      * @param id     task id
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @return requested task
-     * @throws EntityNotFoundException if task is not found by id and author
+     * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
-    Mono<Task> getTask(Long id, String author) throws EntityNotFoundException;
+    Mono<Task> getTask(Long id, User user) throws EntityNotFoundException;
 
     /**
-     * Creates new task belonging to the given author.
+     * Creates new task.
      *
      * @param task task to be created (must not be {@code null})
-     * @param author task author (must not be {@code null} or empty)
      * @return created task
      */
-    Mono<Task> createTask(Task task, String author);
+    Mono<Task> createTask(Task task);
 
     /**
-     * Updates task with the given id and belonging to the given author.
+     * Updates task.
      *
      * @param task task to be updated (must not be {@code null})
-     * @param id task id
-     * @param author task author
      * @return updated task
-     * @throws EntityNotFoundException if task is not found by id and author
+     * @throws EntityNotFoundException if task is not found
      */
-    Mono<Task> updateTask(Task task, Long id, String author) throws EntityNotFoundException;
+    Mono<Task> updateTask(Task task) throws EntityNotFoundException;
 
     /**
-     * Completes task with the given id and belonging to the given author.
+     * Completes task with the given id and belonging to the given user.
      *
      * @param id task id
-     * @param author task author
-     * @throws EntityNotFoundException if task is not found by id and author
+     * @param user task author (must not be {@code null})
+     * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
-    Mono<Void> completeTask(Long id, String author) throws EntityNotFoundException;
+    Mono<Void> completeTask(Long id, User user) throws EntityNotFoundException;
 
     /**
-     * Deletes task with the given id and belonging to the given author.
+     * Deletes task with the given id and belonging to the given user.
      *
      * @param id task id
-     * @param author task author
+     * @param user task author (must not be {@code null})
      * @throws EntityNotFoundException if task is not found by id and author
      */
-    Mono<Void> deleteTask(Long id, String author) throws EntityNotFoundException;
+    Mono<Void> deleteTask(Long id, User user) throws EntityNotFoundException;
 
     /**
-     * Returns tags for task with the given id and belonging to the given author.
+     * Returns tags for task with the given id and belonging to the given user.
      *
      * @param taskId task id
-     * @param taskAuthor task author
+     * @param user task author (must not be {@code null})
      * @return task tags or empty stream when task does not have any tag
-     * @throws EntityNotFoundException if task is not found by id and author
+     * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
-    Flux<Tag> getTags(Long taskId, String taskAuthor) throws EntityNotFoundException;
+    Flux<Tag> getTags(Long taskId, User user) throws EntityNotFoundException;
 
     /**
-     * Assigns tag with the given id to task with the given id. Both task and tag must belong to the given author.
+     * Assigns tag with the given id to task with the given id. Both task and tag must belong to the given user.
      *
      * @param taskId task id
      * @param tagId id of tag to be assigned
-     * @param author task/tag author
-     * @throws EntityNotFoundException if task or tag is not found by id and author
+     * @param user task/tag author (must not be {@code null})
+     * @throws EntityNotFoundException if task or tag is not found by id or does not belong to the given user
      */
-    Mono<Void> assignTag(Long taskId, Long tagId, String author) throws EntityNotFoundException;
+    Mono<Void> assignTag(Long taskId, Long tagId, User user) throws EntityNotFoundException;
 
     /**
-     * Removes tag with the given id from task with the given id and belonging to the given author.
+     * Removes tag with the given id from task with the given id and belonging to the given user.
      *
      * @param taskId task id
-     * @param taskAuthor task author
      * @param tagId id of tag to be removed
-     * @throws EntityNotFoundException if task is not found by id and author
+     * @param user task author (must not be {@code null})
+     * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
-    Mono<Void> removeTag(Long taskId, String taskAuthor, Long tagId) throws EntityNotFoundException;
+    Mono<Void> removeTag(Long taskId, Long tagId, User user) throws EntityNotFoundException;
 
     /**
-     * Returns comments for task with the given id and belonging to the given author.
+     * Returns comments for task with the given id and belonging to the given user.
      *
      * @param taskId task id
-     * @param taskAuthor task author
+     * @param user task author (must not be {@code null})
      * @param pageable paging restriction
      * @return task comments or empty stream when task does not have any comment
-     * @throws EntityNotFoundException if task is not found by id and author
+     * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
-    Flux<TaskComment> getComments(Long taskId, String taskAuthor, Pageable pageable) throws EntityNotFoundException;
+    Flux<TaskComment> getComments(Long taskId, User user, Pageable pageable) throws EntityNotFoundException;
 
     /**
-     * Adds new comment to task with the given id and belonging to the given author.
+     * Adds new comment to task.
      *
-     * @param taskId task id
-     * @param taskAuthor task author
-     * @param comment new comment
+     * @param comment new comment (must not be {@code null})
      * @return added comment
-     * @throws EntityNotFoundException if task is not found by id and author
+     * @throws EntityNotFoundException if task is not found
      */
-    Mono<TaskComment> addComment(Long taskId, String taskAuthor, TaskComment comment) throws EntityNotFoundException;
+    Mono<TaskComment> addComment(TaskComment comment) throws EntityNotFoundException;
 }

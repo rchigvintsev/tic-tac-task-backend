@@ -23,29 +23,23 @@ import java.util.Collections;
 @Table("users")
 public class User implements UserDetails {
     @Id
+    private Long id;
     @NotBlank
     @Size(max = 255)
     private String email;
-
     @Builder.Default
     private boolean emailConfirmed = true;
-
     @Version
     private long version;
-
     @NotBlank
     @Size(max = 50)
     private String password;
-
     @Builder.Default
     private boolean enabled = true;
-
     @Size(max = 255)
     private String fullName;
-
     @Size(max = 2_000)
     private String imageUrl;
-
     @Builder.Default
     @Transient
     private Collection<? extends GrantedAuthority> authorities = Collections.emptyList();

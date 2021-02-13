@@ -3,6 +3,7 @@ package org.briarheart.orchestra.service;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
+import org.briarheart.orchestra.model.User;
 import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -15,69 +16,66 @@ import reactor.core.publisher.Mono;
  */
 public interface TaskListService {
     /**
-     * Returns uncompleted task lists belonging to the given author.
+     * Returns uncompleted task lists belonging to the given user.
      *
-     * @param author task list author
+     * @param user task list author (must not be {@code null})
      * @return found task lists or empty stream when there is no task list meeting the given criteria
      */
-    Flux<TaskList> getUncompletedTaskLists(String author);
+    Flux<TaskList> getUncompletedTaskLists(User user);
 
     /**
-     * Returns task list with the given id and belonging to the given author.
+     * Returns task list with the given id and belonging to the given user.
      *
-     * @param id     task list id
-     * @param author task list author
+     * @param id   task list id
+     * @param user task list author (must not be {@code null})
      * @return requested task list
-     * @throws EntityNotFoundException if task list is not found by id and author
+     * @throws EntityNotFoundException if task list is not found by id or does not belong to the given user
      */
-    Mono<TaskList> getTaskList(Long id, String author) throws EntityNotFoundException;
+    Mono<TaskList> getTaskList(Long id, User user) throws EntityNotFoundException;
 
     /**
-     * Creates new task list belonging to the given author.
+     * Creates new task list.
      *
      * @param taskList task list to be created (must not be {@code null})
-     * @param author task list author (must not be {@code null} or empty)
      * @return created task list
      */
-    Mono<TaskList> createTaskList(TaskList taskList, String author);
+    Mono<TaskList> createTaskList(TaskList taskList);
 
     /**
-     * Updates task list with the given id and belonging to the given author.
+     * Updates task list.
      *
      * @param taskList task list to be updated (must not be {@code null})
-     * @param id task list id
-     * @param author task list author
      * @return updated task list
-     * @throws EntityNotFoundException if task list is not found by id and author
+     * @throws EntityNotFoundException if task list is not found
      */
-    Mono<TaskList> updateTaskList(TaskList taskList, Long id, String author) throws EntityNotFoundException;
+    Mono<TaskList> updateTaskList(TaskList taskList) throws EntityNotFoundException;
 
     /**
-     * Completes task list with the given id and belonging to the given author along with all tasks included in it.
+     * Completes task list with the given id and belonging to the given user along with all tasks included in it.
      *
-     * @param id task list id
-     * @param author task list author
+     * @param id   task list id
+     * @param user task list author (must not be {@code null})
      * @throws EntityNotFoundException if task list is not found by id and author
      */
-    Mono<Void> completeTaskList(Long id, String author) throws EntityNotFoundException;
+    Mono<Void> completeTaskList(Long id, User user) throws EntityNotFoundException;
 
     /**
-     * Deletes task list with the given id and belonging to the given author along with all tasks included in it.
+     * Deletes task list with the given id and belonging to the given user along with all tasks included in it.
      *
-     * @param id task list id
-     * @param author task list author
-     * @throws EntityNotFoundException if task list is not found by id and author
+     * @param id   task list id
+     * @param user task list author (must not be {@code null})
+     * @throws EntityNotFoundException if task list is not found by id or does not belong to the given user
      */
-    Mono<Void> deleteTaskList(Long id, String author) throws EntityNotFoundException;
+    Mono<Void> deleteTaskList(Long id, User user) throws EntityNotFoundException;
 
     /**
-     * Returns tasks for task list with the given id and belonging to the given author.
+     * Returns tasks for task list with the given id and belonging to the given user.
      *
      * @param taskListId task list id
-     * @param taskListAuthor task list author
-     * @param pageable paging restriction
+     * @param user       task list author (must not be {@code null})
+     * @param pageable   paging restriction
      * @return tasks from task list or empty stream when task list does not have any tasks
-     * @throws EntityNotFoundException if task list is not found by id and author
+     * @throws EntityNotFoundException if task list is not found by id or does not belong to the given user
      */
-    Flux<Task> getTasks(Long taskListId, String taskListAuthor, Pageable pageable) throws EntityNotFoundException;
+    Flux<Task> getTasks(Long taskListId, User user, Pageable pageable) throws EntityNotFoundException;
 }

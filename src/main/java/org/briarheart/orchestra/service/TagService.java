@@ -4,6 +4,7 @@ import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
+import org.briarheart.orchestra.model.User;
 import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -16,63 +17,60 @@ import reactor.core.publisher.Mono;
  */
 public interface TagService {
     /**
-     * Returns all tags belonging to the given author.
+     * Returns all tags belonging to the given user.
      *
-     * @param author tag author
+     * @param user author of tags (must not be {@code null})
      * @return found tags or empty stream when there is no tag meeting the given criteria
      */
-    Flux<Tag> getTags(String author);
+    Flux<Tag> getTags(User user);
 
     /**
-     * Returns tag with the given id and belonging to the given author.
+     * Returns tag with the given id and belonging to the given user.
      *
-     * @param id     tag id
-     * @param author tag author
+     * @param id   tag id
+     * @param user tag author (must not be {@code null})
      * @return requested tag
-     * @throws EntityNotFoundException if tag is not found by id and author
+     * @throws EntityNotFoundException if tag is not found by id or does not belong to the given user
      */
-    Mono<Tag> getTag(Long id, String author) throws EntityNotFoundException;
+    Mono<Tag> getTag(Long id, User user) throws EntityNotFoundException;
 
     /**
-     * Creates new tag belonging to the given author.
+     * Creates new tag.
      *
      * @param tag tag to be created (must not be {@code null})
-     * @param author tag author (must not be {@code null} or empty)
      * @return created tag
      * @throws EntityAlreadyExistsException if tag with the given name already exists
      */
-    Mono<Tag> createTag(Tag tag, String author) throws EntityAlreadyExistsException;
+    Mono<Tag> createTag(Tag tag) throws EntityAlreadyExistsException;
 
     /**
-     * Updates tag with the given id and belonging to the given author.
+     * Updates tag.
      *
      * @param tag tag to be updated (must not be {@code null})
-     * @param id tag id
-     * @param author tag author
      * @return updated tag
-     * @throws EntityNotFoundException if tag is not found by id and author
+     * @throws EntityNotFoundException      if tag is not found
      * @throws EntityAlreadyExistsException if tag with updated name already exists
      */
-    Mono<Tag> updateTag(Tag tag, Long id, String author) throws EntityNotFoundException, EntityAlreadyExistsException;
+    Mono<Tag> updateTag(Tag tag) throws EntityNotFoundException, EntityAlreadyExistsException;
 
     /**
-     * Deletes tag with the given id and belonging to the given author.
+     * Deletes tag with the given id and belonging to the given user.
      *
-     * @param id tag id
-     * @param author tag author
-     * @throws EntityNotFoundException if tag is not found by id and author
+     * @param id   tag id
+     * @param user tag author
+     * @throws EntityNotFoundException if tag is not found by id or does not belong to the given user
      */
-    Mono<Void> deleteTag(Long id, String author) throws EntityNotFoundException;
+    Mono<Void> deleteTag(Long id, User user) throws EntityNotFoundException;
 
     /**
      * Returns uncompleted tasks (either unprocessed or processed) for tag with the given id and belonging to the given
-     * author.
+     * user.
      *
-     * @param tagId tag id
-     * @param tagAuthor tag author
+     * @param tagId    tag id
+     * @param user     tag author (must not be {@code null})
      * @param pageable paging restriction
      * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
-     * @throws EntityNotFoundException if tag is not found by id and author
+     * @throws EntityNotFoundException if tag is not found by id or does not belong to the given user
      */
-    Flux<Task> getUncompletedTasks(Long tagId, String tagAuthor, Pageable pageable);
+    Flux<Task> getUncompletedTasks(Long tagId, User user, Pageable pageable);
 }

@@ -78,7 +78,7 @@ public class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler
     }
 
     private Mono<User> findUser(Authentication authentication) {
-        return userRepository.findById(((OAuth2UserAttributeAccessor) authentication.getPrincipal()).getEmail());
+        return userRepository.findByEmail(((OAuth2UserAttributeAccessor) authentication.getPrincipal()).getEmail());
     }
 
     private Mono<URI> addClientPrincipalToRedirectUri(String redirectLocation, AccessToken accessToken) {

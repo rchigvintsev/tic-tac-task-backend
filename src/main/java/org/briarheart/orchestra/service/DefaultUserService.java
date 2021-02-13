@@ -44,7 +44,7 @@ public class DefaultUserService implements UserService {
         Assert.notNull(user, "User must not be null");
 
         String email = user.getEmail();
-        return userRepository.findById(email)
+        return userRepository.findByEmail(email)
                 .flatMap(u -> {
                     String errorMessage = messages.getMessage("user.registration.user-already-registered",
                             new Object[]{email}, locale);

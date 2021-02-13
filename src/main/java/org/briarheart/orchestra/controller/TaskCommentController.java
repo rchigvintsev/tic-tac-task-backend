@@ -2,13 +2,14 @@ package org.briarheart.orchestra.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.TaskComment;
+import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.TaskCommentService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-import java.security.Principal;
 
 /**
  * REST-controller for task comment managing.
@@ -24,13 +25,19 @@ public class TaskCommentController {
     @PutMapping("/{id}")
     public Mono<TaskComment> updateComment(@Valid @RequestBody TaskComment comment,
                                            @PathVariable Long id,
-                                           Principal user) {
-        return taskCommentService.updateComment(comment, id, user.getName());
+                                           Authentication authentication) {
+        comment.setId(id);
+        comment.setUserId(getUser(authentication).getId());
+        return taskCommentService.updateComment(comment);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> deleteComment(@PathVariable Long id, Principal user) {
-        return taskCommentService.deleteComment(id, user.getName());
+    public Mono<Void> deleteComment(@PathVariable Long id, Authentication authentication) {
+        return taskCommentService.deleteComment(id, getUser(authentication));
+    }
+
+    private User getUser(Authentication authentication) {
+        return (User) authentication.getPrincipal();
     }
 }

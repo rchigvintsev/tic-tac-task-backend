@@ -24,16 +24,16 @@ public class DatabaseReactiveUserDetailsService implements ReactiveUserDetailsSe
 
     @Override
     public Mono<UserDetails> findByUsername(String username) {
-        return userRepository.findById(username)
-                .flatMap(user -> loadAuthorities(user.getEmail()).map(authorities -> {
+        return userRepository.findByEmail(username)
+                .flatMap(user -> loadAuthorities(user.getId()).map(authorities -> {
                     user.setAuthorities(authorities);
                     return user;
                 }))
                 .cast(UserDetails.class);
     }
 
-    private Mono<List<SimpleGrantedAuthority>> loadAuthorities(String email) {
-        Flux<UserAuthorityRelation> userAuthorityRelations = userAuthorityRelationRepository.findByEmail(email);
+    private Mono<List<SimpleGrantedAuthority>> loadAuthorities(Long userId) {
+        Flux<UserAuthorityRelation> userAuthorityRelations = userAuthorityRelationRepository.findByUserId(userId);
         return userAuthorityRelations.map(relations -> new SimpleGrantedAuthority(relations.getAuthority()))
                 .collectList();
     }

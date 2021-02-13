@@ -13,6 +13,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserAuthorityRelation {
-    private String email;
+    private Long userId;
     private String authority;
 }

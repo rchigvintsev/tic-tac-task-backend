@@ -30,90 +30,97 @@ public class DefaultTaskService implements TaskService {
     private final TaskCommentRepository taskCommentRepository;
 
     @Override
-    public Mono<Long> getUnprocessedTaskCount(String author) {
-        return taskRepository.countAllByStatusAndAuthor(TaskStatus.UNPROCESSED, author);
+    public Mono<Long> getUnprocessedTaskCount(User user) {
+        Assert.notNull(user, "User must not be null");
+        return taskRepository.countAllByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId());
     }
 
     @Override
-    public Flux<Task> getUnprocessedTasks(String author, Pageable pageable) {
-        return taskRepository.findByStatusAndAuthor(TaskStatus.UNPROCESSED, author, Pageables.getOffset(pageable),
-                Pageables.getLimit(pageable));
+    public Flux<Task> getUnprocessedTasks(User user, Pageable pageable) {
+        Assert.notNull(user, "User must not be null");
+        return taskRepository.findByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId(),
+                Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
     @Override
-    public Mono<Long> getProcessedTaskCount(String author) {
-        return taskRepository.countAllByStatusAndAuthor(TaskStatus.PROCESSED, author);
+    public Mono<Long> getProcessedTaskCount(User user) {
+        Assert.notNull(user, "User must not be null");
+        return taskRepository.countAllByStatusAndUserId(TaskStatus.PROCESSED, user.getId());
     }
 
     @Override
-    public Flux<Task> getProcessedTasks(String author, Pageable pageable) {
-        return taskRepository.findByStatusAndAuthor(TaskStatus.PROCESSED, author, Pageables.getOffset(pageable),
-                Pageables.getLimit(pageable));
+    public Flux<Task> getProcessedTasks(User user, Pageable pageable) {
+        Assert.notNull(user, "User must not be null");
+        return taskRepository.findByStatusAndUserId(TaskStatus.PROCESSED, user.getId(),
+                Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
     @Override
-    public Mono<Long> getProcessedTaskCount(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, String author) {
+    public Mono<Long> getProcessedTaskCount(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, User user) {
+        Assert.notNull(user, "User must not be null");
         if (deadlineFrom == null && deadlineTo == null) {
-            return taskRepository.countAllByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author);
+            return taskRepository.countAllByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId());
         }
         if (deadlineFrom == null) {
-            return taskRepository.countAllByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo, TaskStatus.PROCESSED,
-                    author);
+            return taskRepository.countAllByDeadlineLessThanEqualAndStatusAndUserId(deadlineTo, TaskStatus.PROCESSED,
+                    user.getId());
         }
         if (deadlineTo == null) {
-            return taskRepository.countAllByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom,
-                    TaskStatus.PROCESSED, author);
+            return taskRepository.countAllByDeadlineGreaterThanEqualAndStatusAndUserId(deadlineFrom,
+                    TaskStatus.PROCESSED, user.getId());
         }
-        return taskRepository.countAllByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo,
-                TaskStatus.PROCESSED, author);
+        return taskRepository.countAllByDeadlineBetweenAndStatusAndUserId(deadlineFrom, deadlineTo,
+                TaskStatus.PROCESSED, user.getId());
     }
 
     @Override
     public Flux<Task> getProcessedTasks(
             LocalDateTime deadlineFrom,
             LocalDateTime deadlineTo,
-            String author,
+            User user,
             Pageable pageable
     ) {
+        Assert.notNull(user, "User must not be null");
         if (deadlineFrom == null && deadlineTo == null) {
-            return taskRepository.findByDeadlineIsNullAndStatusAndAuthor(TaskStatus.PROCESSED, author,
+            return taskRepository.findByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId(),
                     Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
         if (deadlineFrom == null) {
-            return taskRepository.findByDeadlineLessThanEqualAndStatusAndAuthor(deadlineTo, TaskStatus.PROCESSED,
-                    author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+            return taskRepository.findByDeadlineLessThanEqualAndStatusAndUserId(deadlineTo, TaskStatus.PROCESSED,
+                    user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
         if (deadlineTo == null) {
-            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndAuthor(deadlineFrom, TaskStatus.PROCESSED,
-                    author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserId(deadlineFrom, TaskStatus.PROCESSED,
+                    user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
-        return taskRepository.findByDeadlineBetweenAndStatusAndAuthor(deadlineFrom, deadlineTo, TaskStatus.PROCESSED,
-                author, Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+        return taskRepository.findByDeadlineBetweenAndStatusAndUserId(deadlineFrom, deadlineTo, TaskStatus.PROCESSED,
+                user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
     @Override
-    public Mono<Long> getUncompletedTaskCount(String author) {
-        return taskRepository.countAllByStatusNotAndAuthor(TaskStatus.COMPLETED, author);
+    public Mono<Long> getUncompletedTaskCount(User user) {
+        Assert.notNull(user, "User must not be null");
+        return taskRepository.countAllByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId());
     }
 
     @Override
-    public Flux<Task> getUncompletedTasks(String author, Pageable pageable) {
-        return taskRepository.findByStatusNotAndAuthor(TaskStatus.COMPLETED, author, Pageables.getOffset(pageable),
-                Pageables.getLimit(pageable));
+    public Flux<Task> getUncompletedTasks(User user, Pageable pageable) {
+        Assert.notNull(user, "User must not be null");
+        return taskRepository.findByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId(),
+                Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
     @Override
-    public Mono<Task> getTask(Long id, String author) throws EntityNotFoundException {
-        return findTask(id, author);
+    public Mono<Task> getTask(Long id, User user) throws EntityNotFoundException {
+        Assert.notNull(user, "User must not be null");
+        return findTask(id, user.getId());
     }
 
     @Override
-    public Mono<Task> createTask(Task task, String author) {
+    public Mono<Task> createTask(Task task) {
         Assert.notNull(task, "Task must not be null");
-        Assert.hasText(author, "Task author must not be null or empty");
         return Mono.defer(() -> {
             Task newTask = task.copy();
-            newTask.setAuthor(author);
             if (newTask.getStatus() == null) {
                 newTask.setStatus(TaskStatus.UNPROCESSED);
             }
@@ -122,13 +129,11 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
-    public Mono<Task> updateTask(Task task, Long id, String author) throws EntityNotFoundException {
+    public Mono<Task> updateTask(Task task) throws EntityNotFoundException {
         Assert.notNull(task, "Task must not be null");
-        return getTask(id, author).flatMap(savedTask -> {
-            task.setId(savedTask.getId());
-            task.setAuthor(savedTask.getAuthor());
+        return findTask(task.getId(), task.getUserId()).flatMap(existingTask -> {
             if (task.getStatus() == null) {
-                task.setStatus(savedTask.getStatus());
+                task.setStatus(existingTask.getStatus());
             }
             if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadline() != null) {
                 task.setStatus(TaskStatus.PROCESSED);
@@ -138,21 +143,21 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
-    public Mono<Void> completeTask(Long id, String author) throws EntityNotFoundException {
-        return getTask(id, author).flatMap(task -> {
+    public Mono<Void> completeTask(Long id, User user) throws EntityNotFoundException {
+        return getTask(id, user).flatMap(task -> {
             task.setStatus(TaskStatus.COMPLETED);
             return taskRepository.save(task);
         }).then();
     }
 
     @Override
-    public Mono<Void> deleteTask(Long id, String author) throws EntityNotFoundException {
-        return getTask(id, author).flatMap(taskRepository::delete);
+    public Mono<Void> deleteTask(Long id, User user) throws EntityNotFoundException {
+        return getTask(id, user).flatMap(taskRepository::delete);
     }
 
     @Override
-    public Flux<Tag> getTags(Long taskId, String taskAuthor) throws EntityNotFoundException {
-        return findTask(taskId, taskAuthor).flatMapMany(task -> {
+    public Flux<Tag> getTags(Long taskId, User user) throws EntityNotFoundException {
+        return getTask(taskId, user).flatMapMany(task -> {
             Mono<List<TaskTagRelation>> taskTagRelations = taskTagRelationRepository.findByTaskId(taskId).collectList();
             return taskTagRelations.flatMapMany(relationList -> {
                 if (relationList.isEmpty()) {
@@ -167,23 +172,23 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
-    public Mono<Void> assignTag(Long taskId, Long tagId, String author) throws EntityNotFoundException {
-        return findTask(taskId, author)
-                .flatMap(task -> findTag(tagId, author))
+    public Mono<Void> assignTag(Long taskId, Long tagId, User user) throws EntityNotFoundException {
+        return getTask(taskId, user)
+                .flatMap(task -> findTag(tagId, user.getId()))
                 .flatMap(tag -> taskTagRelationRepository.findByTaskIdAndTagId(taskId, tagId))
                 .switchIfEmpty(Mono.defer(() -> taskTagRelationRepository.create(taskId, tagId)))
                 .then();
     }
 
     @Override
-    public Mono<Void> removeTag(Long taskId, String taskAuthor, Long tagId) throws EntityNotFoundException {
-        return findTask(taskId, taskAuthor)
+    public Mono<Void> removeTag(Long taskId, Long tagId, User user) throws EntityNotFoundException {
+        return getTask(taskId, user)
                 .flatMap(task -> taskTagRelationRepository.deleteByTaskIdAndTagId(taskId, tagId));
     }
 
     @Override
-    public Flux<TaskComment> getComments(Long taskId, String taskAuthor, Pageable pageable) {
-        return findTask(taskId, taskAuthor).flatMapMany(task -> {
+    public Flux<TaskComment> getComments(Long taskId, User user, Pageable pageable) {
+        return getTask(taskId, user).flatMapMany(task -> {
             long offset = Pageables.getOffset(pageable);
             Integer limit = Pageables.getLimit(pageable);
             return taskCommentRepository.findByTaskIdOrderByCreatedAtDesc(taskId, offset, limit);
@@ -191,25 +196,22 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
-    public Mono<TaskComment> addComment(Long taskId, String taskAuthor, TaskComment comment)
-            throws EntityNotFoundException {
+    public Mono<TaskComment> addComment(TaskComment comment) throws EntityNotFoundException {
         Assert.notNull(comment, "Task comment must not be null");
-        return findTask(taskId, taskAuthor).flatMap(task -> {
+        return findTask(comment.getTaskId(), comment.getUserId()).flatMap(task -> {
             TaskComment newComment = comment.copy();
-            newComment.setTaskId(taskId);
-            newComment.setAuthor(taskAuthor);
             newComment.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
-            return taskCommentRepository.save(newComment);
+            return taskCommentRepository.save(comment);
         });
     }
 
-    private Mono<Task> findTask(Long id, String author) {
-        return taskRepository.findByIdAndAuthor(id, author)
+    private Mono<Task> findTask(Long id, Long userId) {
+        return taskRepository.findByIdAndUserId(id, userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")));
     }
 
-    private Mono<Tag> findTag(Long id, String author) {
-        return tagRepository.findByIdAndAuthor(id, author)
+    private Mono<Tag> findTag(Long id, Long userId) {
+        return tagRepository.findByIdAndUserId(id, userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")));
     }
 }

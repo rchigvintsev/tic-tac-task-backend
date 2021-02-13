@@ -65,7 +65,7 @@ class ReactiveOidcUserLoaderManagerTest {
         OidcUser oidcUserMock = mockOidcUser(CLAIMS);
         when(userLoaderMock.loadUser(any())).thenReturn(Mono.just(oidcUserMock));
 
-        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.empty());
+        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.empty());
         when(userRepositoryMock.save(any())).then((Answer<Mono<User>>) invoc -> Mono.just(invoc.getArgument(0)));
 
         MockOidcUserRequest userRequestMock = new MockOidcUserRequest(CLIENT_REGISTRATION, CLAIMS);
@@ -81,7 +81,7 @@ class ReactiveOidcUserLoaderManagerTest {
         when(userLoaderMock.loadUser(any())).thenReturn(Mono.just(oidcUserMock));
 
         User user = new User();
-        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(user));
+        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.just(user));
         when(userRepositoryMock.save(any())).then((Answer<Mono<User>>) invoc -> Mono.just(invoc.getArgument(0)));
 
         MockOidcUserRequest userRequestMock = new MockOidcUserRequest(CLIENT_REGISTRATION, CLAIMS);
@@ -103,7 +103,7 @@ class ReactiveOidcUserLoaderManagerTest {
         user.setFullName(CLAIMS.get("name").toString());
         user.setImageUrl(CLAIMS.get("picture").toString());
 
-        when(userRepositoryMock.findById(anyString())).thenReturn(Mono.just(user));
+        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.just(user));
         when(userRepositoryMock.save(any())).then((Answer<Mono<User>>) invoc -> Mono.just(invoc.getArgument(0)));
 
         MockOidcUserRequest userRequestMock = new MockOidcUserRequest(CLIENT_REGISTRATION, CLAIMS);

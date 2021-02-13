@@ -2,10 +2,7 @@ package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.data.EntityNotFoundException;
-import org.briarheart.orchestra.model.Tag;
-import org.briarheart.orchestra.model.Task;
-import org.briarheart.orchestra.model.TaskComment;
-import org.briarheart.orchestra.model.TaskStatus;
+import org.briarheart.orchestra.model.*;
 import org.briarheart.orchestra.service.TaskService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,6 +27,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -63,11 +62,11 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnAllUnprocessedTasks() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
-        when(taskService.getUnprocessedTasks(eq(authenticationMock.getName()), any())).thenReturn(Flux.just(task));
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        when(taskService.getUnprocessedTasks(eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/unprocessed").exchange()
@@ -77,9 +76,10 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfAllUnprocessedTasks() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-        when(taskService.getUnprocessedTaskCount(eq(authenticationMock.getName()))).thenReturn(Mono.just(1L));
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        when(taskService.getUnprocessedTaskCount(user)).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/unprocessed/count").exchange()
@@ -89,16 +89,16 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnAllProcessedTasks() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
-                .id(1L)
+                .id(2L)
                 .title("Test task")
-                .author(authenticationMock.getName())
+                .userId(user.getId())
                 .status(TaskStatus.PROCESSED)
                 .build();
-        when(taskService.getProcessedTasks(eq(authenticationMock.getName()), any())).thenReturn(Flux.just(task));
+        when(taskService.getProcessedTasks(eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/processed").exchange()
@@ -108,9 +108,10 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfAllProcessedTasks() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-        when(taskService.getProcessedTaskCount(eq(authenticationMock.getName()))).thenReturn(Mono.just(1L));
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        when(taskService.getProcessedTaskCount(user)).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/processed/count").exchange()
@@ -120,16 +121,16 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnProcessedTasksWithoutDeadline() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
-                .id(1L)
+                .id(2L)
                 .title("Test task")
-                .author(authenticationMock.getName())
+                .userId(user.getId())
                 .status(TaskStatus.PROCESSED)
                 .build();
-        when(taskService.getProcessedTasks(null, null, authenticationMock.getName(), PageRequest.of(0, 20)))
+        when(taskService.getProcessedTasks(null, null, user, PageRequest.of(0, 20)))
                 .thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
@@ -140,9 +141,10 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithoutDeadline() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-        when(taskService.getProcessedTaskCount(null, null, authenticationMock.getName())).thenReturn(Mono.just(1L));
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        when(taskService.getProcessedTaskCount(null, null, user)).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/processed/count?deadlineFrom=&deadlineTo=").exchange()
@@ -152,13 +154,13 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadline() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
-                .id(1L)
+                .id(2L)
                 .title("Test task")
-                .author(authenticationMock.getName())
+                .userId(user.getId())
                 .status(TaskStatus.PROCESSED)
                 .deadline(LocalDateTime.parse("2020-01-10T00:00:00", DateTimeFormatter.ISO_DATE_TIME))
                 .build();
@@ -169,7 +171,7 @@ class TaskControllerTest {
         when(taskService.getProcessedTasks(
                 LocalDateTime.parse(deadlineFrom, DateTimeFormatter.ISO_DATE_TIME),
                 LocalDateTime.parse(deadlineTo, DateTimeFormatter.ISO_DATE_TIME),
-                authenticationMock.getName(),
+                user,
                 PageRequest.of(0, 20)
         )).thenReturn(Flux.just(task));
 
@@ -182,8 +184,8 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadline() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         String deadlineFrom = "2020-01-01T00:00";
         String deadlineTo = "2020-01-31T23:59";
@@ -191,7 +193,7 @@ class TaskControllerTest {
         when(taskService.getProcessedTaskCount(
                 LocalDateTime.parse(deadlineFrom, DateTimeFormatter.ISO_DATE_TIME),
                 LocalDateTime.parse(deadlineTo, DateTimeFormatter.ISO_DATE_TIME),
-                authenticationMock.getName()
+                user
         )).thenReturn(Mono.just(1L));
 
         String uri = "/tasks/processed/count"
@@ -205,12 +207,11 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnAllUncompletedTasks() {
-        String username = "alice";
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
-        when(taskService.getUncompletedTasks(eq(username), any())).thenReturn(Flux.just(task));
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        when(taskService.getUncompletedTasks(eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/uncompleted").exchange()
@@ -220,9 +221,10 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfAllUncompletedTasks() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
-        when(taskService.getUncompletedTaskCount(eq(authenticationMock.getName()))).thenReturn(Mono.just(1L));
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        when(taskService.getUncompletedTaskCount(eq(user))).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/uncompleted/count").exchange()
@@ -232,11 +234,11 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnTaskById() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
-        when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
+        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        when(taskService.getTask(task.getId(), user)).thenReturn(Mono.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/" + task.getId()).exchange()
@@ -246,12 +248,12 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNotFoundStatusCodeWhenTaskIsNotFoundById() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Task is not found";
 
-        when(taskService.getTask(anyLong(), anyString()))
+        when(taskService.getTask(anyLong(), any(User.class)))
                 .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
 
         ErrorResponse errorResponse = new ErrorResponse();
@@ -265,13 +267,22 @@ class TaskControllerTest {
 
     @Test
     void shouldCreateTask() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().title("New task").build();
-        Task savedTask = Task.builder().id(2L).title(task.getTitle()).author(authenticationMock.getName()).build();
 
-        when(taskService.createTask(task, authenticationMock.getName())).thenReturn(Mono.just(savedTask));
+        long taskId = 2L;
+
+        Task responseBody = task.copy();
+        responseBody.setId(taskId);
+        responseBody.setUserId(user.getId());
+
+        when(taskService.createTask(task)).thenAnswer(args -> {
+            Task t = args.getArgument(0);
+            t.setId(taskId);
+            return Mono.just(t);
+        });
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .mutateWith(csrf()).post()
@@ -281,14 +292,14 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isCreated()
-                .expectHeader().valueEquals("Location", "/tasks/" + savedTask.getId())
-                .expectBody(Task.class).isEqualTo(savedTask);
+                .expectHeader().valueEquals("Location", "/tasks/" + taskId)
+                .expectBody(Task.class).isEqualTo(responseBody);
     }
 
     @Test
     void shouldRejectTaskCreationWhenTitleIsNull() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().build();
 
@@ -307,8 +318,8 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectTaskCreationWhenTitleIsBlank() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().title(" ").build();
 
@@ -327,8 +338,8 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectTaskCreationWhenTitleIsTooLong() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().title("L" + "o".repeat(247) + "ng title").build();
 
@@ -347,8 +358,8 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectTaskCreationWhenDescriptionIsTooLong() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
                 .title("Test title")
@@ -370,8 +381,8 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectTaskCreationWhenDeadlineIsInPast() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
                 .title("Test title")
@@ -393,40 +404,45 @@ class TaskControllerTest {
 
     @Test
     void shouldUpdateTask() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
-        Task updatedTask = Task.builder().title("Updated test task").build();
-        when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
-        when(taskService.updateTask(updatedTask, task.getId(), authenticationMock.getName()))
-                .thenReturn(Mono.just(updatedTask));
+        when(taskService.updateTask(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
+
+        Task updatedTask = task.copy();
+        updatedTask.setUserId(null);
+        updatedTask.setTitle("Updated test task");
+
+        Task responseBody = updatedTask.copy();
+        responseBody.setId(task.getId());
+        responseBody.setUserId(user.getId());
 
         testClient.mutateWith(csrf())
                 .mutateWith(mockAuthentication(authenticationMock))
                 .put()
                 .uri("/tasks/" + task.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(updatedTask)
+                .bodyValue(responseBody)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task.class).isEqualTo(updatedTask);
+                .expectBody(Task.class).isEqualTo(responseBody);
     }
 
     @Test
     void shouldCompleteTask() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
+        long taskId = 2L;
 
-        when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
-        when(taskService.completeTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.empty());
+        when(taskService.completeTask(taskId, user)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf())
                 .mutateWith(mockAuthentication(authenticationMock))
-                .put().uri("/tasks/completed/" + task.getId())
+                .put().uri("/tasks/completed/" + taskId)
                 .exchange()
 
                 .expectStatus().isNoContent();
@@ -434,17 +450,16 @@ class TaskControllerTest {
 
     @Test
     void shouldDeleteTask() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(1L).title("Test task").author(authenticationMock.getName()).build();
+        long taskId = 2L;
 
-        when(taskService.getTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.just(task));
-        when(taskService.deleteTask(task.getId(), authenticationMock.getName())).thenReturn(Mono.empty());
+        when(taskService.deleteTask(taskId, user)).thenReturn(Mono.empty());
 
         testClient.mutateWith(csrf())
                 .mutateWith(mockAuthentication(authenticationMock))
-                .delete().uri("/tasks/" + task.getId())
+                .delete().uri("/tasks/" + taskId)
                 .exchange()
 
                 .expectStatus().isNoContent();
@@ -452,14 +467,13 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnTagsForTask() {
-        String username = "alice";
-        Long taskId = 1L;
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        long taskId = 2L;
 
-        Tag tag = Tag.builder().id(2L).author(username).name("Test tag").build();
-        Mockito.when(taskService.getTags(taskId, username)).thenReturn(Flux.just(tag));
+        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
+        Mockito.when(taskService.getTags(taskId, user)).thenReturn(Flux.just(tag));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/" + taskId + "/tags").exchange()
@@ -469,14 +483,13 @@ class TaskControllerTest {
 
     @Test
     void shouldAssignTagToTask() {
-        Long taskId = 1L;
-        Long tagId = 2L;
-        String username = "alice";
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        long taskId = 2L;
+        long tagId = 3L;
 
-        when(taskService.assignTag(taskId, tagId, username)).thenReturn(Mono.empty());
+        when(taskService.assignTag(taskId, tagId, user)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .mutateWith(csrf()).put()
@@ -488,14 +501,13 @@ class TaskControllerTest {
 
     @Test
     void shouldRemoveTagFromTask() {
-        Long taskId = 1L;
-        Long tagId = 2L;
-        String username = "alice";
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        long taskId = 2L;
+        long tagId = 3L;
 
-        when(taskService.removeTag(taskId, username, tagId)).thenReturn(Mono.empty());
+        when(taskService.removeTag(taskId, tagId, user)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .mutateWith(csrf()).delete()
@@ -507,13 +519,18 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnCommentsForTask() {
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn("alice");
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        TaskComment comment = TaskComment.builder().id(1L).taskId(2L).commentText("Test comment").build();
+        TaskComment comment = TaskComment.builder()
+                .userId(user.getId())
+                .id(2L)
+                .taskId(3L)
+                .commentText("Test comment")
+                .build();
         Mockito.when(taskService.getComments(
                 comment.getTaskId(),
-                authenticationMock.getName(),
+                user,
                 PageRequest.of(0, 20)
         )).thenReturn(Flux.just(comment));
 
@@ -525,22 +542,24 @@ class TaskControllerTest {
 
     @Test
     void shouldAddCommentToTask() {
-        String username = "alice";
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        long taskId = 2L;
+        long taskCommentId = 3L;
 
-        Long taskId = 1L;
         TaskComment comment = TaskComment.builder().commentText("Test comment").build();
-        TaskComment savedComment = TaskComment.builder()
-                .id(2L)
-                .taskId(taskId)
-                .commentText(comment.getCommentText())
-                .author(username)
-                .createdAt(LocalDateTime.now())
-                .build();
 
-        when(taskService.addComment(taskId, username, comment)).thenReturn(Mono.just(savedComment));
+        when(taskService.addComment(any(TaskComment.class))).thenAnswer(args -> {
+            TaskComment c = args.getArgument(0);
+            c.setId(taskCommentId);
+            return Mono.just(c);
+        });
+
+        TaskComment responseBody = comment.copy();
+        responseBody.setId(taskCommentId);
+        responseBody.setTaskId(taskId);
+        responseBody.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .mutateWith(csrf())
@@ -550,15 +569,19 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isCreated()
-                .expectBody(TaskComment.class).isEqualTo(savedComment);
+                .expectBody(TaskComment.class).value(c -> {
+                    assertEquals(responseBody.getId(), c.getId());
+                    assertEquals(responseBody.getUserId(), c.getUserId());
+                    assertEquals(responseBody.getTaskId(), c.getTaskId());
+                    assertEquals(responseBody.getCommentText(), c.getCommentText());
+                    assertNotNull(c.getCreatedAt());
+                });
     }
 
     @Test
     void shouldRejectCommentAddingWhenCommentTextIsNull() {
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         TaskComment comment = TaskComment.builder().build();
 
@@ -577,10 +600,8 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectCommentAddingWhenCommentTextIsBlank() {
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         TaskComment comment = TaskComment.builder().commentText(" ").build();
 
@@ -599,10 +620,8 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectCommentAddingWhenCommentTextIsTooLong() {
-        String username = "alice";
-
-        Authentication authenticationMock = mock(Authentication.class);
-        when(authenticationMock.getName()).thenReturn(username);
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
 
         TaskComment comment = TaskComment.builder().commentText("L" + "o".repeat(9993) + "ng text").build();
 
@@ -617,5 +636,12 @@ class TaskControllerTest {
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
                 .jsonPath("$.fieldErrors.commentText").isEqualTo("Value length must not be greater than 10000");
+    }
+
+    private Authentication createAuthentication(User user) {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(user.getEmail());
+        when(authenticationMock.getPrincipal()).thenReturn(user);
+        return authenticationMock;
     }
 }

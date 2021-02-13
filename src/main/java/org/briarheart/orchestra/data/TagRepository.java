@@ -15,12 +15,12 @@ public interface TagRepository extends ReactiveCrudRepository<Tag, Long> {
     @Query("SELECT * FROM tag WHERE id IN (:ids)")
     Flux<Tag> findByIdIn(Set<Long> ids);
 
-    @Query("SELECT * FROM tag WHERE author = :author")
-    Flux<Tag> findByAuthor(String author);
+    @Query("SELECT * FROM tag WHERE user_id = :userId")
+    Flux<Tag> findByUserId(Long userId);
 
-    @Query("SELECT * FROM tag WHERE id = :id AND author = :author")
-    Mono<Tag> findByIdAndAuthor(Long id, String author);
+    @Query("SELECT * FROM tag WHERE id = :id AND user_id = :userId")
+    Mono<Tag> findByIdAndUserId(Long id, Long userId);
 
-    @Query("SELECT * FROM tag WHERE name = :name AND author = :author")
-    Mono<Tag> findByNameAndAuthor(String name, String author);
+    @Query("SELECT * FROM tag WHERE name = :name AND user_id = :userId")
+    Mono<Tag> findByNameAndUserId(String name, Long userId);
 }
