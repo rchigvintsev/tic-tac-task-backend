@@ -7,6 +7,8 @@ import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.TagService;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -22,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
@@ -36,24 +39,38 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @WebFluxTest(TagController.class)
 @Import(PermitAllSecurityConfig.class)
 class TagControllerTest {
+    private static final Locale DEFAULT_LOCALE = Locale.getDefault();
+
     @Autowired
     private WebTestClient testClient;
 
     @MockBean
     private TagService tagService;
 
+    @BeforeAll
+    static void beforeAll() {
+        Locale.setDefault(Locale.ENGLISH);
+    }
+
+    @AfterAll
+    static void afterAll() {
+        Locale.setDefault(DEFAULT_LOCALE);
+    }
+
     @Test
     void shouldReturnAllTags() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Tag tag = Tag.builder().id(2L).name("Test tag").userId(user.getId()).build();
+        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         when(tagService.getTags(user)).thenReturn(Flux.just(tag));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tags").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tags")
+                .exchange()
+
                 .expectStatus().isOk()
-                .expectBody(Tag[].class).isEqualTo(new Tag[] {tag});
+                .expectBody(Tag[].class).isEqualTo(new Tag[]{tag});
     }
 
     @Test
@@ -61,11 +78,13 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Tag tag = Tag.builder().id(2L).name("Test tag").userId(user.getId()).build();
+        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         when(tagService.getTag(tag.getId(), user)).thenReturn(Mono.just(tag));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tags/1").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tags/" + tag.getId())
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Tag.class).isEqualTo(tag);
     }
@@ -77,14 +96,15 @@ class TagControllerTest {
 
         String errorMessage = "Tag is not found";
 
-        when(tagService.getTag(anyLong(), any(User.class)))
-                .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
+        when(tagService.getTag(anyLong(), eq(user))).thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
 
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setErrors(List.of(errorMessage));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tags/1").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tags/2")
+                .exchange()
+
                 .expectStatus().isNotFound()
                 .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
     }
@@ -94,15 +114,18 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        long tagId = 2L;
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
 
-        Task task = Task.builder().id(3L).title("Test task").userId(user.getId()).build();
+        long tagId = 3L;
+
         when(tagService.getUncompletedTasks(eq(tagId), eq(user), any())).thenReturn(Flux.just(task));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tags/" + tagId + "/tasks/uncompleted").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tags/" + tagId + "/tasks/uncompleted")
+                .exchange()
+
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[] {task});
+                .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
 
     @Test
@@ -112,25 +135,84 @@ class TagControllerTest {
 
         long tagId = 2L;
 
-        Tag tag = Tag.builder().name("New tag").build();
-        Mockito.when(tagService.createTag(tag)).thenAnswer(args -> {
+        Mockito.when(tagService.createTag(any(Tag.class))).thenAnswer(args -> {
             Tag t = args.getArgument(0);
             t.setId(tagId);
             return Mono.just(t);
         });
 
-        Tag responseBody = tag.copy();
-        responseBody.setId(tagId);
-        responseBody.setUserId(user.getId());
+        Tag tag = Tag.builder().name("New tag").build();
+
+        Tag expectedResult = tag.copy();
+        expectedResult.setId(tagId);
+        expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/tags")
-                .contentType(MediaType.APPLICATION_JSON).bodyValue(tag)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tag)
                 .exchange()
 
                 .expectStatus().isCreated()
                 .expectHeader().valueEquals("Location", "/tags/" + tagId)
-                .expectBody(Tag.class).isEqualTo(responseBody);
+                .expectBody(Tag.class).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void shouldRejectTagCreationWhenNameIsNull() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        Tag tag = Tag.builder().build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tags")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tag)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.name").isEqualTo("Value must not be blank");
+    }
+
+    @Test
+    void shouldRejectTagCreationWhenNameIsBlank() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        Tag tag = Tag.builder().name(" ").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tags")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tag)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.name").isEqualTo("Value must not be blank");
+    }
+
+    @Test
+    void shouldRejectTagCreationWhenNameIsTooLong() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        Tag tag = Tag.builder().name("L" + "o".repeat(43) + "ng name").build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tags")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tag)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors.name").isEqualTo("Value length must not be greater than 50");
     }
 
     @Test
@@ -138,17 +220,19 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Tag tag = Tag.builder().name("New tag").build();
         String errorMessage = "Tag already exists";
-        when(tagService.createTag(tag))
+        when(tagService.createTag(any(Tag.class)))
                 .thenReturn(Mono.error(new EntityAlreadyExistsException(errorMessage)));
 
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setErrors(List.of(errorMessage));
 
+        Tag tag = Tag.builder().name("New tag").build();
+
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/tags")
-                .contentType(MediaType.APPLICATION_JSON).bodyValue(tag)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(tag)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -162,22 +246,22 @@ class TagControllerTest {
 
         Mockito.when(tagService.updateTag(any(Tag.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        Tag tag = Tag.builder().name("Updated test tag").build();
-
         long tagId = 2L;
 
-        Tag responseBody = tag.copy();
-        tag.setId(tagId);
-        tag.setUserId(user.getId());
+        Tag tag = Tag.builder().name("Updated test tag").build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).put()
-                .uri("/tags/" + tagId)
+        Tag expectedResult = tag.copy();
+        expectedResult.setId(tagId);
+        expectedResult.setUserId(user.getId());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .put().uri("/tags/" + tagId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(tag)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Tag.class).isEqualTo(responseBody);
+                .expectBody(Tag.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -189,8 +273,10 @@ class TagControllerTest {
 
         Mockito.when(tagService.deleteTag(tagId, user)).thenReturn(Mono.empty());
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).delete()
-                .uri("/tags/" + tagId).exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .delete().uri("/tags/" + tagId)
+                .exchange()
+
                 .expectStatus().isNoContent();
     }
 
