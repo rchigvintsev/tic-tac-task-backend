@@ -57,7 +57,7 @@ public interface TagService {
      * Deletes tag with the given id and belonging to the given user.
      *
      * @param id   tag id
-     * @param user tag author
+     * @param user tag author (must not be {@code null})
      * @throws EntityNotFoundException if tag is not found by id or does not belong to the given user
      */
     Mono<Void> deleteTag(Long id, User user) throws EntityNotFoundException;

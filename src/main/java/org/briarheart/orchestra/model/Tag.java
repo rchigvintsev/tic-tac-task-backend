@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.model;
 
+import io.jsonwebtoken.lang.Assert;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
@@ -23,15 +24,15 @@ public class Tag {
     private Integer color;
 
     /**
-     * Creates copy of this tag including all attributes except primary key.
+     * Creates copy of the given tag.
      *
-     * @return copy of this tag
+     * @param tag tag to be copied (must not be {@code null})
      */
-    public Tag copy() {
-        Tag copy = new Tag();
-        copy.setUserId(userId);
-        copy.setName(name);
-        copy.setColor(color);
-        return copy;
+    public Tag(Tag tag) {
+        Assert.notNull(tag, "Tag must not be null");
+        this.id = tag.id;
+        this.userId = tag.userId;
+        this.name = tag.name;
+        this.color = tag.color;
     }
 }

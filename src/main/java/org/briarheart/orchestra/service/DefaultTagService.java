@@ -36,8 +36,7 @@ public class DefaultTagService implements TagService {
     @Override
     public Mono<Tag> getTag(Long id, User user) throws EntityNotFoundException {
         Assert.notNull(user, "User must not be null");
-        return tagRepository.findByIdAndUserId(id, user.getId())
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")));
+        return findTag(id, user.getId());
     }
 
     @Override
@@ -48,14 +47,13 @@ public class DefaultTagService implements TagService {
                     String message = "Tag with name \"" + tag.getName() + "\" already exists";
                     return Mono.<Tag>error(new EntityAlreadyExistsException(message));
                 })
-                .switchIfEmpty(Mono.defer(() -> tagRepository.save(tag.copy())));
+                .switchIfEmpty(Mono.defer(() -> tagRepository.save(tag)));
     }
 
     @Override
-    public Mono<Tag> updateTag(Tag tag)
-            throws EntityNotFoundException, EntityAlreadyExistsException {
+    public Mono<Tag> updateTag(Tag tag) throws EntityNotFoundException, EntityAlreadyExistsException {
         Assert.notNull(tag, "Tag must not be null");
-        return getTag(tag.getId(), tag.getUserId())
+        return findTag(tag.getId(), tag.getUserId())
                 .flatMap(t -> {
                     if (!t.getName().equals(tag.getName())) {
                         return tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId());
@@ -81,7 +79,7 @@ public class DefaultTagService implements TagService {
         });
     }
 
-    private Mono<Tag> getTag(Long tagId, Long userId) throws EntityNotFoundException {
+    private Mono<Tag> findTag(Long tagId, Long userId) throws EntityNotFoundException {
         return tagRepository.findByIdAndUserId(tagId, userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + tagId + " is not found")));
     }

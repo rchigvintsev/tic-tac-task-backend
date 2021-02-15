@@ -3,7 +3,6 @@ package org.briarheart.orchestra.controller;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
-import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.TagService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -26,7 +25,7 @@ import java.net.URI;
 @RestController
 @RequestMapping("/tags")
 @RequiredArgsConstructor
-public class TagController {
+public class TagController extends AbstractController {
     private final TagService tagService;
 
     @GetMapping
@@ -43,7 +42,9 @@ public class TagController {
     public Mono<ResponseEntity<Tag>> createTag(@Valid @RequestBody Tag tag,
                                                Authentication authentication,
                                                ServerHttpRequest request) {
+        tag.setId(null);
         tag.setUserId(getUser(authentication).getId());
+
         return tagService.createTag(tag).map(createdTag -> {
             URI tagLocation = UriComponentsBuilder.fromHttpRequest(request)
                     .path("/{id}")
@@ -57,6 +58,7 @@ public class TagController {
     public Mono<Tag> updateTag(@Valid @RequestBody Tag tag, @PathVariable Long id, Authentication authentication) {
         tag.setId(id);
         tag.setUserId(getUser(authentication).getId());
+
         return tagService.updateTag(tag);
     }
 
@@ -71,9 +73,5 @@ public class TagController {
                                           Authentication authentication,
                                           Pageable pageable) {
         return tagService.getUncompletedTasks(tagId, getUser(authentication), pageable);
-    }
-
-    private User getUser(Authentication authentication) {
-        return (User) authentication.getPrincipal();
     }
 }

@@ -137,13 +137,15 @@ class TagControllerTest {
 
         Mockito.when(tagService.createTag(any(Tag.class))).thenAnswer(args -> {
             Tag t = args.getArgument(0);
-            t.setId(tagId);
+            if (t.getId() == null) {
+                t.setId(tagId);
+            }
             return Mono.just(t);
         });
 
-        Tag tag = Tag.builder().name("New tag").build();
+        Tag tag = Tag.builder().id(-1L).name("New tag").build();
 
-        Tag expectedResult = tag.copy();
+        Tag expectedResult = new Tag(tag);
         expectedResult.setId(tagId);
         expectedResult.setUserId(user.getId());
 
@@ -250,7 +252,7 @@ class TagControllerTest {
 
         Tag tag = Tag.builder().name("Updated test tag").build();
 
-        Tag expectedResult = tag.copy();
+        Tag expectedResult = new Tag(tag);
         expectedResult.setId(tagId);
         expectedResult.setUserId(user.getId());
 
