@@ -54,19 +54,20 @@ class TaskCommentControllerTest {
 
     @Test
     void shouldUpdateComment() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authentication = createAuthentication(user);
-
-        TaskComment comment = TaskComment.builder().commentText("Updated comment text").build();
-
-        long commentId = 1L;
-
-        TaskComment responseBody = comment.copy();
-        responseBody.setId(commentId);
-        responseBody.setUserId(user.getId());
 
         Mockito.when(taskCommentService.updateComment(any(TaskComment.class)))
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        long commentId = 2L;
+
+        TaskComment comment = TaskComment.builder().commentText("Updated test comment text").build();
+
+        TaskComment expectedResult = new TaskComment(comment);
+        expectedResult.setId(commentId);
+        expectedResult.setUserId(user.getId());
+
 
         testClient.mutateWith(mockAuthentication(authentication)).mutateWith(csrf())
                 .put().uri("/task-comments/" + commentId)
@@ -75,15 +76,16 @@ class TaskCommentControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TaskComment.class).isEqualTo(responseBody);
+                .expectBody(TaskComment.class).isEqualTo(expectedResult);
     }
 
     @Test
     void shouldDeleteComment() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authentication = createAuthentication(user);
 
-        long commentId = 1L;
+        long commentId = 2L;
+
         Mockito.when(taskCommentService.deleteComment(commentId, user)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(mockAuthentication(authentication)).mutateWith(csrf())

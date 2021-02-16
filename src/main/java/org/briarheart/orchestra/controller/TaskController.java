@@ -152,8 +152,10 @@ public class TaskController {
     public Mono<TaskComment> addComment(@PathVariable("taskId") Long taskId,
                                         @Valid @RequestBody TaskComment comment,
                                         Authentication authentication) {
-        comment.setTaskId(taskId);
+        comment.setId(null);
         comment.setUserId(getUser(authentication).getId());
+        comment.setTaskId(taskId);
+
         return taskService.addComment(comment);
     }
 

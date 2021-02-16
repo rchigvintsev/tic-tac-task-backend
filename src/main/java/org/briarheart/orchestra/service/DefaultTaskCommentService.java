@@ -29,10 +29,9 @@ public class DefaultTaskCommentService implements TaskCommentService {
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task comment with id " + comment.getId()
                         + " is not found")))
                 .flatMap(c -> {
-                    if (comment.getCreatedAt() == null) {
-                        comment.setCreatedAt(c.getCreatedAt());
-                    }
-                    comment.setUpdatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                    comment.setTaskId(c.getTaskId());
+                    comment.setCreatedAt(c.getCreatedAt());
+                    comment.setUpdatedAt(getCurrentTime());
                     return taskCommentRepository.save(comment);
                 });
     }
@@ -41,5 +40,9 @@ public class DefaultTaskCommentService implements TaskCommentService {
     public Mono<Void> deleteComment(Long id, User user) {
         Assert.notNull(user, "User must not be null");
         return taskCommentRepository.deleteByIdAndUserId(id, user.getId());
+    }
+
+    protected LocalDateTime getCurrentTime() {
+        return LocalDateTime.now(ZoneOffset.UTC);
     }
 }

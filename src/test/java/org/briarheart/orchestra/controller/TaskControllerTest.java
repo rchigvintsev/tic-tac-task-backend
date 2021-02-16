@@ -556,7 +556,7 @@ class TaskControllerTest {
             return Mono.just(c);
         });
 
-        TaskComment responseBody = comment.copy();
+        TaskComment responseBody = new TaskComment(comment);
         responseBody.setId(taskCommentId);
         responseBody.setTaskId(taskId);
         responseBody.setUserId(user.getId());

@@ -2,7 +2,6 @@ package org.briarheart.orchestra.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.TaskComment;
-import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.TaskCommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -19,7 +18,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/task-comments")
 @RequiredArgsConstructor
-public class TaskCommentController {
+public class TaskCommentController extends AbstractController {
     private final TaskCommentService taskCommentService;
 
     @PutMapping("/{id}")
@@ -28,6 +27,7 @@ public class TaskCommentController {
                                            Authentication authentication) {
         comment.setId(id);
         comment.setUserId(getUser(authentication).getId());
+
         return taskCommentService.updateComment(comment);
     }
 
@@ -35,9 +35,5 @@ public class TaskCommentController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteComment(@PathVariable Long id, Authentication authentication) {
         return taskCommentService.deleteComment(id, getUser(authentication));
-    }
-
-    private User getUser(Authentication authentication) {
-        return (User) authentication.getPrincipal();
     }
 }

@@ -11,7 +11,8 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -22,74 +23,46 @@ import static org.mockito.Mockito.*;
 class DefaultTaskCommentServiceTest {
     private TaskCommentRepository taskCommentRepository;
     private DefaultTaskCommentService taskCommentService;
+    private LocalDateTime currentTime;
 
     @BeforeEach
     void setUp() {
         taskCommentRepository = mock(TaskCommentRepository.class);
-        taskCommentService = new DefaultTaskCommentService(taskCommentRepository);
+        taskCommentService = new DefaultTaskCommentService(taskCommentRepository) {
+            @Override
+            protected LocalDateTime getCurrentTime() {
+                return currentTime;
+            }
+        };
     }
 
     @Test
     void shouldUpdateComment() {
         TaskComment comment = TaskComment.builder()
                 .id(1L)
-                .taskId(2L)
                 .userId(2L)
+                .taskId(3L)
                 .commentText("Test comment")
                 .createdAt(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
+
         when(taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId()))
                 .thenReturn(Mono.just(comment));
-        when(taskCommentRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        TaskComment updatedComment = comment.copy();
-        updatedComment.setCommentText("Updated test comment");
-        TaskComment result = taskCommentService.updateComment(updatedComment).block();
-        assertNotNull(result);
-        assertEquals(updatedComment.getCommentText(), result.getCommentText());
-    }
-
-    @Test
-    void shouldSetCreatedAtFieldOnCommentUpdate() {
-        TaskComment comment = TaskComment.builder()
-                .id(1L)
-                .userId(2L)
-                .userId(3L)
-                .commentText("Test comment")
-                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
-                .build();
-        when(taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId()))
-                .thenReturn(Mono.just(comment));
-        when(taskCommentRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
-
-        TaskComment updatedComment = comment.copy();
+        TaskComment updatedComment = new TaskComment(comment);
         updatedComment.setCommentText("Updated test comment");
         updatedComment.setCreatedAt(null);
+        updatedComment.setTaskId(null);
+
+        currentTime = LocalDateTime.now(ZoneOffset.UTC);
+
+        TaskComment expectedResult = new TaskComment(comment);
+        expectedResult.setCommentText(updatedComment.getCommentText());
+        expectedResult.setUpdatedAt(currentTime);
 
         TaskComment result = taskCommentService.updateComment(updatedComment).block();
-        assertNotNull(result);
-        assertEquals(comment.getCreatedAt(), result.getCreatedAt());
-    }
-
-    @Test
-    void shouldSetUpdatedAtFieldOnCommentUpdate() {
-        TaskComment comment = TaskComment.builder()
-                .id(1L)
-                .userId(2L)
-                .userId(3L)
-                .commentText("Test comment")
-                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
-                .build();
-        when(taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId()))
-                .thenReturn(Mono.just(comment));
-        when(taskCommentRepository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
-
-        TaskComment updatedComment = comment.copy();
-        updatedComment.setCommentText("Updated test comment");
-
-        TaskComment result = taskCommentService.updateComment(updatedComment).block();
-        assertNotNull(result);
-        assertNotNull(result.getUpdatedAt());
+        assertEquals(expectedResult, result);
     }
 
     @Test
@@ -102,7 +75,7 @@ class DefaultTaskCommentServiceTest {
     @Test
     void shouldThrowExceptionOnCommentUpdateWhenCommentIsNotFound() {
         when(taskCommentRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
-        TaskComment comment = TaskComment.builder().id(1L).userId(2L).build();
+        TaskComment comment = TaskComment.builder().id(1L).userId(2L).commentText("Updated test comment").build();
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> taskCommentService.updateComment(comment).block());
         assertEquals("Task comment with id " + comment.getId() + " is not found", exception.getMessage());
@@ -110,10 +83,17 @@ class DefaultTaskCommentServiceTest {
 
     @Test
     void shouldDeleteComment() {
-        User user = User.builder().id(1L).build();
-        Long commentId = 1L;
-        when(taskCommentRepository.deleteByIdAndUserId(commentId, user.getId())).thenReturn(Mono.empty());
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        long commentId = 2L;
+        when(taskCommentRepository.deleteByIdAndUserId(commentId, user.getId())).thenReturn(Mono.just(true).then());
         taskCommentService.deleteComment(commentId, user).block();
         verify(taskCommentRepository, times(1)).deleteByIdAndUserId(commentId, user.getId());
+    }
+
+    @Test
+    void shouldThrowExceptionOnCommentDeleteWhenUserIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> taskCommentService.deleteComment(1L, null));
+        assertEquals("User must not be null", exception.getMessage());
     }
 }

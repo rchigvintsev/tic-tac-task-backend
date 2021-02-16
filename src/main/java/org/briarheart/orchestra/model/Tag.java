@@ -26,13 +26,13 @@ public class Tag {
     /**
      * Creates copy of the given tag.
      *
-     * @param tag tag to be copied (must not be {@code null})
+     * @param other tag to be copied (must not be {@code null})
      */
-    public Tag(Tag tag) {
-        Assert.notNull(tag, "Tag must not be null");
-        this.id = tag.id;
-        this.userId = tag.userId;
-        this.name = tag.name;
-        this.color = tag.color;
+    public Tag(Tag other) {
+        Assert.notNull(other, "Tag must not be null");
+        this.id = other.id;
+        this.userId = other.userId;
+        this.name = other.name;
+        this.color = other.color;
     }
 }
