@@ -120,7 +120,9 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> createTask(Task task) {
         Assert.notNull(task, "Task must not be null");
         return Mono.defer(() -> {
-            Task newTask = task.copy();
+            Task newTask = new Task(task);
+            newTask.setId(null);
+            newTask.setTaskListId(null);
             if (newTask.getStatus() == null) {
                 newTask.setStatus(TaskStatus.UNPROCESSED);
             }
@@ -132,13 +134,14 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> updateTask(Task task) throws EntityNotFoundException {
         Assert.notNull(task, "Task must not be null");
         return findTask(task.getId(), task.getUserId()).flatMap(existingTask -> {
-            if (task.getStatus() == null) {
-                task.setStatus(existingTask.getStatus());
+            Task updatedTask = new Task(task);
+            if (updatedTask.getStatus() == null) {
+                updatedTask.setStatus(existingTask.getStatus());
             }
-            if (task.getStatus() == TaskStatus.UNPROCESSED && task.getDeadline() != null) {
-                task.setStatus(TaskStatus.PROCESSED);
+            if (updatedTask.getStatus() == TaskStatus.UNPROCESSED && updatedTask.getDeadline() != null) {
+                updatedTask.setStatus(TaskStatus.PROCESSED);
             }
-            return taskRepository.save(task);
+            return taskRepository.save(updatedTask);
         });
     }
 
@@ -199,9 +202,16 @@ public class DefaultTaskService implements TaskService {
     public Mono<TaskComment> addComment(TaskComment comment) throws EntityNotFoundException {
         Assert.notNull(comment, "Task comment must not be null");
         return findTask(comment.getTaskId(), comment.getUserId()).flatMap(task -> {
-            comment.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
-            return taskCommentRepository.save(comment);
+            TaskComment newComment = new TaskComment(comment);
+            newComment.setId(null);
+            newComment.setCreatedAt(getCurrentTime());
+            newComment.setUpdatedAt(null);
+            return taskCommentRepository.save(newComment);
         });
+    }
+
+    protected LocalDateTime getCurrentTime() {
+        return LocalDateTime.now(ZoneOffset.UTC);
     }
 
     private Mono<Task> findTask(Long id, Long userId) {

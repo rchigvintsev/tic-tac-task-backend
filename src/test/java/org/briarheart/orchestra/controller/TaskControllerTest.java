@@ -27,8 +27,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -65,11 +63,13 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskService.getUnprocessedTasks(eq(user), any())).thenReturn(Flux.just(task));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/unprocessed").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/unprocessed")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
@@ -81,8 +81,10 @@ class TaskControllerTest {
 
         when(taskService.getUnprocessedTaskCount(user)).thenReturn(Mono.just(1L));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/unprocessed/count").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/unprocessed/count")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Long.class).isEqualTo(1L);
     }
@@ -94,14 +96,17 @@ class TaskControllerTest {
 
         Task task = Task.builder()
                 .id(2L)
-                .title("Test task")
                 .userId(user.getId())
+                .title("Test task")
                 .status(TaskStatus.PROCESSED)
                 .build();
+
         when(taskService.getProcessedTasks(eq(user), any())).thenReturn(Flux.just(task));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/processed")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
@@ -113,8 +118,10 @@ class TaskControllerTest {
 
         when(taskService.getProcessedTaskCount(user)).thenReturn(Mono.just(1L));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed/count").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/processed/count")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Long.class).isEqualTo(1L);
     }
@@ -126,15 +133,17 @@ class TaskControllerTest {
 
         Task task = Task.builder()
                 .id(2L)
-                .title("Test task")
                 .userId(user.getId())
+                .title("Test task")
                 .status(TaskStatus.PROCESSED)
                 .build();
-        when(taskService.getProcessedTasks(null, null, user, PageRequest.of(0, 20)))
-                .thenReturn(Flux.just(task));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed?deadlineFrom=&deadlineTo=").exchange()
+        when(taskService.getProcessedTasks(null, null, user, PageRequest.of(0, 20))).thenReturn(Flux.just(task));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/processed?deadlineFrom=&deadlineTo=")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
@@ -146,8 +155,10 @@ class TaskControllerTest {
 
         when(taskService.getProcessedTaskCount(null, null, user)).thenReturn(Mono.just(1L));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed/count?deadlineFrom=&deadlineTo=").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/processed/count?deadlineFrom=&deadlineTo=")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Long.class).isEqualTo(1L);
     }
@@ -159,8 +170,8 @@ class TaskControllerTest {
 
         Task task = Task.builder()
                 .id(2L)
-                .title("Test task")
                 .userId(user.getId())
+                .title("Test task")
                 .status(TaskStatus.PROCESSED)
                 .deadline(LocalDateTime.parse("2020-01-10T00:00:00", DateTimeFormatter.ISO_DATE_TIME))
                 .build();
@@ -175,9 +186,10 @@ class TaskControllerTest {
                 PageRequest.of(0, 20)
         )).thenReturn(Flux.just(task));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/processed?deadlineFrom=" + deadlineFrom + "&deadlineTo=" + deadlineTo)
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/processed?deadlineFrom=" + deadlineFrom + "&deadlineTo=" + deadlineTo)
                 .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
@@ -196,11 +208,10 @@ class TaskControllerTest {
                 user
         )).thenReturn(Mono.just(1L));
 
-        String uri = "/tasks/processed/count"
-                + "?deadlineFrom=" + deadlineFrom + "&deadlineTo=" + deadlineTo;
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri(uri)
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/processed/count?deadlineFrom=" + deadlineFrom + "&deadlineTo=" + deadlineTo)
                 .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Long.class).isEqualTo(1L);
     }
@@ -210,11 +221,13 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskService.getUncompletedTasks(eq(user), any())).thenReturn(Flux.just(task));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/uncompleted").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/uncompleted")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
@@ -226,8 +239,10 @@ class TaskControllerTest {
 
         when(taskService.getUncompletedTaskCount(eq(user))).thenReturn(Mono.just(1L));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/uncompleted/count").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/uncompleted/count")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Long.class).isEqualTo(1L);
     }
@@ -237,11 +252,13 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskService.getTask(task.getId(), user)).thenReturn(Mono.just(task));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/" + task.getId()).exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/" + task.getId())
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Task.class).isEqualTo(task);
     }
@@ -260,7 +277,7 @@ class TaskControllerTest {
         errorResponse.setErrors(List.of(errorMessage));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/1").exchange()
+                .uri("/tasks/2").exchange()
                 .expectStatus().isNotFound()
                 .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
     }
@@ -270,30 +287,29 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().title("New task").build();
-
         long taskId = 2L;
 
-        Task responseBody = task.copy();
-        responseBody.setId(taskId);
-        responseBody.setUserId(user.getId());
-
-        when(taskService.createTask(task)).thenAnswer(args -> {
+        when(taskService.createTask(any(Task.class))).thenAnswer(args -> {
             Task t = args.getArgument(0);
             t.setId(taskId);
             return Mono.just(t);
         });
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/tasks")
+        Task task = Task.builder().id(-1L).title("New task").build();
+
+        Task expectedResult = new Task(task);
+        expectedResult.setId(taskId);
+        expectedResult.setUserId(user.getId());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(task)
                 .exchange()
 
                 .expectStatus().isCreated()
                 .expectHeader().valueEquals("Location", "/tasks/" + taskId)
-                .expectBody(Task.class).isEqualTo(responseBody);
+                .expectBody(Task.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -303,9 +319,8 @@ class TaskControllerTest {
 
         Task task = Task.builder().build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/tasks")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(task)
                 .exchange()
@@ -323,9 +338,8 @@ class TaskControllerTest {
 
         Task task = Task.builder().title(" ").build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/tasks")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(task)
                 .exchange()
@@ -343,9 +357,8 @@ class TaskControllerTest {
 
         Task task = Task.builder().title("L" + "o".repeat(247) + "ng title").build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/tasks")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(task)
                 .exchange()
@@ -366,9 +379,8 @@ class TaskControllerTest {
                 .description("L" + "o".repeat(9986) + "ng description")
                 .build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/tasks")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(task)
                 .exchange()
@@ -389,9 +401,8 @@ class TaskControllerTest {
                 .deadline(LocalDateTime.now().minus(3, ChronoUnit.DAYS))
                 .build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/tasks")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(task)
                 .exchange()
@@ -409,26 +420,22 @@ class TaskControllerTest {
 
         when(taskService.updateTask(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
+        long taskId = 2L;
 
-        Task updatedTask = task.copy();
-        updatedTask.setUserId(null);
-        updatedTask.setTitle("Updated test task");
+        Task task = Task.builder().title("Updated test task").build();
 
-        Task responseBody = updatedTask.copy();
-        responseBody.setId(task.getId());
-        responseBody.setUserId(user.getId());
+        Task expectedResult = new Task(task);
+        expectedResult.setId(taskId);
+        expectedResult.setUserId(user.getId());
 
-        testClient.mutateWith(csrf())
-                .mutateWith(mockAuthentication(authenticationMock))
-                .put()
-                .uri("/tasks/" + task.getId())
+        testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
+                .put().uri("/tasks/" + taskId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(responseBody)
+                .bodyValue(task)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task.class).isEqualTo(responseBody);
+                .expectBody(Task.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -440,8 +447,7 @@ class TaskControllerTest {
 
         when(taskService.completeTask(taskId, user)).thenReturn(Mono.just(true).then());
 
-        testClient.mutateWith(csrf())
-                .mutateWith(mockAuthentication(authenticationMock))
+        testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
                 .put().uri("/tasks/completed/" + taskId)
                 .exchange()
 
@@ -457,8 +463,7 @@ class TaskControllerTest {
 
         when(taskService.deleteTask(taskId, user)).thenReturn(Mono.empty());
 
-        testClient.mutateWith(csrf())
-                .mutateWith(mockAuthentication(authenticationMock))
+        testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
                 .delete().uri("/tasks/" + taskId)
                 .exchange()
 
@@ -475,8 +480,10 @@ class TaskControllerTest {
         Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         Mockito.when(taskService.getTags(taskId, user)).thenReturn(Flux.just(tag));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/" + taskId + "/tags").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/" + taskId + "/tags")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Tag[].class).isEqualTo(new Tag[]{tag});
     }
@@ -491,9 +498,8 @@ class TaskControllerTest {
 
         when(taskService.assignTag(taskId, tagId, user)).thenReturn(Mono.just(true).then());
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).put()
-                .uri("/tasks/" + taskId + "/tags/" + tagId)
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .put().uri("/tasks/" + taskId + "/tags/" + tagId)
                 .exchange()
 
                 .expectStatus().isNoContent();
@@ -509,9 +515,8 @@ class TaskControllerTest {
 
         when(taskService.removeTag(taskId, tagId, user)).thenReturn(Mono.just(true).then());
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).delete()
-                .uri("/tasks/" + taskId + "/tags/" + tagId)
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .delete().uri("/tasks/" + taskId + "/tags/" + tagId)
                 .exchange()
 
                 .expectStatus().isNoContent();
@@ -523,19 +528,22 @@ class TaskControllerTest {
         Authentication authenticationMock = createAuthentication(user);
 
         TaskComment comment = TaskComment.builder()
-                .userId(user.getId())
                 .id(2L)
+                .userId(user.getId())
                 .taskId(3L)
                 .commentText("Test comment")
                 .build();
+
         Mockito.when(taskService.getComments(
                 comment.getTaskId(),
                 user,
                 PageRequest.of(0, 20)
         )).thenReturn(Flux.just(comment));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/tasks/" + comment.getTaskId() + "/comments").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/tasks/" + comment.getTaskId() + "/comments")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(TaskComment[].class).isEqualTo(new TaskComment[]{comment});
     }
@@ -546,36 +554,29 @@ class TaskControllerTest {
         Authentication authenticationMock = createAuthentication(user);
 
         long taskId = 2L;
-        long taskCommentId = 3L;
-
-        TaskComment comment = TaskComment.builder().commentText("Test comment").build();
+        long commentId = 3L;
 
         when(taskService.addComment(any(TaskComment.class))).thenAnswer(args -> {
             TaskComment c = args.getArgument(0);
-            c.setId(taskCommentId);
+            c.setId(commentId);
             return Mono.just(c);
         });
 
-        TaskComment responseBody = new TaskComment(comment);
-        responseBody.setId(taskCommentId);
-        responseBody.setTaskId(taskId);
-        responseBody.setUserId(user.getId());
+        TaskComment comment = TaskComment.builder().commentText("Test comment").build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf())
+        TaskComment expectedResult = new TaskComment(comment);
+        expectedResult.setId(commentId);
+        expectedResult.setUserId(user.getId());
+        expectedResult.setTaskId(taskId);
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/tasks/" + taskId + "/comments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()
 
                 .expectStatus().isCreated()
-                .expectBody(TaskComment.class).value(c -> {
-                    assertEquals(responseBody.getId(), c.getId());
-                    assertEquals(responseBody.getUserId(), c.getUserId());
-                    assertEquals(responseBody.getTaskId(), c.getTaskId());
-                    assertEquals(responseBody.getCommentText(), c.getCommentText());
-                    assertNotNull(c.getCreatedAt());
-                });
+                .expectBody(TaskComment.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -585,9 +586,8 @@ class TaskControllerTest {
 
         TaskComment comment = TaskComment.builder().build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf())
-                .post().uri("/tasks/1/comments")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tasks/2/comments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()
@@ -605,9 +605,8 @@ class TaskControllerTest {
 
         TaskComment comment = TaskComment.builder().commentText(" ").build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf())
-                .post().uri("/tasks/1/comments")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tasks/2/comments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()
@@ -625,9 +624,8 @@ class TaskControllerTest {
 
         TaskComment comment = TaskComment.builder().commentText("L" + "o".repeat(9993) + "ng text").build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf())
-                .post().uri("/tasks/1/comments")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/tasks/2/comments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()

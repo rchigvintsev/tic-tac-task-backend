@@ -29,7 +29,7 @@ public interface TaskService {
     /**
      * Returns all unprocessed tasks belonging to the given user.
      *
-     * @param user task author (must not be {@code null})
+     * @param user     task author (must not be {@code null})
      * @param pageable paging restriction
      * @return unprocessed tasks or empty stream when there is no task meeting the given criteria
      */
@@ -46,7 +46,7 @@ public interface TaskService {
     /**
      * Returns all processed tasks belonging to the given user.
      *
-     * @param user task author (must not be {@code null})
+     * @param user     task author (must not be {@code null})
      * @param pageable paging restriction
      * @return processed tasks or empty stream when there is no task meeting the given criteria
      */
@@ -57,8 +57,8 @@ public interface TaskService {
      * user. If deadline bounds are not specified this method returns number of processed tasks without deadline.
      *
      * @param deadlineFrom optional deadline from bound
-     * @param deadlineTo optional deadline to bound
-     * @param user task author (must not be {@code null})
+     * @param deadlineTo   optional deadline to bound
+     * @param user         task author (must not be {@code null})
      * @return number of processed tasks or empty stream when there is no task meeting the given criteria
      */
     Mono<Long> getProcessedTaskCount(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, User user);
@@ -68,9 +68,9 @@ public interface TaskService {
      * If deadline bounds are not specified this method returns processed tasks without deadline.
      *
      * @param deadlineFrom optional deadline from bound
-     * @param deadlineTo optional deadline to bound
-     * @param user task author (must not be {@code null})
-     * @param pageable paging restriction
+     * @param deadlineTo   optional deadline to bound
+     * @param user         task author (must not be {@code null})
+     * @param pageable     paging restriction
      * @return processed tasks or empty stream when there is no task meeting the given criteria
      */
     Flux<Task> getProcessedTasks(LocalDateTime deadlineFrom,
@@ -89,7 +89,7 @@ public interface TaskService {
     /**
      * Returns uncompleted tasks (either unprocessed or processed) belonging to the given user.
      *
-     * @param user task author (must not be {@code null})
+     * @param user     task author (must not be {@code null})
      * @param pageable paging restriction
      * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
      */
@@ -98,7 +98,7 @@ public interface TaskService {
     /**
      * Returns task with the given id and belonging to the given user.
      *
-     * @param id     task id
+     * @param id   task id
      * @param user task author (must not be {@code null})
      * @return requested task
      * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
@@ -125,7 +125,7 @@ public interface TaskService {
     /**
      * Completes task with the given id and belonging to the given user.
      *
-     * @param id task id
+     * @param id   task id
      * @param user task author (must not be {@code null})
      * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
@@ -134,7 +134,7 @@ public interface TaskService {
     /**
      * Deletes task with the given id and belonging to the given user.
      *
-     * @param id task id
+     * @param id   task id
      * @param user task author (must not be {@code null})
      * @throws EntityNotFoundException if task is not found by id and author
      */
@@ -144,7 +144,7 @@ public interface TaskService {
      * Returns tags for task with the given id and belonging to the given user.
      *
      * @param taskId task id
-     * @param user task author (must not be {@code null})
+     * @param user   task author (must not be {@code null})
      * @return task tags or empty stream when task does not have any tag
      * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
@@ -154,8 +154,8 @@ public interface TaskService {
      * Assigns tag with the given id to task with the given id. Both task and tag must belong to the given user.
      *
      * @param taskId task id
-     * @param tagId id of tag to be assigned
-     * @param user task/tag author (must not be {@code null})
+     * @param tagId  id of tag to be assigned
+     * @param user   task/tag author (must not be {@code null})
      * @throws EntityNotFoundException if task or tag is not found by id or does not belong to the given user
      */
     Mono<Void> assignTag(Long taskId, Long tagId, User user) throws EntityNotFoundException;
@@ -164,8 +164,8 @@ public interface TaskService {
      * Removes tag with the given id from task with the given id and belonging to the given user.
      *
      * @param taskId task id
-     * @param tagId id of tag to be removed
-     * @param user task author (must not be {@code null})
+     * @param tagId  id of tag to be removed
+     * @param user   task author (must not be {@code null})
      * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
     Mono<Void> removeTag(Long taskId, Long tagId, User user) throws EntityNotFoundException;
@@ -173,8 +173,8 @@ public interface TaskService {
     /**
      * Returns comments for task with the given id and belonging to the given user.
      *
-     * @param taskId task id
-     * @param user task author (must not be {@code null})
+     * @param taskId   task id
+     * @param user     task author (must not be {@code null})
      * @param pageable paging restriction
      * @return task comments or empty stream when task does not have any comment
      * @throws EntityNotFoundException if task is not found by id or does not belong to the given user

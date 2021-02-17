@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.Tag;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskComment;
-import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.TaskService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -29,7 +28,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/tasks")
 @RequiredArgsConstructor
-public class TaskController {
+public class TaskController extends AbstractController {
     private final TaskService taskService;
 
     @GetMapping("/unprocessed")
@@ -104,6 +103,7 @@ public class TaskController {
     public Mono<Task> updateTask(@Valid @RequestBody Task task, @PathVariable Long id, Authentication authentication) {
         task.setId(id);
         task.setUserId(getUser(authentication).getId());
+
         return taskService.updateTask(task);
     }
 
@@ -152,14 +152,8 @@ public class TaskController {
     public Mono<TaskComment> addComment(@PathVariable("taskId") Long taskId,
                                         @Valid @RequestBody TaskComment comment,
                                         Authentication authentication) {
-        comment.setId(null);
         comment.setUserId(getUser(authentication).getId());
         comment.setTaskId(taskId);
-
         return taskService.addComment(comment);
-    }
-
-    private User getUser(Authentication authentication) {
-        return (User) authentication.getPrincipal();
     }
 }
