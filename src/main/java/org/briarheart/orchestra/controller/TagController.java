@@ -42,9 +42,7 @@ public class TagController extends AbstractController {
     public Mono<ResponseEntity<Tag>> createTag(@Valid @RequestBody Tag tag,
                                                Authentication authentication,
                                                ServerHttpRequest request) {
-        tag.setId(null);
         tag.setUserId(getUser(authentication).getId());
-
         return tagService.createTag(tag).map(createdTag -> {
             URI tagLocation = UriComponentsBuilder.fromHttpRequest(request)
                     .path("/{id}")

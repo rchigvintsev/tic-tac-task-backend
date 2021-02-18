@@ -82,7 +82,7 @@ class DefaultEmailConfirmationLinkSenderTest {
                 .tokenValue(UUID.randomUUID().toString())
                 .build();
         assertThrows(IllegalArgumentException.class,
-                () -> sender.sendEmailConfirmationLink(null, token, Locale.ENGLISH),
+                () -> sender.sendEmailConfirmationLink(null, token, Locale.ENGLISH).block(),
                 "User must not be null");
     }
 

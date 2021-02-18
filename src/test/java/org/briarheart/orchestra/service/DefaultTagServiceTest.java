@@ -76,14 +76,16 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldCreateTag() {
-        long tagId = 1L;
+        long tagId = 2L;
         when(tagRepository.save(any())).thenAnswer(args -> {
             Tag t = args.getArgument(0);
-            t.setId(tagId);
+            if (t.getId() == null) {
+                t.setId(tagId);
+            }
             return Mono.just(t);
         });
 
-        Tag tag = Tag.builder().userId(1L).name("New tag").build();
+        Tag tag = Tag.builder().id(-1L).userId(1L).name("New tag").build();
         when(tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())).thenReturn(Mono.empty());
 
         Tag expectedResult = new Tag(tag);

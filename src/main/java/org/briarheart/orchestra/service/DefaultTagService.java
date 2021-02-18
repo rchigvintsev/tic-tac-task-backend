@@ -47,7 +47,11 @@ public class DefaultTagService implements TagService {
                     String message = "Tag with name \"" + tag.getName() + "\" already exists";
                     return Mono.<Tag>error(new EntityAlreadyExistsException(message));
                 })
-                .switchIfEmpty(Mono.defer(() -> tagRepository.save(tag)));
+                .switchIfEmpty(Mono.defer(() -> {
+                    Tag newTag = new Tag(tag);
+                    newTag.setId(null);
+                    return tagRepository.save(newTag);
+                }));
     }
 
     @Override

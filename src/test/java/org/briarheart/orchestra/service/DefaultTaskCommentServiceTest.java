@@ -93,7 +93,7 @@ class DefaultTaskCommentServiceTest {
     @Test
     void shouldThrowExceptionOnCommentDeleteWhenUserIsNull() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> taskCommentService.deleteComment(1L, null));
+                () -> taskCommentService.deleteComment(1L, null).block());
         assertEquals("User must not be null", exception.getMessage());
     }
 }

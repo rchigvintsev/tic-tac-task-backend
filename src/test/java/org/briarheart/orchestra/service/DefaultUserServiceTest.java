@@ -115,7 +115,7 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldThrowExceptionOnUserCreateWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> service.createUser(null, Locale.ENGLISH),
+        assertThrows(IllegalArgumentException.class, () -> service.createUser(null, Locale.ENGLISH).block(),
                 "User must not be null");
     }
 

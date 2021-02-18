@@ -27,7 +27,6 @@ public class TaskCommentController extends AbstractController {
                                            Authentication authentication) {
         comment.setId(id);
         comment.setUserId(getUser(authentication).getId());
-
         return taskCommentService.updateComment(comment);
     }
 
