@@ -8,7 +8,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -22,8 +21,7 @@ import reactor.core.publisher.Mono;
 import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
 
@@ -57,7 +55,7 @@ class TaskCommentControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authentication = createAuthentication(user);
 
-        Mockito.when(taskCommentService.updateComment(any(TaskComment.class)))
+        when(taskCommentService.updateComment(any(TaskComment.class)))
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         long commentId = 2L;
@@ -86,13 +84,14 @@ class TaskCommentControllerTest {
 
         long commentId = 2L;
 
-        Mockito.when(taskCommentService.deleteComment(commentId, user)).thenReturn(Mono.just(true).then());
+        when(taskCommentService.deleteComment(commentId, user)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(mockAuthentication(authentication)).mutateWith(csrf())
                 .delete().uri("/task-comments/" + commentId)
                 .exchange()
 
                 .expectStatus().isNoContent();
+        verify(taskCommentService, times(1)).deleteComment(commentId, user);
     }
 
     private Authentication createAuthentication(User user) {

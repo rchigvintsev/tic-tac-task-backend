@@ -48,21 +48,4 @@ public class Task {
         this.deadline = other.deadline;
         this.deadlineTimeExplicitlySet = other.deadlineTimeExplicitlySet;
     }
-
-    /**
-     * Creates copy of this task including all attributes except primary key.
-     *
-     * @return copy of this task
-     */
-    public Task copy() {
-        Task copy = new Task();
-        copy.setUserId(userId);
-        copy.setTitle(title);
-        copy.setDescription(description);
-        copy.setStatus(status);
-        copy.setDeadline(deadline);
-        copy.setDeadlineTimeExplicitlySet(deadlineTimeExplicitlySet);
-        copy.setTaskListId(taskListId);
-        return copy;
-    }
 }

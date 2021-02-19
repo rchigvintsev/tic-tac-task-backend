@@ -55,7 +55,7 @@ public interface TaskListService {
      *
      * @param id   task list id
      * @param user task list author (must not be {@code null})
-     * @throws EntityNotFoundException if task list is not found by id and author
+     * @throws EntityNotFoundException if task list is not found by id or does not belong to the given user
      */
     Mono<Void> completeTaskList(Long id, User user) throws EntityNotFoundException;
 

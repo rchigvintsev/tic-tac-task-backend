@@ -3,7 +3,6 @@ package org.briarheart.orchestra.controller;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
-import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.TaskListService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -26,7 +25,7 @@ import java.net.URI;
 @RestController
 @RequestMapping("/task-lists")
 @RequiredArgsConstructor
-public class TaskListController {
+public class TaskListController extends AbstractController {
     private final TaskListService taskListService;
 
     @GetMapping("/uncompleted")
@@ -79,9 +78,5 @@ public class TaskListController {
                                Authentication authentication,
                                Pageable pageable) {
         return taskListService.getTasks(taskListId, getUser(authentication), pageable);
-    }
-
-    private User getUser(Authentication authentication) {
-        return (User) authentication.getPrincipal();
     }
 }

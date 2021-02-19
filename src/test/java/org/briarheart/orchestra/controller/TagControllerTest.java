@@ -11,7 +11,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -27,8 +26,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
 
@@ -135,7 +133,7 @@ class TagControllerTest {
 
         long tagId = 2L;
 
-        Mockito.when(tagService.createTag(any(Tag.class))).thenAnswer(args -> {
+        when(tagService.createTag(any(Tag.class))).thenAnswer(args -> {
             Tag t = args.getArgument(0);
             t.setId(tagId);
             return Mono.just(t);
@@ -244,7 +242,7 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Mockito.when(tagService.updateTag(any(Tag.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(tagService.updateTag(any(Tag.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         long tagId = 2L;
 
@@ -271,13 +269,14 @@ class TagControllerTest {
 
         long tagId = 2L;
 
-        Mockito.when(tagService.deleteTag(tagId, user)).thenReturn(Mono.empty());
+        when(tagService.deleteTag(tagId, user)).thenReturn(Mono.empty());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .delete().uri("/tags/" + tagId)
                 .exchange()
 
                 .expectStatus().isNoContent();
+        verify(tagService, times(1)).deleteTag(tagId, user);
     }
 
     private Authentication createAuthentication(User user) {

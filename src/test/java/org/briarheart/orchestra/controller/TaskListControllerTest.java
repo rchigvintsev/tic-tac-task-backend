@@ -10,7 +10,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -28,8 +27,7 @@ import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
 
@@ -60,39 +58,39 @@ class TaskListControllerTest {
 
     @Test
     void shouldReturnAllUncompletedTaskLists() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskList taskList = TaskList.builder()
-                .id(2L)
-                .userId(user.getId())
-                .name("Test task list")
-                .build();
+        TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         when(taskListService.getUncompletedTaskLists(user)).thenReturn(Flux.just(taskList));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/task-lists/uncompleted").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/task-lists/uncompleted")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(TaskList[].class).isEqualTo(new TaskList[] {taskList});
     }
 
     @Test
     void shouldReturnTaskListById() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskList taskList = TaskList.builder().id(2L).name("Test task list").userId(user.getId()).build();
+        TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         when(taskListService.getTaskList(taskList.getId(), user)).thenReturn(Mono.just(taskList));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/task-lists/" + taskList.getId()).exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/task-lists/" + taskList.getId())
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(TaskList.class).isEqualTo(taskList);
     }
 
     @Test
     void shouldReturnNotFoundStatusCodeWhenTaskListIsNotFoundById() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Task list is not found";
@@ -103,54 +101,54 @@ class TaskListControllerTest {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setErrors(List.of(errorMessage));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/task-lists/2").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/task-lists/2")
+                .exchange()
+
                 .expectStatus().isNotFound()
                 .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
     }
 
     @Test
     void shouldCreateTaskList() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskList taskList = TaskList.builder().name("New task list").build();
-
         long taskListId = 2L;
-
-        when(taskListService.createTaskList(taskList)).thenAnswer(args -> {
+        when(taskListService.createTaskList(any(TaskList.class))).thenAnswer(args -> {
             TaskList l = args.getArgument(0);
             l.setId(taskListId);
             return Mono.just(l);
         });
 
-        TaskList responseBody = taskList.copy();
-        responseBody.setId(1L);
+        TaskList newTaskList = TaskList.builder().name("New task list").build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/task-lists")
+        TaskList expectedResult = new TaskList(newTaskList);
+        expectedResult.setId(taskListId);
+        expectedResult.setUserId(user.getId());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/task-lists")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(taskList)
+                .bodyValue(newTaskList)
                 .exchange()
 
                 .expectStatus().isCreated()
                 .expectHeader().valueEquals("Location", "/task-lists/" + taskListId)
-                .expectBody(TaskList.class).isEqualTo(responseBody);
+                .expectBody(TaskList.class).isEqualTo(expectedResult);
     }
 
     @Test
     void shouldRejectTaskListCreationWhenNameIsNull() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskList taskList = TaskList.builder().build();
+        TaskList newTaskList = TaskList.builder().build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/task-lists")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/task-lists")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(taskList)
+                .bodyValue(newTaskList)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -161,14 +159,13 @@ class TaskListControllerTest {
 
     @Test
     void shouldRejectTaskListCreationWhenNameIsBlank() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
         TaskList taskList = TaskList.builder().name(" ").build();
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf()).post()
-                .uri("/task-lists")
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/task-lists")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(taskList)
                 .exchange()
@@ -181,77 +178,72 @@ class TaskListControllerTest {
 
     @Test
     void shouldUpdateTaskList() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskList taskList = TaskList.builder()
-                .id(2L)
-                .userId(user.getId())
-                .name("Test task list")
-                .build();
-
-        TaskList updatedTaskList = taskList.copy();
-        updatedTaskList.setName("Updated test task list");
-
-        when(taskListService.getTaskList(taskList.getId(), user)).thenReturn(Mono.just(taskList));
         when(taskListService.updateTaskList(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        TaskList responseBody = updatedTaskList.copy();
-        responseBody.setId(taskList.getId());
-        responseBody.setUserId(user.getId());
+        long taskListId = 2L;
 
-        testClient.mutateWith(csrf())
-                .mutateWith(mockAuthentication(authenticationMock))
-                .put()
-                .uri("/task-lists/" + taskList.getId())
+        TaskList taskList = TaskList.builder().name("Updated test task list").build();
+
+        TaskList expectedResult = new TaskList(taskList);
+        expectedResult.setId(taskListId);
+        expectedResult.setUserId(user.getId());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .put().uri("/task-lists/" + taskListId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(taskList)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TaskList.class).isEqualTo(responseBody);
+                .expectBody(TaskList.class).isEqualTo(expectedResult);
     }
 
     @Test
     void shouldCompleteTaskList() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskListId = 2L;
-        Mockito.when(taskListService.completeTaskList(taskListId, user)).thenReturn(Mono.empty());
+        when(taskListService.completeTaskList(taskListId, user)).thenReturn(Mono.empty());
 
-        testClient.mutateWith(mockAuthentication(authenticationMock))
-                .mutateWith(csrf())
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .put().uri("/task-lists/completed/" + taskListId)
                 .exchange()
 
                 .expectStatus().isNoContent();
+        verify(taskListService, times(1)).completeTaskList(taskListId, user);
     }
 
     @Test
     void shouldDeleteTaskList() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskListId = 2L;
-        Mockito.when(taskListService.deleteTaskList(taskListId, user)).thenReturn(Mono.empty());
+        when(taskListService.deleteTaskList(taskListId, user)).thenReturn(Mono.empty());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).delete()
                 .uri("/task-lists/" + taskListId).exchange()
                 .expectStatus().isNoContent();
+        verify(taskListService, times(1)).deleteTaskList(taskListId, user);
     }
 
     @Test
     void shouldReturnTasksForTaskList() {
-        User user = User.builder().id(1L).build();
+        User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().id(2L).taskListId(3L).userId(user.getId()).title("Test task").build();
-        Mockito.when(taskListService.getTasks(task.getTaskListId(), user, PageRequest.of(0, 20)))
+        Task task = Task.builder().id(2L).userId(user.getId()).taskListId(3L).title("Test task").build();
+        when(taskListService.getTasks(task.getTaskListId(), user, PageRequest.of(0, 20)))
                 .thenReturn(Flux.just(task));
 
-        testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/task-lists/" + task.getTaskListId() + "/tasks").exchange()
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/task-lists/" + task.getTaskListId() + "/tasks")
+                .exchange()
+
                 .expectStatus().isOk()
                 .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }

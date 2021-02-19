@@ -41,7 +41,11 @@ public class DefaultTaskListService implements TaskListService {
     @Override
     public Mono<TaskList> createTaskList(TaskList taskList) {
         Assert.notNull(taskList, "Task list must not be null");
-        return Mono.defer(() -> taskListRepository.save(taskList.copy()));
+        return Mono.defer(() -> {
+            TaskList newTaskList = new TaskList(taskList);
+            newTaskList.setId(null);
+            return taskListRepository.save(newTaskList);
+        });
     }
 
     @Override
@@ -53,7 +57,6 @@ public class DefaultTaskListService implements TaskListService {
 
     @Override
     public Mono<Void> completeTaskList(Long id, User user) throws EntityNotFoundException {
-        Assert.notNull(user, "User must not be null");
         return getTaskList(id, user)
                 .zipWhen(taskList -> {
                     Flux<Task> taskFlux = taskRepository.findByTaskListIdAndUserId(id, user.getId(), 0, null);
@@ -71,7 +74,6 @@ public class DefaultTaskListService implements TaskListService {
 
     @Override
     public Mono<Void> deleteTaskList(Long id, User user) throws EntityNotFoundException {
-        Assert.notNull(user, "User must not be null");
         return getTaskList(id, user)
                 .zipWhen(taskList -> taskRepository.findByTaskListIdAndUserId(id, user.getId(), 0, null)
                         .flatMap(taskRepository::delete)

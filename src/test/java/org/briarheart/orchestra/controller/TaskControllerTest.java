@@ -28,8 +28,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
 
@@ -452,6 +451,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isNoContent();
+        verify(taskService, times(1)).completeTask(taskId, user);
     }
 
     @Test
@@ -468,6 +468,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isNoContent();
+        verify(taskService, times(1)).deleteTask(taskId, user);
     }
 
     @Test
@@ -503,6 +504,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isNoContent();
+        verify(taskService, times(1)).assignTag(taskId, tagId, user);
     }
 
     @Test
@@ -520,6 +522,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isNoContent();
+        verify(taskService, times(1)).removeTag(taskId, tagId, user);
     }
 
     @Test

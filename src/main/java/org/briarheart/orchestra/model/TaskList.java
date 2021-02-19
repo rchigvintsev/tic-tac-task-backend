@@ -23,15 +23,14 @@ public class TaskList {
     private boolean completed;
 
     /**
-     * Creates copy of this task list including all attributes except primary key.
+     * Creates copy of the given task list.
      *
-     * @return copy of this task list
+     * @param other task list to be copied (must not be {@code null})
      */
-    public TaskList copy() {
-        TaskList copy = new TaskList();
-        copy.setUserId(userId);
-        copy.setName(name);
-        copy.setCompleted(completed);
-        return copy;
+    public TaskList(TaskList other) {
+        this.id = other.id;
+        this.userId = other.userId;
+        this.name = other.name;
+        this.completed = other.completed;
     }
 }
