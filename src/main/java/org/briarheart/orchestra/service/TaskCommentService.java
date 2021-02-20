@@ -24,7 +24,7 @@ public interface TaskCommentService {
     /**
      * Deletes comment with the given id and belonging to the given user.
      *
-     * @param id comment id
+     * @param id   comment id
      * @param user comment author (must not be {@code null})
      */
     Mono<Void> deleteComment(Long id, User user) throws EntityNotFoundException;

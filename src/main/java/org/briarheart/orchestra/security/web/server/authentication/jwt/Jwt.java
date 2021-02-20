@@ -30,6 +30,21 @@ public class Jwt implements AccessToken {
     }
 
     @Override
+    public String getEmail() {
+        return (String) claims.get(JwtClaim.EMAIL.getName());
+    }
+
+    @Override
+    public String getFullName() {
+        return (String) claims.get(JwtClaim.FULL_NAME.getName());
+    }
+
+    @Override
+    public String getProfilePictureUrl() {
+        return (String) claims.get(JwtClaim.PROFILE_PICTURE_URL.getName());
+    }
+
+    @Override
     public Instant getIssuedAt() {
         return Instant.ofEpochSecond((Long) claims.get(Claims.ISSUED_AT));
     }

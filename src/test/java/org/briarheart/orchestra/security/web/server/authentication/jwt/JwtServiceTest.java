@@ -56,14 +56,13 @@ class JwtServiceTest {
     @Value("${application.security.authentication.access-token.signing-key}")
     private String accessTokenSigningKey;
 
-    private ServerAccessTokenRepository accessTokenRepositoryMock;
     private JwtService service;
 
     @BeforeEach
     void setUp() {
-        accessTokenRepositoryMock = mock(ServerAccessTokenRepository.class);
+        ServerAccessTokenRepository accessTokenRepositoryMock = mock(ServerAccessTokenRepository.class);
         when(accessTokenRepositoryMock.saveAccessToken(any(), any()))
-                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0, AccessToken.class)));
+                .thenAnswer(args -> Mono.just(args.getArgument(0, AccessToken.class)));
 
         service = new JwtService(accessTokenRepositoryMock, accessTokenSigningKey);
         service.setAccessTokenValiditySeconds(Long.MAX_VALUE / 1001);
@@ -71,43 +70,52 @@ class JwtServiceTest {
 
     @Test
     void shouldCreateAccessToken() {
-        User user = new User();
-        user.setEmail(USER_EMAIL);
+        User user = User.builder().id(1L).email(USER_EMAIL).build();
 
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
         MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
         AccessToken accessToken = service.createAccessToken(user, webExchangeMock).block();
         assertNotNull(accessToken);
-        assertEquals(USER_EMAIL, accessToken.getSubject());
+        assertEquals(Long.toString(user.getId()), accessToken.getSubject());
+    }
+
+    @Test
+    void shouldIncludeUserEmailInToken() {
+        User user = User.builder().id(1L).email(USER_EMAIL).build();
+
+        MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
+        MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
+
+        AccessToken accessToken = service.createAccessToken(user, webExchangeMock).block();
+        assertNotNull(accessToken);
+        assertEquals(USER_EMAIL, accessToken.getEmail());
     }
 
     @Test
     void shouldIncludeUserFullNameInToken() {
         final String FULL_NAME = "White Rabbit";
-        User user = new User();
-        user.setFullName(FULL_NAME);
+        User user = User.builder().id(1L).fullName(FULL_NAME).build();
 
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
         MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
         AccessToken accessToken = service.createAccessToken(user, webExchangeMock).block();
         assertNotNull(accessToken);
-        assertEquals(FULL_NAME, accessToken.getClaims().get(JwtClaim.FULL_NAME.getName()));
+        assertEquals(FULL_NAME, accessToken.getFullName());
     }
 
     @Test
-    void shouldIncludeUserImageUrlInToken() {
-        final String IMAGE_URL = "http://example.com/picture";
-        User user = new User();
-        user.setImageUrl(IMAGE_URL);
+    void shouldIncludeUserProfilePictureUrlInToken() {
+        final String PROFILE_PICTURE_URL = "http://example.com/picture";
+        User user = User.builder().id(1L).profilePictureUrl(PROFILE_PICTURE_URL).build();
 
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
         MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
 
         AccessToken accessToken = service.createAccessToken(user, webExchangeMock).block();
         assertNotNull(accessToken);
-        assertEquals(IMAGE_URL, accessToken.getClaims().get(JwtClaim.PROFILE_PICTURE_URL.getName()));
+        assertEquals(PROFILE_PICTURE_URL, accessToken.getProfilePictureUrl());
     }
 
     @Test

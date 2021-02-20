@@ -14,6 +14,12 @@ public interface AccessToken extends Serializable {
 
     String getSubject();
 
+    String getEmail();
+
+    String getFullName();
+
+    String getProfilePictureUrl();
+
     Instant getIssuedAt();
 
     Instant getExpiration();

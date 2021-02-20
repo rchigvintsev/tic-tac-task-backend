@@ -90,7 +90,7 @@ class ReactiveOidcUserLoaderManagerTest {
         verify(userRepositoryMock, times(1)).save(any());
         assertEquals(1, user.getVersion());
         assertEquals(CLAIMS.get("name"), user.getFullName());
-        assertEquals(CLAIMS.get("picture"), user.getImageUrl());
+        assertEquals(CLAIMS.get("picture"), user.getProfilePictureUrl());
     }
 
     @SuppressWarnings("UnassignedFluxMonoInstance")
@@ -101,7 +101,7 @@ class ReactiveOidcUserLoaderManagerTest {
 
         User user = new User();
         user.setFullName(CLAIMS.get("name").toString());
-        user.setImageUrl(CLAIMS.get("picture").toString());
+        user.setProfilePictureUrl(CLAIMS.get("picture").toString());
 
         when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.just(user));
         when(userRepositoryMock.save(any())).then((Answer<Mono<User>>) invoc -> Mono.just(invoc.getArgument(0)));

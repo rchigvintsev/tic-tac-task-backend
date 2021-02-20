@@ -15,8 +15,8 @@ public interface EmailConfirmationLinkSender {
     /**
      * Sends email confirmation link to the given user.
      *
-     * @param user user to which email confirmation link should be sent (must not be {@code null})
-     * @param token email confirmation token that will be used to activate user's account (must not be {@code null})
+     * @param user   user to which email confirmation link should be sent (must not be {@code null})
+     * @param token  email confirmation token that will be used to activate user's account (must not be {@code null})
      * @param locale current user's locale
      * @throws UnableToSendMessageException if error occurred while trying to send confirmation link
      */

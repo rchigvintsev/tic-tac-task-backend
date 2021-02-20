@@ -58,9 +58,10 @@ public class JwtService implements AccessTokenService {
 
         return Mono.defer(() -> {
             Claims claims = Jwts.claims();
-            claims.setSubject(user.getEmail());
+            claims.setSubject(user.getId().toString());
+            claims.put(JwtClaim.EMAIL.getName(), user.getEmail());
             claims.put(JwtClaim.FULL_NAME.getName(), user.getFullName());
-            claims.put(JwtClaim.PROFILE_PICTURE_URL.getName(), user.getImageUrl());
+            claims.put(JwtClaim.PROFILE_PICTURE_URL.getName(), user.getProfilePictureUrl());
 
             LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
             LocalDateTime expiration = now.plus(accessTokenValiditySeconds, ChronoUnit.SECONDS);

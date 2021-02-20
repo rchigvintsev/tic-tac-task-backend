@@ -1,6 +1,8 @@
 package org.briarheart.orchestra.util;
 
 /**
+ * Utility class that provides JWTs for integration tests.
+ *
  * @author Roman Chigvintsev
  */
 public class TestAccessTokens {
@@ -8,7 +10,7 @@ public class TestAccessTokens {
         //no instance
     }
 
-    public static final String JOHN_DOE = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huLmRvZUBtYWlsLmNvbSIsIm5hbWUiOiJKb2huIE"
-            + "RvZSIsImlhdCI6MTYwNjIxNjk5NCwiZXhwIjozMzE0MjIxNjk5NH0.dA0OO1kvGlrCQX6NBreEW6ZmPx5DslJrvNcYDXudCvnzMvOGZ"
-            + "Lp1OQc7N4G34QzcmeLCH5cYtM8TjV_AiuzrSA";
+    public static final String JOHN_DOE = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJqb2huLmRvZUBtYWlsLmNvbSIsIm5"
+            + "hbWUiOiJKb2huIERvZSIsImlhdCI6MTYwNjIxNjk5NCwiZXhwIjozMzE0MjIxNjk5NH0.S5KuV3QN0klawq5CAh7tDcrlW0oPaxLNlyo"
+            + "J8ScqrO3uKImdlB8Wdv0dRPIt7TAxy1mXPNJsrczUqLr4IDKVdw";
 }

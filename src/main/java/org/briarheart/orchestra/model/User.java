@@ -39,7 +39,7 @@ public class User implements UserDetails {
     @Size(max = 255)
     private String fullName;
     @Size(max = 2_000)
-    private String imageUrl;
+    private String profilePictureUrl;
     @Builder.Default
     @Transient
     private Collection<? extends GrantedAuthority> authorities = Collections.emptyList();

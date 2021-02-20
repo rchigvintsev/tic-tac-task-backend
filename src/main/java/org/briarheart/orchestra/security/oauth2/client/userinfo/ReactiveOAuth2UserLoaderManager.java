@@ -76,7 +76,7 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
         User newUser = User.builder()
                 .email(attrAccessor.getEmail())
                 .fullName(attrAccessor.getFullName())
-                .imageUrl(attrAccessor.getPicture())
+                .profilePictureUrl(attrAccessor.getPicture())
                 .build();
         return userRepository.save(newUser);
     }
@@ -89,8 +89,8 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
             needUpdate = true;
         }
 
-        if (!Objects.equals(user.getImageUrl(), attrAccessor.getPicture())) {
-            user.setImageUrl(attrAccessor.getPicture());
+        if (!Objects.equals(user.getProfilePictureUrl(), attrAccessor.getPicture())) {
+            user.setProfilePictureUrl(attrAccessor.getPicture());
             needUpdate = true;
         }
 

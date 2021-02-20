@@ -6,6 +6,7 @@ package org.briarheart.orchestra.security.web.server.authentication.jwt;
  * @author Roman Chigvintsev
  */
 public enum JwtClaim {
+    EMAIL("email"),
     ISSUED_AT("iat"),
     EXPIRATION_TIME("exp"),
     FULL_NAME("name"),
