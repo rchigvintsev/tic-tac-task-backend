@@ -24,4 +24,9 @@ public class UserController {
     public Mono<User> createUser(@Valid @RequestBody User user, Locale locale) {
         return userService.createUser(user, locale);
     }
+
+    @PutMapping("/{id}/email/confirmation/{token}")
+    public Mono<Void> confirmEmail(@PathVariable Long id, @PathVariable String token) {
+        return userService.confirmEmail(id, token);
+    }
 }

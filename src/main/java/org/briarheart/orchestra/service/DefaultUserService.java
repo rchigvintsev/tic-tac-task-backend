@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.briarheart.orchestra.data.EmailConfirmationTokenRepository;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
+import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
@@ -67,6 +68,24 @@ public class DefaultUserService implements UserService {
                     return emailConfirmationLinkSender.sendEmailConfirmationLink(savedUser, token, locale)
                             .thenReturn(savedUser);
                 });
+    }
+
+    @Override
+    public Mono<Void> confirmEmail(Long userId, String tokenValue) throws EntityNotFoundException {
+        return tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, tokenValue)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Email confirmation token \""
+                        + tokenValue + "\" is not registered for user with id " + userId)))
+                .filter(token -> !token.isExpired())
+                .switchIfEmpty(Mono.error(new EmailConfirmationTokenExpiredException("Email confirmation token \""
+                        + tokenValue + "\" is expired")))
+                .flatMap(token -> userRepository.findById(userId))
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
+                .filter(user -> !user.isEmailConfirmed())
+                .map(user -> {
+                    user.setEmailConfirmed(true);
+                    return userRepository.save(user);
+                })
+                .then();
     }
 
     private User encodePassword(User user) {
