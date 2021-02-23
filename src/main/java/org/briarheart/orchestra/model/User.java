@@ -7,11 +7,14 @@ import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author Roman Chigvintsev
@@ -42,7 +45,30 @@ public class User implements UserDetails {
     private String profilePictureUrl;
     @Builder.Default
     @Transient
-    private Collection<? extends GrantedAuthority> authorities = Collections.emptyList();
+    private Collection<? extends GrantedAuthority> authorities = Collections.emptySet();
+
+    /**
+     * Creates copy of the given user.
+     *
+     * @param user user to be copied (must not be {@code null})
+     */
+    public User(User user) {
+        Assert.notNull(user, "User must not be null");
+        this.id = user.id;
+        this.email = user.email;
+        this.emailConfirmed = user.emailConfirmed;
+        this.version = user.version;
+        this.password = user.password;
+        this.enabled = user.enabled;
+        this.fullName = user.fullName;
+        this.profilePictureUrl = user.profilePictureUrl;
+
+        if (!CollectionUtils.isEmpty(user.authorities)) {
+            this.authorities = new HashSet<>(user.authorities);
+        } else {
+            this.authorities = Collections.emptySet();
+        }
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

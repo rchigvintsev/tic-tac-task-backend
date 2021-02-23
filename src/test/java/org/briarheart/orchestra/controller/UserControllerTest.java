@@ -16,7 +16,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.Locale;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 
 /**
@@ -35,7 +37,7 @@ class UserControllerTest {
     @Test
     void shouldCreateUser() {
         User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userService.createUser(user, Locale.ENGLISH)).thenReturn(Mono.just(user));
+        when(userService.createUser(any(User.class), eq(Locale.ENGLISH))).thenReturn(Mono.just(user));
 
         testClient.mutateWith(csrf()).post()
                 .uri("/users")
@@ -44,7 +46,21 @@ class UserControllerTest {
                 .bodyValue(user)
                 .exchange()
 
-                .expectStatus().isCreated()
-                .expectBody(User.class).isEqualTo(user);
+                .expectStatus().isCreated();
+        verify(userService, times(1)).createUser(any(User.class), eq(Locale.ENGLISH));
+    }
+
+    @Test
+    void shouldConfirmEmail() {
+        long userId = 1L;
+        String token = "K1Mb2ByFcfYndPmuFijB";
+        when(userService.confirmEmail(userId, token)).thenReturn(Mono.just(true).then());
+
+        testClient.mutateWith(csrf()).put()
+                .uri("/users/" + userId + "/email/confirmation/" + token)
+                .exchange()
+
+                .expectStatus().isOk();
+        verify(userService, times(1)).confirmEmail(userId, token);
     }
 }
