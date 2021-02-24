@@ -83,6 +83,7 @@ public class DefaultUserService implements UserService {
                 .filter(user -> !user.isEmailConfirmed())
                 .map(user -> {
                     user.setEmailConfirmed(true);
+                    user.setEnabled(true);
                     return userRepository.save(user);
                 })
                 .then();

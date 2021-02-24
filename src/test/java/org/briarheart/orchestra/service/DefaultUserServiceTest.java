@@ -133,7 +133,7 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldConfirmEmail() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(false).build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(false).enabled(false).build();
         EmailConfirmationToken token = EmailConfirmationToken.builder()
                 .id(2L)
                 .userId(user.getId())
@@ -149,6 +149,7 @@ class DefaultUserServiceTest {
 
         User expectedUser = new User(user);
         expectedUser.setEmailConfirmed(true);
+        expectedUser.setEnabled(true);
         verify(userRepository, times(1)).save(expectedUser);
     }
 
