@@ -92,6 +92,7 @@ public class WebSecurityConfig {
                     .csrf().disable()
                     .authorizeExchange()
                         .pathMatchers(HttpMethod.POST, "/users").access(unauthenticated())
+                        .pathMatchers(HttpMethod.PUT, "/users/*/email/confirmation/*").access(unauthenticated())
                         .anyExchange().authenticated()
                 .and()
                     .exceptionHandling()
