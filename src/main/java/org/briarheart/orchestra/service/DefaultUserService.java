@@ -61,7 +61,7 @@ public class DefaultUserService implements UserService {
                 .map(this::encodePassword)
                 .flatMap(userRepository::save)
                 .map(this::clearPassword)
-                .zipWhen(u -> this.createEmailConfirmationToken(email))
+                .zipWhen(this::createEmailConfirmationToken)
                 .flatMap(userAndToken -> {
                     EmailConfirmationToken token = userAndToken.getT2();
                     User savedUser = userAndToken.getT1();
@@ -99,11 +99,12 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-    private Mono<EmailConfirmationToken> createEmailConfirmationToken(String email) {
+    private Mono<EmailConfirmationToken> createEmailConfirmationToken(User user) {
         LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC);
         LocalDateTime expiresAt = createdAt.plus(emailConfirmationTokenExpirationTimeout);
         EmailConfirmationToken token = EmailConfirmationToken.builder()
-                .email(email)
+                .userId(user.getId())
+                .email(user.getEmail())
                 .tokenValue(UUID.randomUUID().toString())
                 .createdAt(createdAt)
                 .expiresAt(expiresAt)
