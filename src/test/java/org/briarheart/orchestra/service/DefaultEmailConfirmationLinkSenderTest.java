@@ -61,12 +61,13 @@ class DefaultEmailConfirmationLinkSenderTest {
 
     @Test
     void shouldIncludeConfirmationLinkIntoMessageText() {
-        User user = User.builder().email("alice@mail.com").fullName("Alice").build();
+        User user = User.builder().id(1L).email("alice@mail.com").fullName("Alice").build();
         EmailConfirmationToken token = EmailConfirmationToken.builder()
                 .email(user.getEmail())
                 .tokenValue(UUID.randomUUID().toString())
                 .build();
-        String confirmationLink = APPLICATION_URL + "?token=" + token.getTokenValue();
+        String confirmationLink = APPLICATION_URL + "/user/email/confirmation?userId=" + user.getId()
+                + "&token=" + token.getTokenValue();
 
         sender.sendEmailConfirmationLink(user, token, Locale.ENGLISH).block();
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);

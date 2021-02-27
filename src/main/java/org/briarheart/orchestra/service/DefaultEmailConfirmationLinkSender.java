@@ -37,6 +37,8 @@ public class DefaultEmailConfirmationLinkSender implements EmailConfirmationLink
 
         return Mono.fromRunnable(() -> {
             String confirmationLink = UriComponentsBuilder.fromHttpUrl(applicationInfo.getUrl())
+                    .path("/user/email/confirmation")
+                    .queryParam("userId", user.getId())
                     .queryParam("token", token.getTokenValue())
                     .build()
                     .toUriString();
