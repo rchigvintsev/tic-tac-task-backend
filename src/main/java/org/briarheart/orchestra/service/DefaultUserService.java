@@ -81,9 +81,10 @@ public class DefaultUserService implements UserService {
                 .flatMap(token -> userRepository.findById(userId))
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
                 .filter(user -> !user.isEmailConfirmed())
-                .map(user -> {
+                .flatMap(user -> {
                     user.setEmailConfirmed(true);
                     user.setEnabled(true);
+                    user.setVersion(user.getVersion() + 1);
                     return userRepository.save(user);
                 })
                 .then();

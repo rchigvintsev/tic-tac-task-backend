@@ -13,7 +13,7 @@ class JwtTest {
     @Test
     void shouldReturnIssuedAtClaim() {
         final long IAT = 1570969232L;
-        Jwt token = new Jwt.Builder(MockJwts.DEFAULT_ACCESS_TOKEN_VALUE)
+        Jwt token = new Jwt.Builder(TestJwts.DEFAULT_ACCESS_TOKEN_VALUE)
                 .claim(JwtClaim.ISSUED_AT, IAT)
                 .build();
         assertEquals(Instant.ofEpochSecond(IAT), token.getIssuedAt());
@@ -22,7 +22,7 @@ class JwtTest {
     @Test
     void shouldReturnExpirationClaim() {
         final long EXP = 9214159449945032L;
-        Jwt token = new Jwt.Builder(MockJwts.DEFAULT_ACCESS_TOKEN_VALUE)
+        Jwt token = new Jwt.Builder(TestJwts.DEFAULT_ACCESS_TOKEN_VALUE)
                 .claim(JwtClaim.EXPIRATION_TIME, EXP)
                 .build();
         assertEquals(Instant.ofEpochSecond(EXP), token.getExpiration());

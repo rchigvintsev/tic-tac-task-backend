@@ -1,8 +1,10 @@
 package org.briarheart.orchestra.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.util.TestAccessTokens;
+import org.briarheart.orchestra.util.TestUsers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -31,9 +33,11 @@ import static org.mockito.Mockito.mock;
 class UserControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
-
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private UserRepository userRepository;
+
 
     @LocalServerPort
     private int port;
@@ -46,23 +50,38 @@ class UserControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        ResponseEntity<Void> response = restTemplate.exchange("http://localhost:{port}/users",
-                HttpMethod.POST, new HttpEntity<>(requestBody, headers), Void.class, port);
+        ResponseEntity<User> response = restTemplate.exchange("http://localhost:{port}/users",
+                HttpMethod.POST, new HttpEntity<>(requestBody, headers), User.class, port);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
 
     @Test
     void shouldDenyAccessToUserCreationServiceWhenCurrentUserIsAuthenticated() throws Exception {
-        User newUser = User.builder().email("john.doe@mail.com").fullName("John Doe").password("secret").build();
-        String requestBody = objectMapper.writeValueAsString(newUser);
+        String requestBody = objectMapper.writeValueAsString(TestUsers.JOHN_DOE);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.COOKIE, "access_token=" + TestAccessTokens.JOHN_DOE);
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        ResponseEntity<Void> response = restTemplate.exchange("http://localhost:{port}/users",
-                HttpMethod.POST, new HttpEntity<>(requestBody, headers), Void.class, port);
+        ResponseEntity<String> response = restTemplate.exchange("http://localhost:{port}/users",
+                HttpMethod.POST, new HttpEntity<>(requestBody, headers), String.class, port);
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+
+    @Test
+    void shouldConfirmUserEmail() {
+        long userId = TestUsers.JANE_DOE.getId();
+        String token = "4b1f7955-a406-4d36-8cbe-d6c61f39e27d";
+
+        String url = "http://localhost:{port}/users/{userId}/email/confirmation/{token}";
+        ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.PUT, null, Void.class, port, userId,
+                token);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        User user = userRepository.findById(userId).block();
+        assertNotNull(user);
+        assertTrue(user.isEmailConfirmed());
+        assertTrue(user.isEnabled());
     }
 
     public static class TestJavaMailSenderConfiguration {

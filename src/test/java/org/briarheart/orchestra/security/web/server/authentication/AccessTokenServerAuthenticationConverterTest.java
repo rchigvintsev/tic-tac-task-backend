@@ -2,7 +2,7 @@ package org.briarheart.orchestra.security.web.server.authentication;
 
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessToken;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.ServerAccessTokenRepository;
-import org.briarheart.orchestra.security.web.server.authentication.jwt.MockJwts;
+import org.briarheart.orchestra.security.web.server.authentication.jwt.TestJwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -31,18 +31,18 @@ class AccessTokenServerAuthenticationConverterTest {
     @Test
     void shouldConvertConsideringAuthorizationHeaderFirst() {
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + MockJwts.DEFAULT_ACCESS_TOKEN_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + TestJwts.DEFAULT_ACCESS_TOKEN_VALUE)
                 .build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Authentication authentication = converter.convert(serverWebExchangeMock).block();
         assertTrue(authentication instanceof AccessTokenAuthentication);
-        assertEquals(MockJwts.DEFAULT_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
+        assertEquals(TestJwts.DEFAULT_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
     }
 
     @SuppressWarnings("UnassignedFluxMonoInstance")
     @Test
     void shouldConvertUsingServerAccessTokenRepository() {
-        AccessToken accessTokenMock = MockJwts.createMock();
+        AccessToken accessTokenMock = TestJwts.create();
         doReturn(Mono.just(accessTokenMock)).when(accessTokenRepositoryMock).loadAccessToken(any());
 
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
@@ -50,7 +50,7 @@ class AccessTokenServerAuthenticationConverterTest {
 
         Authentication authentication = converter.convert(serverWebExchangeMock).block();
         assertTrue(authentication instanceof AccessTokenAuthentication);
-        assertEquals(MockJwts.DEFAULT_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
+        assertEquals(TestJwts.DEFAULT_ACCESS_TOKEN_VALUE, ((AccessTokenAuthentication) authentication).getTokenValue());
     }
 
     @Test
@@ -66,7 +66,7 @@ class AccessTokenServerAuthenticationConverterTest {
     void shouldReturnNullWhenAuthorizationHeaderValueDoesNotStartWithBearer() {
         when(accessTokenRepositoryMock.loadAccessToken(any())).thenReturn(Mono.empty());
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/")
-                .header(HttpHeaders.AUTHORIZATION, MockJwts.DEFAULT_ACCESS_TOKEN_VALUE)
+                .header(HttpHeaders.AUTHORIZATION, TestJwts.DEFAULT_ACCESS_TOKEN_VALUE)
                 .build();
         MockServerWebExchange serverWebExchangeMock = MockServerWebExchange.from(requestMock);
         Authentication authentication = converter.convert(serverWebExchangeMock).block();

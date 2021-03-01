@@ -150,6 +150,7 @@ class DefaultUserServiceTest {
         User expectedUser = new User(user);
         expectedUser.setEmailConfirmed(true);
         expectedUser.setEnabled(true);
+        expectedUser.setVersion(1L);
         verify(userRepository, times(1)).save(expectedUser);
     }
 
