@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -47,19 +48,16 @@ public class DefaultUserService implements UserService {
         String email = user.getEmail();
         return userRepository.findByEmail(email)
                 .flatMap(u -> {
-                    String errorMessage = messages.getMessage("user.registration.user-already-registered",
-                            new Object[]{email}, locale);
-                    return Mono.<User>error(new EntityAlreadyExistsException(errorMessage));
+                    if (u.isEmailConfirmed()) {
+                        String errorMessage = messages.getMessage("user.registration.user-already-registered",
+                                new Object[]{email}, locale);
+                        return Mono.error(new EntityAlreadyExistsException(errorMessage));
+                    }
+                    u.setFullName(user.getFullName());
+                    u.setPassword(encodePassword(user.getPassword()));
+                    return userRepository.save(u);
                 })
-                .switchIfEmpty(Mono.fromCallable(() -> User.builder()
-                        .email(email)
-                        .emailConfirmed(false)
-                        .password(user.getPassword())
-                        .fullName(user.getFullName())
-                        .enabled(false)
-                        .build()))
-                .map(this::encodePassword)
-                .flatMap(userRepository::save)
+                .switchIfEmpty(Mono.fromCallable(() -> createNewUser(user)).flatMap(userRepository::save))
                 .map(this::clearPassword)
                 .zipWhen(this::createEmailConfirmationToken)
                 .flatMap(userAndToken -> {
@@ -90,9 +88,19 @@ public class DefaultUserService implements UserService {
                 .then();
     }
 
-    private User encodePassword(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return user;
+    private User createNewUser(User user) {
+        User newUser = new User(user);
+        newUser.setId(null);
+        newUser.setEmailConfirmed(false);
+        newUser.setVersion(0L);
+        newUser.setPassword(encodePassword(user.getPassword()));
+        newUser.setEnabled(false);
+        newUser.setAuthorities(Collections.emptySet());
+        return newUser;
+    }
+
+    private String encodePassword(String rawPassword) {
+        return passwordEncoder.encode(rawPassword);
     }
 
     private User clearPassword(User user) {

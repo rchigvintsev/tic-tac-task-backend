@@ -8,6 +8,7 @@ import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,7 +36,7 @@ class DefaultUserServiceTest {
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         tokenRepository = mock(EmailConfirmationTokenRepository.class);
         when(tokenRepository.save(any(EmailConfirmationToken.class)))
@@ -124,11 +125,59 @@ class DefaultUserServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionOnUserCreateWhenUserAlreadyExists() {
-        User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
+    void shouldThrowExceptionOnUserCreateWhenUserWithConfirmedEmailAlreadyExists() {
+        User user = User.builder()
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .password("secret")
+                .fullName("Alice")
+                .enabled(true)
+                .build();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
         assertThrows(EntityAlreadyExistsException.class, () -> service.createUser(user, Locale.ENGLISH).block(),
                 "User with email \"" + user.getEmail() + "\" is already registered");
+    }
+
+    @Test
+    void shouldUpdateFullNameOnUserCreateWhenUserWithUnconfirmedEmailAlreadyExists() {
+        User user = User.builder()
+                .email("alice@mail.com")
+                .emailConfirmed(false)
+                .password("secret")
+                .fullName("Alice")
+                .enabled(false)
+                .build();
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
+
+        User newUser = new User(user);
+        newUser.setFullName("Alice Wonderland");
+
+        service.createUser(newUser, Locale.ENGLISH).block();
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository, times(1)).save(userCaptor.capture());
+        assertEquals(newUser.getFullName(), userCaptor.getValue().getFullName());
+    }
+
+    @Test
+    void shouldUpdatePasswordOnUserCreateWhenUserWithUnconfirmedEmailAlreadyExists() {
+        User user = User.builder()
+                .email("alice@mail.com")
+                .emailConfirmed(false)
+                .password("secret")
+                .fullName("Alice")
+                .enabled(false)
+                .build();
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
+
+        User newUser = new User(user);
+        newUser.setPassword("qwerty");
+
+        service.createUser(newUser, Locale.ENGLISH).block();
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository, times(1)).save(userCaptor.capture());
+        assertEquals(newUser.getPassword(), userCaptor.getValue().getPassword());
     }
 
     @Test
