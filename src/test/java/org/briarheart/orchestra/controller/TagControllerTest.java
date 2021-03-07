@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
+import org.briarheart.orchestra.controller.error.ErrorResponse;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;

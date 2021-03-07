@@ -1,4 +1,4 @@
-package org.briarheart.orchestra.controller;
+package org.briarheart.orchestra.controller.error;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
