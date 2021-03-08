@@ -95,19 +95,16 @@ class TaskListControllerTest {
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Task list is not found";
-
         when(taskListService.getTaskList(anyLong(), any(User.class)))
                 .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
-
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setErrors(List.of(errorMessage));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .get().uri("/task-lists/2")
                 .exchange()
 
                 .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
+                .expectBody()
+                .jsonPath("$.message").isEqualTo(errorMessage);
     }
 
     @Test
@@ -155,7 +152,7 @@ class TaskListControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.name").isEqualTo("Value must not be blank");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -174,7 +171,7 @@ class TaskListControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.name").isEqualTo("Value must not be blank");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value must not be blank");
     }
 
     @Test

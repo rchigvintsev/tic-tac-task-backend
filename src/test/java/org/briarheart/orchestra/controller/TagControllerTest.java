@@ -94,7 +94,6 @@ class TagControllerTest {
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Tag is not found";
-
         when(tagService.getTag(anyLong(), eq(user))).thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
 
         ErrorResponse errorResponse = new ErrorResponse();
@@ -105,7 +104,8 @@ class TagControllerTest {
                 .exchange()
 
                 .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
+                .expectBody()
+                .jsonPath("$.message").isEqualTo(errorMessage);
     }
 
     @Test
@@ -173,7 +173,7 @@ class TagControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.name").isEqualTo("Value must not be blank");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -192,7 +192,7 @@ class TagControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.name").isEqualTo("Value must not be blank");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -211,7 +211,7 @@ class TagControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.name").isEqualTo("Value length must not be greater than 50");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value length must not be greater than 50");
     }
 
     @Test
@@ -223,9 +223,6 @@ class TagControllerTest {
         when(tagService.createTag(any(Tag.class)))
                 .thenReturn(Mono.error(new EntityAlreadyExistsException(errorMessage)));
 
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setErrors(List.of(errorMessage));
-
         Tag tag = Tag.builder().name("New tag").build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
@@ -235,7 +232,8 @@ class TagControllerTest {
                 .exchange()
 
                 .expectStatus().isBadRequest()
-                .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
+                .expectBody()
+                .jsonPath("$.message").isEqualTo(errorMessage);
     }
 
     @Test

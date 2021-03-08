@@ -269,17 +269,14 @@ class TaskControllerTest {
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Task is not found";
-
         when(taskService.getTask(anyLong(), any(User.class)))
                 .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
-
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setErrors(List.of(errorMessage));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
                 .uri("/tasks/2").exchange()
                 .expectStatus().isNotFound()
-                .expectBody(ErrorResponse.class).isEqualTo(errorResponse);
+                .expectBody()
+                .jsonPath("$.message").isEqualTo(errorMessage);
     }
 
     @Test
@@ -328,7 +325,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.title").isEqualTo("Value must not be blank");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -347,7 +344,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.title").isEqualTo("Value must not be blank");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -366,7 +363,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.title").isEqualTo("Value length must not be greater than 255");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value length must not be greater than 255");
     }
 
     @Test
@@ -388,7 +385,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.description").isEqualTo("Value length must not be greater than 10000");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value length must not be greater than 10000");
     }
 
     @Test
@@ -410,7 +407,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.deadline").isEqualTo("Value must not be in past");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value must not be in past");
     }
 
     @Test
@@ -599,7 +596,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -618,7 +615,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value must not be blank");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value must not be blank");
     }
 
     @Test
@@ -637,7 +634,7 @@ class TaskControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors.commentText").isEqualTo("Value length must not be greater than 10000");
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Value length must not be greater than 10000");
     }
 
     private Authentication createAuthentication(User user) {
