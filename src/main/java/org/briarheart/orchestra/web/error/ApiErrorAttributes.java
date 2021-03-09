@@ -9,7 +9,10 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.reactive.function.server.ServerRequest;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of {@link org.springframework.boot.web.reactive.error.ErrorAttributes} for error responses from
@@ -33,12 +36,14 @@ public class ApiErrorAttributes extends DefaultErrorAttributes {
      */
     public ApiErrorAttributes(boolean includeException, HttpStatusExceptionTypeMapper httpStatusExceptionTypeMapper) {
         super(includeException);
-        Assert.notNull(httpStatusExceptionTypeMapper, "Exception type to HTTP status mapper must not be null.");
+        Assert.notNull(httpStatusExceptionTypeMapper, "Exception type to HTTP status mapper must not be null");
         this.httpStatusExceptionMapper = httpStatusExceptionTypeMapper;
     }
 
     @Override
     public Map<String, Object> getErrorAttributes(ServerRequest request, boolean includeStackTrace) {
+        Assert.notNull(request, "Server request must not be null");
+
         Map<String, Object> errorAttributes = new LinkedHashMap<>(super.getErrorAttributes(request, includeStackTrace));
         Throwable error = getError(request);
         HttpStatus httpStatus = httpStatusExceptionMapper.getHttpStatus(error.getClass());
