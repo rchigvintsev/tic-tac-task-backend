@@ -54,9 +54,11 @@ public class DefaultEmailConfirmationLinkSender implements EmailConfirmationLink
             message.setText(text);
             mailSender.send(message);
         }).onErrorMap(MailException.class, e -> {
-            String errorMessage = messages.getMessage("user.registration.email-confirmation.link.unable-to-send",
+            String message = messages.getMessage("user.registration.email-confirmation.link.unable-to-send",
+                    new Object[]{user.getEmail()}, Locale.ENGLISH);
+            String localizedMessage = messages.getMessage("user.registration.email-confirmation.link.unable-to-send",
                     new Object[]{user.getEmail()}, locale);
-            return new UnableToSendMessageException(errorMessage, e);
+            return new UnableToSendMessageException(message, localizedMessage, e);
         }).then();
     }
 }

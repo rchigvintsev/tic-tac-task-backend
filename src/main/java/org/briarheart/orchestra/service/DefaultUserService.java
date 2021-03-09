@@ -49,9 +49,11 @@ public class DefaultUserService implements UserService {
         return userRepository.findByEmail(email)
                 .flatMap(u -> {
                     if (u.isEmailConfirmed()) {
-                        String errorMessage = messages.getMessage("user.registration.user-already-registered",
+                        String message = messages.getMessage("user.registration.user-already-registered",
+                                new Object[]{email}, Locale.ENGLISH);
+                        String localizedMessage = messages.getMessage("user.registration.user-already-registered",
                                 new Object[]{email}, locale);
-                        return Mono.error(new EntityAlreadyExistsException(errorMessage));
+                        return Mono.error(new EntityAlreadyExistsException(message, localizedMessage));
                     }
                     u.setFullName(user.getFullName());
                     u.setPassword(encodePassword(user.getPassword()));
