@@ -1,30 +1,34 @@
 package org.briarheart.orchestra.model;
 
-import lombok.*;
-import org.springframework.data.annotation.Id;
-
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Token that is generated on user registration to confirm user's email address.
  *
  * @author Roman Chigvintsev
  */
-@Data
 @NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
-public class EmailConfirmationToken {
-    @Id
-    private Long id;
-    private Long userId;
-    private String email;
-    private String tokenValue;
-    private LocalDateTime createdAt;
-    private LocalDateTime expiresAt;
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class EmailConfirmationToken extends AbstractToken {
+    private EmailConfirmationToken(EmailConfirmationTokenBuilder builder) {
+        super(builder);
+    }
 
-    public boolean isExpired() {
-        return !expiresAt.isAfter(LocalDateTime.now(ZoneOffset.UTC));
+    public static EmailConfirmationTokenBuilder builder() {
+        return new EmailConfirmationTokenBuilder();
+    }
+
+    public static class EmailConfirmationTokenBuilder extends AbstractTokenBuilder<EmailConfirmationToken> {
+        private EmailConfirmationTokenBuilder() {
+            //no instance
+        }
+
+        @Override
+        public EmailConfirmationToken build() {
+            return new EmailConfirmationToken(this);
+        }
     }
 }
