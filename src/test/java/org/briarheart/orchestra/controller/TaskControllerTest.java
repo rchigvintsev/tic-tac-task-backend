@@ -1,7 +1,6 @@
 package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
-import org.briarheart.orchestra.controller.error.ErrorResponse;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.*;
 import org.briarheart.orchestra.service.TaskService;
@@ -25,7 +24,6 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.*;

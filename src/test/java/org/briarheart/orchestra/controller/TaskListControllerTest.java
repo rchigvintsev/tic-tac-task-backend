@@ -1,7 +1,6 @@
 package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
-import org.briarheart.orchestra.controller.error.ErrorResponse;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Task;
 import org.briarheart.orchestra.model.TaskList;
@@ -23,7 +22,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.any;

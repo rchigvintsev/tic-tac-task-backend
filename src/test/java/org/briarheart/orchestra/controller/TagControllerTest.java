@@ -1,7 +1,6 @@
 package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
-import org.briarheart.orchestra.controller.error.ErrorResponse;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.Tag;
@@ -23,7 +22,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -95,9 +93,6 @@ class TagControllerTest {
 
         String errorMessage = "Tag is not found";
         when(tagService.getTag(anyLong(), eq(user))).thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
-
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setErrors(List.of(errorMessage));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .get().uri("/tags/2")
