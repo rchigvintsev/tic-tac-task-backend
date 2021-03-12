@@ -15,7 +15,8 @@ import java.util.Locale;
  */
 public interface UserService {
     /**
-     * Creates new user. Newly created user will be disabled until his/her email is confirmed.
+     * Creates new user along with sending email confirmation link to user's email address. Newly created user will be
+     * disabled until his/her email is confirmed.
      *
      * @param user   user to be created (must not be {@code null})
      * @param locale current user's locale
