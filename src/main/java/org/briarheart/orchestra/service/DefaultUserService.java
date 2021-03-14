@@ -3,7 +3,6 @@ package org.briarheart.orchestra.service;
 import io.jsonwebtoken.lang.Assert;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.briarheart.orchestra.data.EmailConfirmationTokenRepository;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.UserRepository;
@@ -13,6 +12,7 @@ import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -33,8 +33,7 @@ public class DefaultUserService implements UserService {
     private static final Duration DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT = Duration.of(24, ChronoUnit.HOURS);
 
     private final UserRepository userRepository;
-    private final EmailConfirmationTokenRepository tokenRepository;
-    private final EmailConfirmationLinkSender emailConfirmationLinkSender;
+    private final EmailConfirmationService emailConfirmationService;
     private final PasswordEncoder passwordEncoder;
     private final MessageSourceAccessor messages;
 
@@ -47,50 +46,35 @@ public class DefaultUserService implements UserService {
 
         String email = user.getEmail();
         return userRepository.findByEmail(email)
+                .flatMap(u -> ensureEmailNotConfirmed(u, locale))
                 .flatMap(u -> {
-                    if (u.isEmailConfirmed()) {
-                        String message = messages.getMessage("user.registration.user-already-registered",
-                                new Object[]{email}, Locale.ENGLISH);
-                        String localizedMessage = messages.getMessage("user.registration.user-already-registered",
-                                new Object[]{email}, locale);
-                        return Mono.error(new EntityAlreadyExistsException(message, localizedMessage));
-                    }
                     u.setFullName(user.getFullName());
                     u.setPassword(encodePassword(user.getPassword()));
                     return userRepository.save(u);
                 })
-                .switchIfEmpty(Mono.fromCallable(() -> createNewUser(user)).flatMap(userRepository::save))
+                .switchIfEmpty(Mono.defer(() -> createNewUser(user)))
                 .map(this::clearPassword)
-                .zipWhen(this::createEmailConfirmationToken)
-                .flatMap(userAndToken -> {
-                    EmailConfirmationToken token = userAndToken.getT2();
-                    User savedUser = userAndToken.getT1();
-                    return emailConfirmationLinkSender.sendEmailConfirmationLink(savedUser, token, locale)
-                            .thenReturn(savedUser);
-                });
+                .zipWhen(u -> emailConfirmationService.sendEmailConfirmationLink(u, locale))
+                .map(Tuple2::getT1);
     }
 
-    @Override
-    public Mono<Void> confirmEmail(Long userId, String tokenValue) throws EntityNotFoundException {
-        return tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, tokenValue)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Email confirmation token \""
-                        + tokenValue + "\" is not registered for user with id " + userId)))
-                .filter(token -> !token.isExpired())
-                .switchIfEmpty(Mono.error(new EmailConfirmationTokenExpiredException("Email confirmation token \""
-                        + tokenValue + "\" is expired")))
-                .flatMap(token -> userRepository.findById(userId))
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
-                .filter(user -> !user.isEmailConfirmed())
-                .flatMap(user -> {
-                    user.setEmailConfirmed(true);
-                    user.setEnabled(true);
-                    user.setVersion(user.getVersion() + 1);
-                    return userRepository.save(user);
-                })
-                .then();
+    private Mono<User> ensureEmailNotConfirmed(User user, Locale locale) {
+        if (user.isEmailConfirmed()) {
+            String message = messages.getMessage("user.registration.user-already-registered",
+                    new Object[]{user.getEmail()}, Locale.ENGLISH);
+            String localizedMessage;
+            if (locale == Locale.ENGLISH) {
+                localizedMessage = message;
+            } else {
+                localizedMessage = messages.getMessage("user.registration.user-already-registered",
+                        new Object[]{user.getEmail()}, locale);
+            }
+            return Mono.error(new EntityAlreadyExistsException(message, localizedMessage));
+        }
+        return Mono.just(user);
     }
 
-    private User createNewUser(User user) {
+    private Mono<User> createNewUser(User user) {
         User newUser = new User(user);
         newUser.setId(null);
         newUser.setEmailConfirmed(false);
@@ -98,7 +82,7 @@ public class DefaultUserService implements UserService {
         newUser.setPassword(encodePassword(user.getPassword()));
         newUser.setEnabled(false);
         newUser.setAuthorities(Collections.emptySet());
-        return newUser;
+        return userRepository.save(newUser);
     }
 
     private String encodePassword(String rawPassword) {

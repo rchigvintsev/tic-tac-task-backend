@@ -1,8 +1,6 @@
 package org.briarheart.orchestra.service;
 
-import org.briarheart.orchestra.data.EmailConfirmationTokenRepository;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
-import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
@@ -29,8 +27,7 @@ import static org.mockito.Mockito.*;
 class DefaultUserServiceTest {
     private DefaultUserService service;
     private UserRepository userRepository;
-    private EmailConfirmationTokenRepository tokenRepository;
-    private EmailConfirmationLinkSender emailConfirmationLinkSender;
+    private EmailConfirmationService emailConfirmationService;
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
@@ -38,14 +35,20 @@ class DefaultUserServiceTest {
         userRepository = mock(UserRepository.class);
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
-        tokenRepository = mock(EmailConfirmationTokenRepository.class);
-        when(tokenRepository.save(any(EmailConfirmationToken.class)))
-                .thenAnswer(args -> Mono.just(args.getArgument(0)));
-
-        emailConfirmationLinkSender = mock(EmailConfirmationLinkSender.class);
-        when(emailConfirmationLinkSender
-                .sendEmailConfirmationLink(any(User.class), any(EmailConfirmationToken.class), eq(Locale.ENGLISH)))
-                .thenReturn(Mono.just(true).then());
+        emailConfirmationService = mock(EmailConfirmationService.class);
+        when(emailConfirmationService.sendEmailConfirmationLink(any(User.class), eq(Locale.ENGLISH)))
+                .thenAnswer(args -> {
+                    User user = args.getArgument(0);
+                    EmailConfirmationToken emailConfirmationToken = EmailConfirmationToken.builder()
+                            .id(1L)
+                            .userId(user.getId())
+                            .email(user.getEmail())
+                            .tokenValue("K1Mb2ByFcfYndPmuFijB")
+                            .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                            .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(24, ChronoUnit.HOURS))
+                            .build();
+                    return Mono.just(emailConfirmationToken);
+                });
 
         passwordEncoder = mock(PasswordEncoder.class);
         when(passwordEncoder.encode(anyString())).thenAnswer(args -> args.getArgument(0));
@@ -54,8 +57,7 @@ class DefaultUserServiceTest {
         messageSource.setBasename("messages");
         MessageSourceAccessor messages = new MessageSourceAccessor(messageSource);
 
-        service = new DefaultUserService(userRepository, tokenRepository, emailConfirmationLinkSender, passwordEncoder,
-                messages);
+        service = new DefaultUserService(userRepository, emailConfirmationService, passwordEncoder, messages);
     }
 
     @Test
@@ -102,20 +104,11 @@ class DefaultUserServiceTest {
     }
 
     @Test
-    void shouldCreateEmailConfirmationTokenOnUserCreate() {
-        User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
-        service.createUser(newUser, Locale.ENGLISH).block();
-        verify(tokenRepository, times(1)).save(any(EmailConfirmationToken.class));
-    }
-
-    @Test
     void shouldSendEmailConfirmationLinkToUserOnUserCreate() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
         when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
         service.createUser(newUser, Locale.ENGLISH).block();
-        verify(emailConfirmationLinkSender, times(1))
-                .sendEmailConfirmationLink(any(User.class), any(EmailConfirmationToken.class), eq(Locale.ENGLISH));
+        verify(emailConfirmationService, times(1)).sendEmailConfirmationLink(any(User.class), eq(Locale.ENGLISH));
     }
 
     @Test
@@ -178,88 +171,5 @@ class DefaultUserServiceTest {
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository, times(1)).save(userCaptor.capture());
         assertEquals(newUser.getPassword(), userCaptor.getValue().getPassword());
-    }
-
-    @Test
-    void shouldConfirmEmail() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(false).enabled(false).build();
-        EmailConfirmationToken token = EmailConfirmationToken.builder()
-                .id(2L)
-                .userId(user.getId())
-                .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
-                .build();
-
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(user.getId(), token.getTokenValue()))
-                .thenReturn(Mono.just(token));
-        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
-
-        service.confirmEmail(user.getId(), token.getTokenValue()).block();
-
-        User expectedUser = new User(user);
-        expectedUser.setEmailConfirmed(true);
-        expectedUser.setEnabled(true);
-        expectedUser.setVersion(1L);
-        verify(userRepository, times(1)).save(expectedUser);
-    }
-
-    @Test
-    void shouldThrowExceptionOnEmailConfirmWhenTokenIsNotFound() {
-        long userId = 1L;
-        String tokenValue = "K1Mb2ByFcfYndPmuFijB";
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, tokenValue))
-                .thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> service.confirmEmail(userId, tokenValue).block(),
-                "Email confirmation token \"" + tokenValue + "\" is not registered for user with id " + userId);
-    }
-
-    @Test
-    void shouldThrowExceptionOnEmailConfirmWhenTokenIsExpired() {
-        long userId = 1L;
-        EmailConfirmationToken token = EmailConfirmationToken.builder()
-                .id(2L)
-                .userId(userId)
-                .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).minus(1, ChronoUnit.HOURS))
-                .build();
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, token.getTokenValue()))
-                .thenReturn(Mono.just(token));
-        assertThrows(EmailConfirmationTokenExpiredException.class,
-                () -> service.confirmEmail(userId, token.getTokenValue()).block(),
-                "Email confirmation token \"" + token.getTokenValue() + "\" is expired");
-    }
-
-    @Test
-    void shouldThrowExceptionOnEmailConfirmWhenUserIsNotFound() {
-        long userId = 1L;
-        EmailConfirmationToken token = EmailConfirmationToken.builder()
-                .id(2L)
-                .userId(userId)
-                .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
-                .build();
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, token.getTokenValue()))
-                .thenReturn(Mono.just(token));
-        when(userRepository.findById(userId)).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> service.confirmEmail(userId, token.getTokenValue()).block(),
-                "User with id " + userId + " is not found");
-    }
-
-    @Test
-    void shouldDoNothingOnEmailConfirmWhenEmailIsAlreadyConfirmed() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
-        EmailConfirmationToken token = EmailConfirmationToken.builder()
-                .id(2L)
-                .userId(user.getId())
-                .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
-                .build();
-
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(user.getId(), token.getTokenValue()))
-                .thenReturn(Mono.just(token));
-        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
-
-        service.confirmEmail(user.getId(), token.getTokenValue()).block();
-        verify(userRepository, never()).save(any(User.class));
     }
 }

@@ -2,6 +2,7 @@ package org.briarheart.orchestra.controller;
 
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.model.User;
+import org.briarheart.orchestra.service.EmailConfirmationService;
 import org.briarheart.orchestra.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,8 @@ class UserControllerTest {
 
     @MockBean
     private UserService userService;
+    @MockBean
+    private EmailConfirmationService emailConfirmationService;
 
     @Test
     void shouldCreateUser() {
@@ -54,13 +57,13 @@ class UserControllerTest {
     void shouldConfirmEmail() {
         long userId = 1L;
         String token = "K1Mb2ByFcfYndPmuFijB";
-        when(userService.confirmEmail(userId, token)).thenReturn(Mono.just(true).then());
+        when(emailConfirmationService.confirmEmail(userId, token)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf()).put()
                 .uri("/users/" + userId + "/email/confirmation/" + token)
                 .exchange()
 
                 .expectStatus().isOk();
-        verify(userService, times(1)).confirmEmail(userId, token);
+        verify(emailConfirmationService, times(1)).confirmEmail(userId, token);
     }
 }
