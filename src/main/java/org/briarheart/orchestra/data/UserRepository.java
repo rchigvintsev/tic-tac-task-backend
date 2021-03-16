@@ -11,4 +11,7 @@ import reactor.core.publisher.Mono;
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
     @Query("SELECT * FROM users WHERE email = :email")
     Mono<User> findByEmail(String email);
+
+    @Query("SELECT * FROM users WHERE email = :email AND enabled = :enabled")
+    Mono<User> findByEmailAndEnabled(String email, boolean enabled);
 }

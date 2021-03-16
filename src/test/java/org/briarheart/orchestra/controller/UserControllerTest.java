@@ -42,8 +42,8 @@ class UserControllerTest {
         User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
         when(userService.createUser(any(User.class), eq(Locale.ENGLISH))).thenReturn(Mono.just(user));
 
-        testClient.mutateWith(csrf()).post()
-                .uri("/users")
+        testClient.mutateWith(csrf())
+                .post().uri("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Accept-Language", "en")
                 .bodyValue(user)
@@ -59,11 +59,38 @@ class UserControllerTest {
         String token = "K1Mb2ByFcfYndPmuFijB";
         when(emailConfirmationService.confirmEmail(userId, token)).thenReturn(Mono.just(true).then());
 
-        testClient.mutateWith(csrf()).put()
-                .uri("/users/" + userId + "/email/confirmation/" + token)
+        testClient.mutateWith(csrf())
+                .put().uri("/users/" + userId + "/email/confirmation/" + token)
                 .exchange()
 
                 .expectStatus().isOk();
         verify(emailConfirmationService, times(1)).confirmEmail(userId, token);
+    }
+
+    @Test
+    void shouldResetPassword() {
+        String email = "alice@mail.com";
+        when(userService.resetPassword(email, Locale.ENGLISH)).thenReturn(Mono.just(true).then());
+
+        testClient.mutateWith(csrf())
+                .post().uri("/users/password/reset")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("email=" + email)
+                .header("Accept-Language", "en")
+                .exchange()
+
+                .expectStatus().isOk();
+        verify(userService, times(1)).resetPassword(email, Locale.ENGLISH);
+    }
+
+    @Test
+    void shouldReturnBadRequestStatusCodeWhenEmailFormParameterIsNotProvided() {
+        testClient.mutateWith(csrf())
+                .post().uri("/users/password/reset")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .header("Accept-Language", "en")
+                .exchange()
+
+                .expectStatus().isBadRequest();
     }
 }

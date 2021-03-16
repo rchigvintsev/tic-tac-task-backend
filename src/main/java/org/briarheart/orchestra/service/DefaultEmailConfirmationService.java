@@ -82,7 +82,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                             Locale.ENGLISH
                     );
                     String localizedMessage;
-                    if (locale == Locale.ENGLISH) {
+                    if (locale == null || locale == Locale.ENGLISH) {
                         localizedMessage = message;
                     } else {
                         localizedMessage = messages.getMessage(

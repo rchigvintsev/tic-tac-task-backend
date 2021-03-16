@@ -2,25 +2,16 @@ package org.briarheart.orchestra.service;
 
 import io.jsonwebtoken.lang.Assert;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
-import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.UserRepository;
-import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.User;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Locale;
-import java.util.UUID;
 
 /**
  * Default implementation of {@link UserService}.
@@ -30,15 +21,11 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class DefaultUserService implements UserService {
-    private static final Duration DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT = Duration.of(24, ChronoUnit.HOURS);
-
     private final UserRepository userRepository;
     private final EmailConfirmationService emailConfirmationService;
+    private final PasswordService passwordService;
     private final PasswordEncoder passwordEncoder;
     private final MessageSourceAccessor messages;
-
-    @Setter
-    private Duration emailConfirmationTokenExpirationTimeout = DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT;
 
     @Override
     public Mono<User> createUser(User user, Locale locale) throws EntityAlreadyExistsException {
@@ -54,8 +41,15 @@ public class DefaultUserService implements UserService {
                 })
                 .switchIfEmpty(Mono.defer(() -> createNewUser(user)))
                 .map(this::clearPassword)
-                .zipWhen(u -> emailConfirmationService.sendEmailConfirmationLink(u, locale))
-                .map(Tuple2::getT1);
+                .flatMap(u -> emailConfirmationService.sendEmailConfirmationLink(u, locale).map(token -> u));
+    }
+
+    @Override
+    public Mono<Void> resetPassword(String email, Locale locale) {
+        Assert.hasLength(email, "Email address must not be null or empty");
+        return userRepository.findByEmailAndEnabled(email, true)
+                .flatMap(user -> passwordService.sendPasswordResetLink(user, locale))
+                .then();
     }
 
     private Mono<User> ensureEmailNotConfirmed(User user, Locale locale) {
@@ -63,7 +57,7 @@ public class DefaultUserService implements UserService {
             String message = messages.getMessage("user.registration.user-already-registered",
                     new Object[]{user.getEmail()}, Locale.ENGLISH);
             String localizedMessage;
-            if (locale == Locale.ENGLISH) {
+            if (locale == null || locale == Locale.ENGLISH) {
                 localizedMessage = message;
             } else {
                 localizedMessage = messages.getMessage("user.registration.user-already-registered",
@@ -92,18 +86,5 @@ public class DefaultUserService implements UserService {
     private User clearPassword(User user) {
         user.setPassword(null);
         return user;
-    }
-
-    private Mono<EmailConfirmationToken> createEmailConfirmationToken(User user) {
-        LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC);
-        LocalDateTime expiresAt = createdAt.plus(emailConfirmationTokenExpirationTimeout);
-        EmailConfirmationToken token = EmailConfirmationToken.builder()
-                .userId(user.getId())
-                .email(user.getEmail())
-                .tokenValue(UUID.randomUUID().toString())
-                .createdAt(createdAt)
-                .expiresAt(expiresAt)
-                .build();
-        return tokenRepository.save(token);
     }
 }

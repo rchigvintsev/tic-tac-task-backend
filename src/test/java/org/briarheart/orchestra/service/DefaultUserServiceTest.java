@@ -3,6 +3,7 @@ package org.briarheart.orchestra.service;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
+import org.briarheart.orchestra.model.PasswordResetToken;
 import org.briarheart.orchestra.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ class DefaultUserServiceTest {
     private DefaultUserService service;
     private UserRepository userRepository;
     private EmailConfirmationService emailConfirmationService;
+    private PasswordService passwordService;
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
@@ -50,6 +52,20 @@ class DefaultUserServiceTest {
                     return Mono.just(emailConfirmationToken);
                 });
 
+        passwordService = mock(PasswordService.class);
+        when(passwordService.sendPasswordResetLink(any(User.class), eq(Locale.ENGLISH))).thenAnswer(args -> {
+            User user = args.getArgument(0);
+            PasswordResetToken passwordResetToken = PasswordResetToken.builder()
+                    .id(1L)
+                    .userId(user.getId())
+                    .email(user.getEmail())
+                    .tokenValue("K1Mb2ByFcfYndPmuFijB")
+                    .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                    .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(24, ChronoUnit.HOURS))
+                    .build();
+            return Mono.just(passwordResetToken);
+        });
+
         passwordEncoder = mock(PasswordEncoder.class);
         when(passwordEncoder.encode(anyString())).thenAnswer(args -> args.getArgument(0));
 
@@ -57,7 +73,8 @@ class DefaultUserServiceTest {
         messageSource.setBasename("messages");
         MessageSourceAccessor messages = new MessageSourceAccessor(messageSource);
 
-        service = new DefaultUserService(userRepository, emailConfirmationService, passwordEncoder, messages);
+        service = new DefaultUserService(userRepository, emailConfirmationService, passwordService, passwordEncoder,
+                messages);
     }
 
     @Test
@@ -171,5 +188,28 @@ class DefaultUserServiceTest {
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository, times(1)).save(userCaptor.capture());
         assertEquals(newUser.getPassword(), userCaptor.getValue().getPassword());
+    }
+
+    @Test
+    void shouldSendPasswordResetLinkToUserOnPasswordReset() {
+        User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
+        when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
+        service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
+        verify(passwordService, times(1)).sendPasswordResetLink(user, Locale.ENGLISH);
+    }
+
+    @Test
+    void shouldDoNothingOnPasswordResetWhenUserIsNotFound() {
+        String email = "alice@mail.com";
+        when(userRepository.findByEmailAndEnabled(email, true)).thenReturn(Mono.empty());
+        service.resetPassword(email, Locale.ENGLISH).block();
+        verify(passwordService, never()).sendPasswordResetLink(any(User.class), any(Locale.class));
+    }
+
+    @Test
+    void shouldThrowExceptionOnPasswordResetWhenEmailIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> service.resetPassword(null, Locale.ENGLISH).block());
+        assertEquals("Email address must not be null or empty", e.getMessage());
     }
 }
