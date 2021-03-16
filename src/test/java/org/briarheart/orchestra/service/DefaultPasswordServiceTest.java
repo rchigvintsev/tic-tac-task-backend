@@ -20,8 +20,7 @@ import java.util.Locale;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -82,8 +81,9 @@ class DefaultPasswordServiceTest {
 
     @Test
     void shouldThrowExceptionOnPasswordResetLinkSendWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> service.sendPasswordResetLink(null, Locale.ENGLISH).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> service.sendPasswordResetLink(null, Locale.ENGLISH).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test

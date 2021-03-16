@@ -56,8 +56,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnUnprocessedTaskCountGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.getUnprocessedTaskCount(null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getUnprocessedTaskCount(null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -85,8 +86,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnUnprocessedTasksGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> taskService.getUnprocessedTasks(null, Pageable.unpaged()).blockFirst(), "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getUnprocessedTasks(null, Pageable.unpaged()).blockFirst());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -98,8 +100,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnProcessedTaskCountGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.getProcessedTaskCount(null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getProcessedTaskCount(null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -127,8 +130,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnProcessedTasksGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> taskService.getProcessedTasks(null, Pageable.unpaged()).blockFirst(), "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getProcessedTasks(null, Pageable.unpaged()).blockFirst());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -147,8 +151,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnProcessedTaskWithDeadlineCountGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.getProcessedTaskCount(null, null, null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getProcessedTaskCount(null, null, null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -267,9 +272,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnProcessedTasksWithDeadlineGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> taskService.getProcessedTasks(null, null, null, Pageable.unpaged()).blockFirst(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getProcessedTasks(null, null, null, Pageable.unpaged()).blockFirst());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -281,8 +286,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnUncompletedTaskCountGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.getUncompletedTaskCount(null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getUncompletedTaskCount(null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -309,8 +315,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnUncompletedTasksGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> taskService.getUncompletedTasks(null, Pageable.unpaged()).blockFirst(), "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getUncompletedTasks(null, Pageable.unpaged()).blockFirst());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -325,8 +332,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.getTask(1L, null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getTask(1L, null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -334,8 +342,9 @@ class DefaultTaskServiceTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         long taskId = 2L;
-        assertThrows(EntityNotFoundException.class, () -> taskService.getTask(taskId, user).block(),
-                "Task with id " + taskId + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.getTask(taskId, user).block());
+        assertEquals("Task with id " + taskId + " is not found", e.getMessage());
     }
 
     @Test
@@ -401,15 +410,17 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskUpdateWhenTaskIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.updateTask(null), "Task must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> taskService.updateTask(null));
+        assertEquals("Task must not be null", e.getMessage());
     }
 
     @Test
     void shouldThrowExceptionOnTaskUpdateWhenTaskIsNotFound() {
         Task task = Task.builder().id(1L).userId(2L).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.updateTask(task).block(),
-                "Task with id " + task.getId() + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.updateTask(task).block());
+        assertEquals("Task with id " + task.getId() + " is not found", e.getMessage());
     }
 
     @Test
@@ -425,8 +436,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskCompleteWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.completeTask(1L, null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.completeTask(1L, null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -435,8 +447,9 @@ class DefaultTaskServiceTest {
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.completeTask(taskId, user).block(),
-                "Task with id " + taskId + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.completeTask(taskId, user).block());
+        assertEquals("Task with id " + taskId + " is not found", e.getMessage());
     }
 
     @Test
@@ -453,8 +466,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskDeleteWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.deleteTask(1L, null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.deleteTask(1L, null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -463,8 +477,9 @@ class DefaultTaskServiceTest {
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.deleteTask(taskId, user).block(),
-                "Task with id " + taskId + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.deleteTask(taskId, user).block());
+        assertEquals("Task with id " + taskId + " is not found", e.getMessage());
     }
 
     @Test
@@ -484,8 +499,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagsGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.getTags(1L, null).blockFirst(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getTags(1L, null).blockFirst());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -494,8 +510,9 @@ class DefaultTaskServiceTest {
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.getTags(taskId, user).blockFirst(),
-                "Task with id " + taskId + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.getTags(taskId, user).blockFirst());
+        assertEquals("Task with id " + taskId + " is not found", e.getMessage());
     }
 
     @Test
@@ -516,8 +533,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagAssignWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.assignTag(1L, 2L, null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.assignTag(1L, 2L, null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -529,8 +547,9 @@ class DefaultTaskServiceTest {
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
 
-        assertThrows(EntityNotFoundException.class, () -> taskService.assignTag(taskId, tag.getId(), user).block(),
-                "Task with id " + taskId + "is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.assignTag(taskId, tag.getId(), user).block());
+        assertEquals("Task with id " + taskId + " is not found", e.getMessage());
     }
 
     @Test
@@ -542,8 +561,9 @@ class DefaultTaskServiceTest {
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(tagRepository.findByIdAndUserId(tagId, user.getId())).thenReturn(Mono.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> taskService.assignTag(task.getId(), tagId, user).block(),
-                "Tag with id " + tagId + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.assignTag(task.getId(), tagId, user).block());
+        assertEquals("Tag with id " + tagId + " is not found", e.getMessage());
     }
 
     @Test
@@ -562,8 +582,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagRemoveWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.removeTag(1L, 2L, null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.removeTag(1L, 2L, null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -573,8 +594,9 @@ class DefaultTaskServiceTest {
         Long tagId = 3L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.removeTag(taskId, tagId, user).block(),
-                "Task with id " + taskId + "is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.removeTag(taskId, tagId, user).block());
+        assertEquals("Task with id " + taskId + " is not found", e.getMessage());
     }
 
     @Test
@@ -618,8 +640,9 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnCommentsGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> taskService.getComments(1L, null, Pageable.unpaged()).blockFirst(), "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getComments(1L, null, Pageable.unpaged()).blockFirst());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -665,8 +688,8 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnCommentAddWhenCommentIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> taskService.addComment(null),
-                "Task comment must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> taskService.addComment(null));
+        assertEquals("Task comment must not be null", e.getMessage());
     }
 
     @Test
@@ -677,7 +700,8 @@ class DefaultTaskServiceTest {
                 .taskId(2L)
                 .build();
         when(taskRepository.findByIdAndUserId(comment.getTaskId(), comment.getUserId())).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> taskService.addComment(comment).block(),
-                "Task with id " + comment.getTaskId() + "is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.addComment(comment).block());
+        assertEquals("Task with id " + comment.getTaskId() + " is not found", e.getMessage());
     }
 }

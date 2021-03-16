@@ -45,8 +45,9 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagsGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> tagService.getTags(null).blockFirst(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> tagService.getTags(null).blockFirst());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -61,8 +62,9 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagGetWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> tagService.getTag(1L, null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> tagService.getTag(1L, null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -70,8 +72,9 @@ class DefaultTagServiceTest {
         when(tagRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         long tagId = 2L;
         User user = User.builder().id(1L).email("alice@mail.com").build();
-        assertThrows(EntityNotFoundException.class, () -> tagService.getTag(tagId, user).block(),
-                "Tag with id " + tagId + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> tagService.getTag(tagId, user).block());
+        assertEquals("Tag with id " + tagId + " is not found", e.getMessage());
     }
 
     @Test
@@ -97,15 +100,17 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagCreateWhenTagIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> tagService.createTag(null), "Tag must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> tagService.createTag(null));
+        assertEquals("Tag must not be null", e.getMessage());
     }
 
     @Test
     void shouldThrowExceptionOnTagCreateWhenTagAlreadyExists() {
         Tag tag = Tag.builder().name("New tag").userId(1L).build();
         when(tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())).thenReturn(Mono.just(tag));
-        assertThrows(EntityAlreadyExistsException.class, () -> tagService.createTag(tag).block(),
-                "Tag with name \"" + tag.getName() + "\" already exists");
+        EntityAlreadyExistsException e = assertThrows(EntityAlreadyExistsException.class,
+                () -> tagService.createTag(tag).block());
+        assertEquals("Tag with name \"" + tag.getName() + "\" already exists", e.getMessage());
     }
 
     @Test
@@ -125,15 +130,17 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagUpdateWhenTagIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> tagService.updateTag(null), "Tag must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> tagService.updateTag(null));
+        assertEquals("Tag must not be null", e.getMessage());
     }
 
     @Test
     void shouldThrowExceptionOnTagUpdateWhenTagIsNotFound() {
         when(tagRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         Tag tag = Tag.builder().id(2L).userId(1L).name("Test tag").build();
-        assertThrows(EntityNotFoundException.class, () -> tagService.updateTag(tag).block(),
-                "Tag with id " + tag.getId() + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> tagService.updateTag(tag).block());
+        assertEquals("Tag with id " + tag.getId() + " is not found", e.getMessage());
     }
 
     @Test
@@ -147,8 +154,9 @@ class DefaultTagServiceTest {
         when(tagRepository.findByIdAndUserId(tag.getId(), tag.getUserId())).thenReturn(Mono.just(tag));
         when(tagRepository.findByNameAndUserId(updatedTag.getName(), updatedTag.getUserId()))
                 .thenReturn(Mono.just(updatedTag));
-        assertThrows(EntityAlreadyExistsException.class, () -> tagService.updateTag(updatedTag).block(),
-                "Tag with name \"" + updatedTag.getName() + "\" already exists");
+        EntityAlreadyExistsException e = assertThrows(EntityAlreadyExistsException.class,
+                () -> tagService.updateTag(updatedTag).block());
+        assertEquals("Tag with name \"" + updatedTag.getName() + "\" already exists", e.getMessage());
     }
 
     @Test
@@ -165,8 +173,9 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagDeleteWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> tagService.deleteTag(1L, null).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> tagService.deleteTag(1L, null).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -176,8 +185,9 @@ class DefaultTagServiceTest {
         long tagId = 1L;
         User user = User.builder().id(1L).email("alice@mail.com").build();
 
-        assertThrows(EntityNotFoundException.class, () -> tagService.deleteTag(tagId, user).block(),
-                "Tag with id " + tagId + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> tagService.deleteTag(tagId, user).block());
+        assertEquals("Tag with id " + tagId + " is not found", e.getMessage());
     }
 
     @Test

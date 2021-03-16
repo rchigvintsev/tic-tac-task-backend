@@ -50,6 +50,8 @@ class NoFallbackResourceBundleLocatorTest {
 
     @Test
     void shouldThrowExceptionOnResourceBundleGetWhenLocaleIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> locator.getResourceBundle(null), "Locale must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> locator.getResourceBundle(null));
+        assertEquals("Locale must not be null", e.getMessage());
     }
 }

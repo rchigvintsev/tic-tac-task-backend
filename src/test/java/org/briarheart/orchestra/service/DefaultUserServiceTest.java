@@ -130,8 +130,9 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldThrowExceptionOnUserCreateWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> service.createUser(null, Locale.ENGLISH).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> service.createUser(null, Locale.ENGLISH).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -144,8 +145,9 @@ class DefaultUserServiceTest {
                 .enabled(true)
                 .build();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
-        assertThrows(EntityAlreadyExistsException.class, () -> service.createUser(user, Locale.ENGLISH).block(),
-                "User with email \"" + user.getEmail() + "\" is already registered");
+        EntityAlreadyExistsException e = assertThrows(EntityAlreadyExistsException.class,
+                () -> service.createUser(user, Locale.ENGLISH).block());
+        assertEquals("User with email \"" + user.getEmail() + "\" is already registered", e.getMessage());
     }
 
     @Test

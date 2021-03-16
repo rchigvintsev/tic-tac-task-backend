@@ -24,8 +24,7 @@ import java.util.Locale;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -87,9 +86,9 @@ class DefaultEmailConfirmationServiceTest {
 
     @Test
     void shouldThrowExceptionOnEmailConfirmationLinkSendWhenUserIsNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.sendEmailConfirmationLink(null, Locale.ENGLISH).block(),
-                "User must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> service.sendEmailConfirmationLink(null, Locale.ENGLISH).block());
+        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
@@ -129,8 +128,10 @@ class DefaultEmailConfirmationServiceTest {
         String tokenValue = "K1Mb2ByFcfYndPmuFijB";
         when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, tokenValue))
                 .thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> service.confirmEmail(userId, tokenValue).block(),
-                "Email confirmation token \"" + tokenValue + "\" is not registered for user with id " + userId);
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> service.confirmEmail(userId, tokenValue).block());
+        assertEquals("Email confirmation token \"" + tokenValue + "\" is not registered for user with id " + userId,
+                e.getMessage());
     }
 
     @Test
@@ -144,9 +145,9 @@ class DefaultEmailConfirmationServiceTest {
                 .build();
         when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, token.getTokenValue()))
                 .thenReturn(Mono.just(token));
-        assertThrows(EmailConfirmationTokenExpiredException.class,
-                () -> service.confirmEmail(userId, token.getTokenValue()).block(),
-                "Email confirmation token \"" + token.getTokenValue() + "\" is expired");
+        EmailConfirmationTokenExpiredException e = assertThrows(EmailConfirmationTokenExpiredException.class,
+                () -> service.confirmEmail(userId, token.getTokenValue()).block());
+        assertEquals("Email confirmation token \"" + token.getTokenValue() + "\" is expired", e.getMessage());
     }
 
     @Test
@@ -161,8 +162,9 @@ class DefaultEmailConfirmationServiceTest {
         when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, token.getTokenValue()))
                 .thenReturn(Mono.just(token));
         when(userRepository.findById(userId)).thenReturn(Mono.empty());
-        assertThrows(EntityNotFoundException.class, () -> service.confirmEmail(userId, token.getTokenValue()).block(),
-                "User with id " + userId + " is not found");
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> service.confirmEmail(userId, token.getTokenValue()).block());
+        assertEquals("User with id " + userId + " is not found", e.getMessage());
     }
 
     @Test

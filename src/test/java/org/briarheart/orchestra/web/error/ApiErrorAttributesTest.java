@@ -121,15 +121,16 @@ class ApiErrorAttributesTest {
 
     @Test
     void shouldThrowExceptionOnConstructWhenHttpStatusExceptionTypeMapperIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> new ApiErrorAttributes(false, null),
-                "Exception type to HTTP status mapper must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new ApiErrorAttributes(false, null));
+        assertEquals("Exception type to HTTP status mapper must not be null", e.getMessage());
     }
 
     @Test
     void shouldThrowExceptionOnErrorAttributesGetWhenServerRequestIsNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new ApiErrorAttributes(false, t -> null).getErrorAttributes(null, false),
-                "Server request must not be null");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new ApiErrorAttributes(false, t -> null).getErrorAttributes(null, false));
+        assertEquals("Server request must not be null", e.getMessage());
     }
 
     private ServerRequest mockServerRequest() {
