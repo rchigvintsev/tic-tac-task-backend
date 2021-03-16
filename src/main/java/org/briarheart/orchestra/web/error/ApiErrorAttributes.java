@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.web.error;
 
+import org.briarheart.orchestra.LocalizedRuntimeException;
 import org.springframework.boot.web.reactive.error.DefaultErrorAttributes;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
@@ -31,7 +32,7 @@ public class ApiErrorAttributes extends DefaultErrorAttributes {
      * Creates new instance of this class with the given include exception flag and
      * {@link HttpStatusExceptionTypeMapper}.
      *
-     * @param includeException indicates whether exception must be included in error attributes
+     * @param includeException              indicates whether exception must be included in error attributes
      * @param httpStatusExceptionTypeMapper exception type to HTTP status mapper (must not be {@link null})
      */
     public ApiErrorAttributes(boolean includeException, HttpStatusExceptionTypeMapper httpStatusExceptionTypeMapper) {
@@ -51,10 +52,8 @@ public class ApiErrorAttributes extends DefaultErrorAttributes {
             errorAttributes.put("status", httpStatus.value());
             errorAttributes.put("error", httpStatus.getReasonPhrase());
         }
-        String message = (String) errorAttributes.get("message");
-        String localizedMessage = error.getLocalizedMessage();
-        if (StringUtils.hasLength(localizedMessage) && !localizedMessage.equals(message)) {
-            errorAttributes.put("localizedMessage", localizedMessage);
+        if (error instanceof LocalizedRuntimeException && StringUtils.hasLength(error.getLocalizedMessage())) {
+            errorAttributes.put("localizedMessage", error.getLocalizedMessage());
         }
         if (error instanceof BindingResult) {
             handleBindingResult(errorAttributes, (BindingResult) error);

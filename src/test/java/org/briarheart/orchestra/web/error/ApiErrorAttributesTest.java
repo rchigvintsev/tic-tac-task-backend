@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.web.error;
 
+import org.briarheart.orchestra.LocalizedRuntimeException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -38,12 +39,7 @@ class ApiErrorAttributesTest {
     @Test
     void shouldIncludeLocalizedMessageInErrorAttributes() {
         String localizedMessage = "Что-то пошло не так";
-        Exception exception = new Exception("Something went wrong") {
-            @Override
-            public String getLocalizedMessage() {
-                return localizedMessage;
-            }
-        };
+        LocalizedRuntimeException exception = new LocalizedRuntimeException("Something went wrong", localizedMessage);
         ServerRequest request = mockServerRequest();
 
         ApiErrorAttributes attributes = new ApiErrorAttributes(false, t -> null);
