@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.service;
 
 import io.jsonwebtoken.lang.Assert;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
@@ -21,10 +22,15 @@ import java.util.Locale;
 @Service
 @RequiredArgsConstructor
 public class DefaultUserService implements UserService {
+    @NonNull
     private final UserRepository userRepository;
+    @NonNull
     private final EmailConfirmationService emailConfirmationService;
+    @NonNull
     private final PasswordService passwordService;
+    @NonNull
     private final PasswordEncoder passwordEncoder;
+    @NonNull
     private final MessageSourceAccessor messages;
 
     @Override

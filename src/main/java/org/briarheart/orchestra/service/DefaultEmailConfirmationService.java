@@ -101,7 +101,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Email confirmation token \""
                         + tokenValue + "\" is not registered for user with id " + userId)))
                 .filter(token -> !token.isExpired())
-                .switchIfEmpty(Mono.error(new EmailConfirmationTokenExpiredException("Email confirmation token \""
+                .switchIfEmpty(Mono.error(new TokenExpiredException("Email confirmation token \""
                         + tokenValue + "\" is expired")))
                 .flatMap(token -> userRepository.findById(userId))
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))

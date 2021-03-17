@@ -3,7 +3,7 @@ package org.briarheart.orchestra.service;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
-import org.briarheart.orchestra.model.PasswordResetToken;
+import org.briarheart.orchestra.model.PasswordResetConfirmationToken;
 import org.briarheart.orchestra.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +55,7 @@ class DefaultUserServiceTest {
         passwordService = mock(PasswordService.class);
         when(passwordService.sendPasswordResetLink(any(User.class), eq(Locale.ENGLISH))).thenAnswer(args -> {
             User user = args.getArgument(0);
-            PasswordResetToken passwordResetToken = PasswordResetToken.builder()
+            PasswordResetConfirmationToken passwordResetConfirmationToken = PasswordResetConfirmationToken.builder()
                     .id(1L)
                     .userId(user.getId())
                     .email(user.getEmail())
@@ -63,7 +63,7 @@ class DefaultUserServiceTest {
                     .createdAt(LocalDateTime.now(ZoneOffset.UTC))
                     .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(24, ChronoUnit.HOURS))
                     .build();
-            return Mono.just(passwordResetToken);
+            return Mono.just(passwordResetConfirmationToken);
         });
 
         passwordEncoder = mock(PasswordEncoder.class);

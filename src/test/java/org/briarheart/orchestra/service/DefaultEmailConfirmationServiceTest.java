@@ -145,7 +145,7 @@ class DefaultEmailConfirmationServiceTest {
                 .build();
         when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, token.getTokenValue()))
                 .thenReturn(Mono.just(token));
-        EmailConfirmationTokenExpiredException e = assertThrows(EmailConfirmationTokenExpiredException.class,
+        TokenExpiredException e = assertThrows(TokenExpiredException.class,
                 () -> service.confirmEmail(userId, token.getTokenValue()).block());
         assertEquals("Email confirmation token \"" + token.getTokenValue() + "\" is expired", e.getMessage());
     }
