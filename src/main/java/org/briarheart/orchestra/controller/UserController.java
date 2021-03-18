@@ -4,6 +4,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.EmailConfirmationService;
+import org.briarheart.orchestra.service.PasswordService;
 import org.briarheart.orchestra.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
@@ -25,6 +26,8 @@ public class UserController {
     private final UserService userService;
     @NonNull
     private final EmailConfirmationService emailConfirmationService;
+    @NonNull
+    private final PasswordService passwordService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -47,6 +50,17 @@ public class UserController {
                 return Mono.error(new RequiredFormParameterMissingException(errorMessage));
             }
             return userService.resetPassword(email, locale);
+        });
+    }
+
+    @PostMapping("/{id}/password/reset/confirmation/{token}")
+    @ResponseStatus(HttpStatus.OK)
+    public Mono<Void> confirmPasswordReset(@PathVariable Long id,
+                                           @PathVariable String token,
+                                           ServerWebExchange exchange) {
+        return exchange.getFormData().flatMap(formData -> {
+            String newPassword = formData.getFirst("password");
+            return passwordService.confirmPasswordReset(id, token, newPassword);
         });
     }
 }

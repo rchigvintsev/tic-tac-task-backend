@@ -3,6 +3,7 @@ package org.briarheart.orchestra.controller;
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.EmailConfirmationService;
+import org.briarheart.orchestra.service.PasswordService;
 import org.briarheart.orchestra.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,8 @@ class UserControllerTest {
     private UserService userService;
     @MockBean
     private EmailConfirmationService emailConfirmationService;
+    @MockBean
+    private PasswordService passwordService;
 
     @Test
     void shouldCreateUser() {
@@ -84,7 +87,7 @@ class UserControllerTest {
     }
 
     @Test
-    void shouldReturnBadRequestStatusCodeWhenEmailFormParameterIsNotProvided() {
+    void shouldReturnBadRequestStatusCodeOnPasswordResetWhenEmailFormParameterIsNotProvided() {
         testClient.mutateWith(csrf())
                 .post().uri("/users/password/reset")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -92,5 +95,22 @@ class UserControllerTest {
                 .exchange()
 
                 .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void shouldConfirmPasswordReset() {
+        long userId = 1L;
+        String token = "K1Mb2ByFcfYndPmuFijB";
+        String newPassword = "qwerty";
+        when(passwordService.confirmPasswordReset(userId, token, newPassword)).thenReturn(Mono.just(true).then());
+
+        testClient.mutateWith(csrf())
+                .post().uri("/users/" + userId + "/password/reset/confirmation/" + token)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("password=" + newPassword)
+                .exchange()
+
+                .expectStatus().isOk();
+        verify(passwordService, times(1)).confirmPasswordReset(userId, token, newPassword);
     }
 }
