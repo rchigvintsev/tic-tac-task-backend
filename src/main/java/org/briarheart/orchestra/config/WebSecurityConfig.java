@@ -93,6 +93,7 @@ public class WebSecurityConfig {
                     .authorizeExchange()
                         .pathMatchers(HttpMethod.POST, "/users").access(unauthenticated())
                         .pathMatchers(HttpMethod.PUT, "/users/*/email/confirmation/*").access(unauthenticated())
+                        .pathMatchers(HttpMethod.POST, "/users/password/reset").access(unauthenticated())
                         .anyExchange().authenticated()
                 .and()
                     .exceptionHandling()
