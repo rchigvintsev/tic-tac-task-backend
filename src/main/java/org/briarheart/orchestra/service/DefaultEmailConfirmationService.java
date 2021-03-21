@@ -57,7 +57,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
         return createEmailConfirmationToken(user)
                 .map(token -> {
                     String confirmationLink = UriComponentsBuilder.fromHttpUrl(applicationInfo.getUrl())
-                            .path("/user/email/confirmation")
+                            .path("/account/email/confirmation")
                             .queryParam("userId", user.getId())
                             .queryParam("token", token.getTokenValue())
                             .build()

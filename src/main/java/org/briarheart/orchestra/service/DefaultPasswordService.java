@@ -60,7 +60,7 @@ public class DefaultPasswordService implements PasswordService {
         return createPasswordResetToken(user)
                 .map(token -> {
                     String passwordResetLink = UriComponentsBuilder.fromHttpUrl(applicationInfo.getUrl())
-                            .path("/user/password/reset")
+                            .path("/account/password/reset/confirmation")
                             .queryParam("userId", user.getId())
                             .queryParam("token", token.getTokenValue())
                             .build()
