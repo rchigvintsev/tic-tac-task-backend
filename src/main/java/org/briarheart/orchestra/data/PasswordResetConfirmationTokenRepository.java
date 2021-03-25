@@ -8,9 +8,10 @@ import reactor.core.publisher.Mono;
 /**
  * @author Roman Chigvintsev
  */
-public interface PasswordResetConfirmationTokenRepository extends ReactiveCrudRepository<PasswordResetConfirmationToken, Long> {
+public interface PasswordResetConfirmationTokenRepository
+        extends ReactiveCrudRepository<PasswordResetConfirmationToken, Long> {
     // Limit records in case (although unlikely) token values are duplicated
-    @Query("SELECT * FROM password_reset_token WHERE user_id = :userId AND token_value = :tokenValue"
+    @Query("SELECT * FROM password_reset_confirmation_token WHERE user_id = :userId AND token_value = :tokenValue"
             + " ORDER BY created_at DESC LIMIT 1")
     Mono<PasswordResetConfirmationToken> findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(
             Long userId,

@@ -74,7 +74,7 @@ class UserControllerIntegrationTest {
         String token = "4b1f7955-a406-4d36-8cbe-d6c61f39e27d";
 
         String url = "http://localhost:{port}/users/{userId}/email/confirmation/{token}";
-        ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.PUT, null, Void.class, port, userId,
+        ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.POST, null, Void.class, port, userId,
                 token);
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
@@ -82,6 +82,21 @@ class UserControllerIntegrationTest {
         assertNotNull(user);
         assertTrue(user.isEmailConfirmed());
         assertTrue(user.isEnabled());
+    }
+
+    @Test
+    void shouldConfirmPasswordReset() {
+        long userId = TestUsers.JOHN_DOE.getId();
+        String token = "cf575578-cddf-4773-b1e0-5f37cbb0a8d9";
+
+        String url = "http://localhost:{port}/users/{userId}/password/reset/confirmation/{token}";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE);
+
+        ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.POST,
+                new HttpEntity<>("password=qwerty", headers), Void.class, port, userId, token);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     public static class TestJavaMailSenderConfiguration {

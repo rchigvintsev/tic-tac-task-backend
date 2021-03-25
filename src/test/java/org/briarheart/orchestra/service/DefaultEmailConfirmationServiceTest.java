@@ -79,7 +79,7 @@ class DefaultEmailConfirmationServiceTest {
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender, times(1)).send(messageCaptor.capture());
         SimpleMailMessage message = messageCaptor.getValue();
-        String confirmationLink = APPLICATION_URL + "/user/email/confirmation?userId=" + user.getId()
+        String confirmationLink = APPLICATION_URL + "/account/email/confirmation?userId=" + user.getId()
                 + "&token=" + token.getTokenValue();
         assertThat(message.getText(), containsString(confirmationLink));
     }

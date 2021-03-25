@@ -63,7 +63,7 @@ class UserControllerTest {
         when(emailConfirmationService.confirmEmail(userId, token)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf())
-                .put().uri("/users/" + userId + "/email/confirmation/" + token)
+                .post().uri("/users/" + userId + "/email/confirmation/" + token)
                 .exchange()
 
                 .expectStatus().isOk();
