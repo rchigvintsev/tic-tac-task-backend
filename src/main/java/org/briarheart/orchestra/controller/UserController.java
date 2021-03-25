@@ -35,7 +35,7 @@ public class UserController {
         return userService.createUser(user, locale);
     }
 
-    @PutMapping("/{id}/email/confirmation/{token}")
+    @PostMapping("/{id}/email/confirmation/{token}")
     public Mono<Void> confirmEmail(@PathVariable Long id, @PathVariable String token) {
         return emailConfirmationService.confirmEmail(id, token);
     }
