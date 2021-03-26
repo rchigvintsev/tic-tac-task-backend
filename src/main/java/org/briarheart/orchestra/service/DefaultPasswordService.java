@@ -95,12 +95,16 @@ public class DefaultPasswordService implements PasswordService {
     @Override
     public Mono<Void> confirmPasswordReset(Long userId, String tokenValue, String newPassword)
             throws EntityNotFoundException, TokenExpiredException {
-        return tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, tokenValue)
+        return tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(userId, tokenValue, true)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Password reset confirmation token \""
                         + tokenValue + "\" is not registered for user with id " + userId)))
                 .filter(token -> !token.isExpired())
                 .switchIfEmpty(Mono.error(new TokenExpiredException("Password reset confirmation token \""
                         + tokenValue + "\" is expired")))
+                .flatMap(token -> {
+                    token.setValid(false);
+                    return tokenRepository.save(token);
+                })
                 .flatMap(token -> userRepository.findById(userId))
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
                 .flatMap(user -> {

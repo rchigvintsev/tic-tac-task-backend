@@ -22,6 +22,16 @@ public abstract class AbstractToken {
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
 
+    public AbstractToken(AbstractToken other) {
+        Assert.notNull(other, "Token must not be null");
+        this.id = other.id;
+        this.userId = other.userId;
+        this.email = other.email;
+        this.tokenValue = other.tokenValue;
+        this.createdAt = other.createdAt;
+        this.expiresAt = other.expiresAt;
+    }
+
     protected AbstractToken(AbstractTokenBuilder<? extends AbstractToken> builder) {
         Assert.notNull(builder, "Token builder must not be null");
         this.id = builder.id;

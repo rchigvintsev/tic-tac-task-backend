@@ -1,8 +1,6 @@
 package org.briarheart.orchestra.model;
 
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 /**
  * Token that is generated to confirm reset of user's password.
@@ -13,6 +11,15 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class PasswordResetConfirmationToken extends AbstractToken {
+    @Getter
+    @Setter
+    private boolean valid = true;
+
+    public PasswordResetConfirmationToken(PasswordResetConfirmationToken other) {
+        super(other);
+        this.valid = other.valid;
+    }
+
     private PasswordResetConfirmationToken(PasswordResetConfirmationTokenBuilder builder) {
         super(builder);
     }

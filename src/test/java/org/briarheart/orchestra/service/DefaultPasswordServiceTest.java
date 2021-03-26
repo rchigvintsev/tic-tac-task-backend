@@ -115,8 +115,11 @@ class DefaultPasswordServiceTest {
                 .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
                 .build();
 
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(user.getId(), token.getTokenValue()))
-                .thenReturn(Mono.just(token));
+        when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
+                user.getId(),
+                token.getTokenValue(),
+                true
+        )).thenReturn(Mono.just(token));
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
 
         String newPassword = "qwerty";
@@ -129,6 +132,31 @@ class DefaultPasswordServiceTest {
     }
 
     @Test
+    void shouldInvalidateTokenOnPasswordResetConfirm() {
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        PasswordResetConfirmationToken token = PasswordResetConfirmationToken.builder()
+                .id(2L)
+                .userId(user.getId())
+                .tokenValue("K1Mb2ByFcfYndPmuFijB")
+                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
+                .build();
+
+        when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
+                user.getId(),
+                token.getTokenValue(),
+                true
+        )).thenReturn(Mono.just(token));
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
+
+        String newPassword = "qwerty";
+        service.confirmPasswordReset(user.getId(), token.getTokenValue(), newPassword).block();
+
+        PasswordResetConfirmationToken invalidatedToken = new PasswordResetConfirmationToken(token);
+        invalidatedToken.setValid(false);
+        verify(tokenRepository, times(1)).save(invalidatedToken);
+    }
+
+    @Test
     void shouldEncodePasswordOnPasswordResetConfirm() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         PasswordResetConfirmationToken token = PasswordResetConfirmationToken.builder()
@@ -138,8 +166,11 @@ class DefaultPasswordServiceTest {
                 .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
                 .build();
 
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(user.getId(), token.getTokenValue()))
-                .thenReturn(Mono.just(token));
+        when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
+                user.getId(),
+                token.getTokenValue(),
+                true
+        )).thenReturn(Mono.just(token));
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
 
         String newPassword = "qwerty";
@@ -151,7 +182,7 @@ class DefaultPasswordServiceTest {
     void shouldThrowExceptionOnPasswordResetConfirmWhenTokenIsNotFound() {
         long userId = 1L;
         String tokenValue = "K1Mb2ByFcfYndPmuFijB";
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, tokenValue))
+        when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(userId, tokenValue, true))
                 .thenReturn(Mono.empty());
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> service.confirmPasswordReset(userId, tokenValue, "qwerty").block());
@@ -168,8 +199,11 @@ class DefaultPasswordServiceTest {
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
                 .expiresAt(LocalDateTime.now(ZoneOffset.UTC).minus(1, ChronoUnit.HOURS))
                 .build();
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, token.getTokenValue()))
-                .thenReturn(Mono.just(token));
+        when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
+                userId,
+                token.getTokenValue(),
+                true
+        )).thenReturn(Mono.just(token));
         TokenExpiredException e = assertThrows(TokenExpiredException.class,
                 () -> service.confirmPasswordReset(userId, token.getTokenValue(), "qwerty").block());
         assertEquals("Password reset confirmation token \"" + token.getTokenValue() + "\" is expired", e.getMessage());
@@ -184,8 +218,11 @@ class DefaultPasswordServiceTest {
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
                 .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
                 .build();
-        when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, token.getTokenValue()))
-                .thenReturn(Mono.just(token));
+        when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
+                userId,
+                token.getTokenValue(),
+                true
+        )).thenReturn(Mono.just(token));
         when(userRepository.findById(userId)).thenReturn(Mono.empty());
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> service.confirmPasswordReset(userId, token.getTokenValue(), "qwerty").block());
