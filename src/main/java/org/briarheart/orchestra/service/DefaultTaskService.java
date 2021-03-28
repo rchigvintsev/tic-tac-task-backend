@@ -135,6 +135,7 @@ public class DefaultTaskService implements TaskService {
         Assert.notNull(task, "Task must not be null");
         return findTask(task.getId(), task.getUserId()).flatMap(existingTask -> {
             Task updatedTask = new Task(task);
+            updatedTask.setTaskListId(existingTask.getTaskListId());
             if (updatedTask.getStatus() == null) {
                 updatedTask.setStatus(existingTask.getStatus());
             }

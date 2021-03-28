@@ -378,13 +378,20 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldUpdateTask() {
-        Task task = Task.builder().id(1L).userId(2L).title("Test task").status(TaskStatus.PROCESSED).build();
+        Task task = Task.builder()
+                .id(1L)
+                .userId(2L)
+                .taskListId(3L)
+                .title("Test task")
+                .status(TaskStatus.PROCESSED)
+                .build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         Task updatedTask = new Task(task);
         updatedTask.setTitle("Updated test task");
         updatedTask.setStatus(null);
+        updatedTask.setTaskListId(30L);
 
         Task expectedResult = new Task(task);
         expectedResult.setTitle(updatedTask.getTitle());
