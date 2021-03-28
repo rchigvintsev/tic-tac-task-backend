@@ -244,6 +244,22 @@ class TaskListControllerTest {
                 .expectBody(Task[].class).isEqualTo(new Task[]{task});
     }
 
+    @Test
+    void shouldAddTask() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        long taskListId = 2L;
+        long taskId = 3L;
+        when(taskListService.addTask(taskListId, taskId, user)).thenReturn(Mono.just(true).then());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .put().uri("/task-lists/" + taskListId + "/tasks/" + taskId)
+                .exchange()
+
+                .expectStatus().isNoContent();
+    }
+
     private Authentication createAuthentication(User user) {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn(user.getEmail());

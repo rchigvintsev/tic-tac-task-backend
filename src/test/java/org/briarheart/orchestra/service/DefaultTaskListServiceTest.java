@@ -253,4 +253,56 @@ class DefaultTaskListServiceTest {
                 () -> taskListService.getTasks(taskListId, user, Pageable.unpaged()).blockFirst());
         assertEquals("Task list with id " + taskListId + " is not found", e.getMessage());
     }
+
+    @Test
+    void shouldAddTaskToTaskList() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
+        Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
+
+        when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        taskListService.addTask(taskList.getId(), task.getId(), user).block();
+
+        Task addedTask = new Task(task);
+        addedTask.setTaskListId(taskList.getId());
+        verify(taskRepository, times(1)).save(addedTask);
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskAddWhenUserIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskListService.addTask(1L, 2L, null).block());
+        assertEquals("User must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskAddWhenTaskListIsNotFound() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
+        Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
+
+        when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.empty());
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskListService.addTask(taskList.getId(), task.getId(), user).block());
+        assertEquals("Task list with id " + taskList.getId() + " is not found", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskAddWhenTaskIsNotFound() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
+        Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
+
+        when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.empty());
+
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskListService.addTask(taskList.getId(), task.getId(), user).block());
+        assertEquals("Task with id " + task.getId() + " is not found", e.getMessage());
+    }
 }

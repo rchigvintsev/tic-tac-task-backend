@@ -74,9 +74,15 @@ public class TaskListController extends AbstractController {
     }
 
     @GetMapping("/{taskListId}/tasks")
-    public Flux<Task> getTasks(@PathVariable("taskListId") Long taskListId,
+    public Flux<Task> getTasks(@PathVariable Long taskListId,
                                Authentication authentication,
                                Pageable pageable) {
         return taskListService.getTasks(taskListId, getUser(authentication), pageable);
+    }
+
+    @PutMapping("/{taskListId}/tasks/{taskId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> addTask(@PathVariable Long taskListId, @PathVariable Long taskId, Authentication authentication) {
+        return taskListService.addTask(taskListId, taskId, getUser(authentication));
     }
 }

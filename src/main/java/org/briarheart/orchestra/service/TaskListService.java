@@ -78,4 +78,14 @@ public interface TaskListService {
      * @throws EntityNotFoundException if task list is not found by id or does not belong to the given user
      */
     Flux<Task> getTasks(Long taskListId, User user, Pageable pageable) throws EntityNotFoundException;
+
+    /**
+     * Assign task with the given id to task list with the given id.
+     *
+     * @param taskListId task list id
+     * @param taskId     id of task to be assigned
+     * @param user       task/task list author (must not be {@code null})
+     * @throws EntityNotFoundException if task/task list is not found by id or does not belong to the given user
+     */
+    Mono<Void> addTask(Long taskListId, Long taskId, User user) throws EntityNotFoundException;
 }

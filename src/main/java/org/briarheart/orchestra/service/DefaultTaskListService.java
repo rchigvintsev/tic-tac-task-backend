@@ -93,6 +93,19 @@ public class DefaultTaskListService implements TaskListService {
         });
     }
 
+    @Override
+    public Mono<Void> addTask(Long taskListId, Long taskId, User user) throws EntityNotFoundException {
+        Assert.notNull(user, "User must not be null");
+        return getTaskList(taskListId, user)
+                .flatMap(taskList -> taskRepository.findByIdAndUserId(taskId, user.getId()))
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + taskId + " is not found")))
+                .flatMap(task -> {
+                    task.setTaskListId(taskListId);
+                    return taskRepository.save(task);
+                })
+                .then();
+    }
+
     private Mono<TaskList> findTaskList(Long taskListId, Long userId) {
         return taskListRepository.findByIdAndUserId(taskListId, userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task list with id " + taskListId
