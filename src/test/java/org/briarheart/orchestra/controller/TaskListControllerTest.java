@@ -245,7 +245,7 @@ class TaskListControllerTest {
     }
 
     @Test
-    void shouldAddTask() {
+    void shouldAddTaskToTaskList() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
@@ -255,6 +255,22 @@ class TaskListControllerTest {
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .put().uri("/task-lists/" + taskListId + "/tasks/" + taskId)
+                .exchange()
+
+                .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldRemoveTaskFromTaskList() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        long taskListId = 2L;
+        long taskId = 3L;
+        when(taskListService.removeTask(taskListId, taskId, user)).thenReturn(Mono.just(true).then());
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .delete().uri("/task-lists/" + taskListId + "/tasks/" + taskId)
                 .exchange()
 
                 .expectStatus().isNoContent();

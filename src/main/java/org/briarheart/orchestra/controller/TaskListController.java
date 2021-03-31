@@ -85,4 +85,12 @@ public class TaskListController extends AbstractController {
     public Mono<Void> addTask(@PathVariable Long taskListId, @PathVariable Long taskId, Authentication authentication) {
         return taskListService.addTask(taskListId, taskId, getUser(authentication));
     }
+
+    @DeleteMapping("/{taskListId}/tasks/{taskId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> removeTask(@PathVariable Long taskListId,
+                                 @PathVariable Long taskId,
+                                 Authentication authentication) {
+        return taskListService.removeTask(taskListId, taskId, getUser(authentication));
+    }
 }

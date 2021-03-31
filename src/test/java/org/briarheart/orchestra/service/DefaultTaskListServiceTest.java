@@ -305,4 +305,56 @@ class DefaultTaskListServiceTest {
                 () -> taskListService.addTask(taskList.getId(), task.getId(), user).block());
         assertEquals("Task with id " + task.getId() + " is not found", e.getMessage());
     }
+
+    @Test
+    void shouldRemoveTaskFromTaskList() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
+        Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
+
+        when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        taskListService.removeTask(taskList.getId(), task.getId(), user).block();
+
+        Task removedTask = new Task(task);
+        removedTask.setTaskListId(null);
+        verify(taskRepository, times(1)).save(removedTask);
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskRemoveWhenUserIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskListService.removeTask(1L, 2L, null).block());
+        assertEquals("User must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskRemoveWhenTaskListIsNotFound() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        long taskListId = 2L;
+        Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
+
+        when(taskListRepository.findByIdAndUserId(taskListId, user.getId())).thenReturn(Mono.empty());
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskListService.removeTask(taskListId, task.getId(), user).block());
+        assertEquals("Task list with id " + taskListId + " is not found", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskRemoveWhenTaskIsNotFound() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
+        long taskId = 3L;
+
+        when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
+        when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
+
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskListService.removeTask(taskList.getId(), taskId, user).block());
+        assertEquals("Task with id " + taskId + " is not found", e.getMessage());
+    }
 }
