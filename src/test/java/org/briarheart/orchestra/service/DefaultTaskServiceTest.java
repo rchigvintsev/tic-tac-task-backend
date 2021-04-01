@@ -38,6 +38,7 @@ class DefaultTaskServiceTest {
         tagRepository = mock(TagRepository.class);
         taskCommentRepository = mock(TaskCommentRepository.class);
 
+        currentTime = LocalDateTime.now(ZoneOffset.UTC);
         taskService = new DefaultTaskService(taskRepository, taskTagRelationRepository, tagRepository,
                 taskCommentRepository) {
             @Override
@@ -65,7 +66,7 @@ class DefaultTaskServiceTest {
     void shouldReturnAllUnprocessedTasks() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
-        when(taskRepository.findByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId(), 0, null))
+        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.UNPROCESSED, user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
 
         Task result = taskService.getUnprocessedTasks(user, Pageable.unpaged()).blockFirst();
@@ -77,7 +78,7 @@ class DefaultTaskServiceTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId(), pageRequest.getOffset(),
+        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.UNPROCESSED, user.getId(), pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
         Task result = taskService.getUnprocessedTasks(user, pageRequest).blockFirst();
@@ -109,7 +110,7 @@ class DefaultTaskServiceTest {
     void shouldReturnAllProcessedTasks() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
-        when(taskRepository.findByStatusAndUserId(TaskStatus.PROCESSED, user.getId(), 0, null))
+        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
 
         Task result = taskService.getProcessedTasks(user, Pageable.unpaged()).blockFirst();
@@ -121,7 +122,7 @@ class DefaultTaskServiceTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusAndUserId(TaskStatus.PROCESSED, user.getId(), pageRequest.getOffset(),
+        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(), pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
         Task result = taskService.getProcessedTasks(user, pageRequest).blockFirst();
@@ -168,7 +169,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.PROCESSED)
                 .deadline(deadlineTo)
                 .build();
-        when(taskRepository.findByDeadlineBetweenAndStatusAndUserId(
+        when(taskRepository.findByDeadlineBetweenAndStatusAndUserIdOrderByCreatedAtAsc(
                 deadlineFrom,
                 deadlineTo,
                 TaskStatus.PROCESSED,
@@ -204,7 +205,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.PROCESSED)
                 .deadline(deadlineTo)
                 .build();
-        when(taskRepository.findByDeadlineLessThanEqualAndStatusAndUserId(
+        when(taskRepository.findByDeadlineLessThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(
                 deadlineTo,
                 TaskStatus.PROCESSED,
                 user.getId(),
@@ -239,7 +240,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.PROCESSED)
                 .deadline(deadlineFrom)
                 .build();
-        when(taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserId(
+        when(taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(
                 deadlineFrom,
                 TaskStatus.PROCESSED,
                 user.getId(),
@@ -263,7 +264,7 @@ class DefaultTaskServiceTest {
     void shouldReturnProcessedTasksWithoutDeadlineDate() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
-        when(taskRepository.findByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId(), 0, null))
+        when(taskRepository.findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
 
         Task result = taskService.getProcessedTasks(null, null, user, null).blockFirst();
@@ -295,7 +296,7 @@ class DefaultTaskServiceTest {
     void shouldReturnAllUncompletedTasks() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
-        when(taskRepository.findByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId(), 0, null))
+        when(taskRepository.findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
         Task result = taskService.getUncompletedTasks(user, Pageable.unpaged()).blockFirst();
         assertEquals(task, result);
@@ -306,7 +307,7 @@ class DefaultTaskServiceTest {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId(), pageRequest.getOffset(),
+        when(taskRepository.findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, user.getId(), pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
         Task result = taskService.getUncompletedTasks(user, pageRequest).blockFirst();
@@ -362,6 +363,7 @@ class DefaultTaskServiceTest {
 
         Task expectedResult = new Task(task);
         expectedResult.setId(taskId);
+        expectedResult.setCreatedAt(currentTime);
         expectedResult.setStatus(TaskStatus.UNPROCESSED);
         expectedResult.setTaskListId(null);
 
@@ -383,6 +385,7 @@ class DefaultTaskServiceTest {
                 .userId(2L)
                 .taskListId(3L)
                 .title("Test task")
+                .createdAt(currentTime)
                 .status(TaskStatus.PROCESSED)
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
@@ -390,6 +393,7 @@ class DefaultTaskServiceTest {
 
         Task updatedTask = new Task(task);
         updatedTask.setTitle("Updated test task");
+        updatedTask.setCreatedAt(null);
         updatedTask.setStatus(null);
         updatedTask.setTaskListId(30L);
 
@@ -681,8 +685,6 @@ class DefaultTaskServiceTest {
                 .taskId(task.getId())
                 .updatedAt(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
-
-        currentTime = LocalDateTime.now(ZoneOffset.UTC);
 
         TaskComment expectedResult = new TaskComment(newComment);
         expectedResult.setId(commentId);

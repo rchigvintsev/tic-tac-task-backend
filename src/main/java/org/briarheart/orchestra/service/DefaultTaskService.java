@@ -38,7 +38,7 @@ public class DefaultTaskService implements TaskService {
     @Override
     public Flux<Task> getUnprocessedTasks(User user, Pageable pageable) {
         Assert.notNull(user, "User must not be null");
-        return taskRepository.findByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId(),
+        return taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.UNPROCESSED, user.getId(),
                 Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
@@ -51,7 +51,7 @@ public class DefaultTaskService implements TaskService {
     @Override
     public Flux<Task> getProcessedTasks(User user, Pageable pageable) {
         Assert.notNull(user, "User must not be null");
-        return taskRepository.findByStatusAndUserId(TaskStatus.PROCESSED, user.getId(),
+        return taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(),
                 Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
@@ -82,18 +82,18 @@ public class DefaultTaskService implements TaskService {
     ) {
         Assert.notNull(user, "User must not be null");
         if (deadlineFrom == null && deadlineTo == null) {
-            return taskRepository.findByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId(),
+            return taskRepository.findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(),
                     Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
         if (deadlineFrom == null) {
-            return taskRepository.findByDeadlineLessThanEqualAndStatusAndUserId(deadlineTo, TaskStatus.PROCESSED,
+            return taskRepository.findByDeadlineLessThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(deadlineTo, TaskStatus.PROCESSED,
                     user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
         if (deadlineTo == null) {
-            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserId(deadlineFrom, TaskStatus.PROCESSED,
+            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(deadlineFrom, TaskStatus.PROCESSED,
                     user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
-        return taskRepository.findByDeadlineBetweenAndStatusAndUserId(deadlineFrom, deadlineTo, TaskStatus.PROCESSED,
+        return taskRepository.findByDeadlineBetweenAndStatusAndUserIdOrderByCreatedAtAsc(deadlineFrom, deadlineTo, TaskStatus.PROCESSED,
                 user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
@@ -106,7 +106,7 @@ public class DefaultTaskService implements TaskService {
     @Override
     public Flux<Task> getUncompletedTasks(User user, Pageable pageable) {
         Assert.notNull(user, "User must not be null");
-        return taskRepository.findByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId(),
+        return taskRepository.findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, user.getId(),
                 Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
@@ -123,6 +123,7 @@ public class DefaultTaskService implements TaskService {
             Task newTask = new Task(task);
             newTask.setId(null);
             newTask.setTaskListId(null);
+            newTask.setCreatedAt(getCurrentTime());
             if (newTask.getStatus() == null) {
                 newTask.setStatus(TaskStatus.UNPROCESSED);
             }
@@ -136,6 +137,7 @@ public class DefaultTaskService implements TaskService {
         return findTask(task.getId(), task.getUserId()).flatMap(existingTask -> {
             Task updatedTask = new Task(task);
             updatedTask.setTaskListId(existingTask.getTaskListId());
+            updatedTask.setCreatedAt(existingTask.getCreatedAt());
             if (updatedTask.getStatus() == null) {
                 updatedTask.setStatus(existingTask.getStatus());
             }

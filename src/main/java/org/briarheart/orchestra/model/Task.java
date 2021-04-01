@@ -28,6 +28,7 @@ public class Task {
     private String description;
     @Builder.Default
     private TaskStatus status = TaskStatus.UNPROCESSED;
+    private LocalDateTime createdAt;
     @FutureOrPresent
     private LocalDateTime deadline;
     private boolean deadlineTimeExplicitlySet;
@@ -45,6 +46,7 @@ public class Task {
         this.title = other.title;
         this.description = other.description;
         this.status = other.status;
+        this.createdAt = other.createdAt;
         this.deadline = other.deadline;
         this.deadlineTimeExplicitlySet = other.deadlineTimeExplicitlySet;
     }

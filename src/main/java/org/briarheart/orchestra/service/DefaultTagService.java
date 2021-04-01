@@ -79,7 +79,7 @@ public class DefaultTagService implements TagService {
         return getTag(tagId, user).flatMapMany(tag -> {
             long offset = Pageables.getOffset(pageable);
             Integer limit = Pageables.getLimit(pageable);
-            return taskRepository.findByStatusNotAndTagId(TaskStatus.COMPLETED, tagId, offset, limit);
+            return taskRepository.findByStatusNotAndTagIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, tagId, offset, limit);
         });
     }
 

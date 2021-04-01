@@ -129,7 +129,7 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
         when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
-        when(taskRepository.findByTaskListIdAndUserId(taskList.getId(), user.getId(), 0, null))
+        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(taskList.getId(), user.getId(), 0, null))
                 .thenReturn(Flux.empty());
 
         TaskList completedTaskList = new TaskList(taskList);
@@ -147,7 +147,7 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
         when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
-        when(taskRepository.findByTaskListIdAndUserId(taskList.getId(), user.getId(), 0, null))
+        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(taskList.getId(), user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
@@ -182,7 +182,7 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
         when(taskListRepository.delete(taskList)).thenReturn(Mono.just(true).then());
-        when(taskRepository.findByTaskListIdAndUserId(taskList.getId(), user.getId(), 0, null))
+        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(taskList.getId(), user.getId(), 0, null))
                 .thenReturn(Flux.empty());
 
         taskListService.deleteTaskList(taskList.getId(), user).block();
@@ -197,7 +197,7 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
         when(taskListRepository.delete(taskList)).thenReturn(Mono.just(true).then());
-        when(taskRepository.findByTaskListIdAndUserId(taskList.getId(), user.getId(), 0, null))
+        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(taskList.getId(), user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
         when(taskRepository.delete(task)).thenReturn(Mono.empty());
 
@@ -230,7 +230,7 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(task.getTaskListId(), user.getId())).thenReturn(Mono.just(taskList));
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByTaskListIdAndUserId(task.getTaskListId(), user.getId(), pageRequest.getOffset(),
+        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(task.getTaskListId(), user.getId(), pageRequest.getOffset(),
                 pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
         Task result = taskListService.getTasks(taskList.getId(), user, pageRequest).blockFirst();

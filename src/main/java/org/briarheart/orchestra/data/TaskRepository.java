@@ -16,52 +16,59 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
     @Query("SELECT * FROM task WHERE id = :id AND user_id = :userId")
     Mono<Task> findByIdAndUserId(Long id, Long userId);
 
-    @Query("SELECT * FROM task WHERE status = :status AND user_id = :userId LIMIT :limit OFFSET :offset")
-    Flux<Task> findByStatusAndUserId(TaskStatus status, Long userId, long offset, Integer limit);
+    @Query("SELECT * FROM task WHERE status = :status AND user_id = :userId ORDER BY created_at ASC LIMIT :limit "
+            + "OFFSET :offset")
+    Flux<Task> findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus status, Long userId, long offset, Integer limit);
 
-    @Query("SELECT * FROM task WHERE status <> :status AND user_id = :userId LIMIT :limit OFFSET :offset")
-    Flux<Task> findByStatusNotAndUserId(TaskStatus status, Long userId, long offset, Integer limit);
+    @Query("SELECT * FROM task WHERE status <> :status AND user_id = :userId ORDER BY created_at ASC LIMIT :limit "
+            + "OFFSET :offset")
+    Flux<Task> findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus status, Long userId, long offset, Integer limit);
 
     @Query("SELECT * FROM task WHERE status <> :status AND id IN (SELECT task_id FROM tasks_tags WHERE tag_id = :tagId)"
-            + " LIMIT :limit OFFSET :offset")
-    Flux<Task> findByStatusNotAndTagId(TaskStatus status, Long tagId, long offset, Integer limit);
+            + " ORDER BY created_at ASC LIMIT :limit OFFSET :offset")
+    Flux<Task> findByStatusNotAndTagIdOrderByCreatedAtAsc(TaskStatus status, Long tagId, long offset, Integer limit);
 
-    @Query("SELECT * FROM task WHERE task_list_id = :taskListId AND user_id = :userId LIMIT :limit OFFSET :offset")
-    Flux<Task> findByTaskListIdAndUserId(Long taskListId, Long userId, long offset, Integer limit);
+    @Query("SELECT * FROM task WHERE task_list_id = :taskListId AND user_id = :userId ORDER BY created_at ASC "
+            + "LIMIT :limit OFFSET :offset")
+    Flux<Task> findByTaskListIdAndUserIdOrderByCreatedAtAsc(Long taskListId, Long userId, long offset, Integer limit);
 
     @Query("SELECT * FROM task WHERE deadline IS NULL AND status = :status AND user_id = :userId "
-            + "LIMIT :limit OFFSET :offset")
-    Flux<Task> findByDeadlineIsNullAndStatusAndUserId(TaskStatus status, Long userId, long offset, Integer limit);
+            + "ORDER BY created_at ASC LIMIT :limit OFFSET :offset")
+    Flux<Task> findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus status,
+                                                                         Long userId,
+                                                                         long offset,
+                                                                         Integer limit);
 
     @Query("SELECT * FROM task WHERE deadline <= :deadline AND status = :status AND user_id = :userId "
-            + "LIMIT :limit OFFSET :offset")
-    Flux<Task> findByDeadlineLessThanEqualAndStatusAndUserId(LocalDateTime deadline,
-                                                             TaskStatus status,
-                                                             Long userId,
-                                                             long offset,
-                                                             Integer limit);
+            + "ORDER BY created_at ASC LIMIT :limit OFFSET :offset")
+    Flux<Task> findByDeadlineLessThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(LocalDateTime deadline,
+                                                                                TaskStatus status,
+                                                                                Long userId,
+                                                                                long offset,
+                                                                                Integer limit);
 
 
     @Query("SELECT * FROM task WHERE deadline >= :deadline AND status = :status AND user_id = :userId "
-            + "LIMIT :limit OFFSET :offset")
-    Flux<Task> findByDeadlineGreaterThanEqualAndStatusAndUserId(LocalDateTime deadline,
-                                                                TaskStatus status,
-                                                                Long userId,
-                                                                long offset,
-                                                                Integer limit);
+            + "ORDER BY created_at ASC LIMIT :limit OFFSET :offset")
+    Flux<Task> findByDeadlineGreaterThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(LocalDateTime deadline,
+                                                                                   TaskStatus status,
+                                                                                   Long userId,
+                                                                                   long offset,
+                                                                                   Integer limit);
 
     @Query("SELECT * "
             + "FROM task "
             + "WHERE (deadline BETWEEN :deadlineFrom AND :deadlineTo) "
             + "AND status = :status "
             + "AND user_id = :userId "
+            + "ORDER BY created_at ASC "
             + "LIMIT :limit OFFSET :offset")
-    Flux<Task> findByDeadlineBetweenAndStatusAndUserId(LocalDateTime deadlineFrom,
-                                                       LocalDateTime deadlineTo,
-                                                       TaskStatus status,
-                                                       Long userId,
-                                                       long offset,
-                                                       Integer limit);
+    Flux<Task> findByDeadlineBetweenAndStatusAndUserIdOrderByCreatedAtAsc(LocalDateTime deadlineFrom,
+                                                                          LocalDateTime deadlineTo,
+                                                                          TaskStatus status,
+                                                                          Long userId,
+                                                                          long offset,
+                                                                          Integer limit);
 
     @Query("SELECT COUNT(*) FROM task WHERE status = :status AND user_id = :userId")
     Mono<Long> countAllByStatusAndUserId(TaskStatus status, Long userId);

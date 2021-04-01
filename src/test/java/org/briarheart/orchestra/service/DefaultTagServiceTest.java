@@ -197,7 +197,7 @@ class DefaultTagServiceTest {
         Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
 
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
-        when(taskRepository.findByStatusNotAndTagId(TaskStatus.COMPLETED, tag.getId(), 0, null))
+        when(taskRepository.findByStatusNotAndTagIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, tag.getId(), 0, null))
                 .thenReturn(Flux.just(task));
 
         Task result = tagService.getUncompletedTasks(tag.getId(), user, Pageable.unpaged()).blockFirst();
