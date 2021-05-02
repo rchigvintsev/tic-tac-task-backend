@@ -46,7 +46,7 @@ class UserControllerTest {
         when(userService.createUser(any(User.class), eq(Locale.ENGLISH))).thenReturn(Mono.just(user));
 
         testClient.mutateWith(csrf())
-                .post().uri("/users")
+                .post().uri("/v1/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Accept-Language", "en")
                 .bodyValue(user)
@@ -63,7 +63,7 @@ class UserControllerTest {
         when(emailConfirmationService.confirmEmail(userId, token)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf())
-                .post().uri("/users/" + userId + "/email/confirmation/" + token)
+                .post().uri("/v1/users/" + userId + "/email/confirmation/" + token)
                 .exchange()
 
                 .expectStatus().isOk();
@@ -76,7 +76,7 @@ class UserControllerTest {
         when(userService.resetPassword(email, Locale.ENGLISH)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf())
-                .post().uri("/users/password/reset")
+                .post().uri("/v1/users/password/reset")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue("email=" + email)
                 .header("Accept-Language", "en")
@@ -89,7 +89,7 @@ class UserControllerTest {
     @Test
     void shouldReturnBadRequestStatusCodeOnPasswordResetWhenEmailFormParameterIsNotProvided() {
         testClient.mutateWith(csrf())
-                .post().uri("/users/password/reset")
+                .post().uri("/v1/users/password/reset")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .header("Accept-Language", "en")
                 .exchange()
@@ -105,7 +105,7 @@ class UserControllerTest {
         when(passwordService.confirmPasswordReset(userId, token, newPassword)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf())
-                .post().uri("/users/" + userId + "/password/reset/confirmation/" + token)
+                .post().uri("/v1/users/" + userId + "/password/reset/confirmation/" + token)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue("password=" + newPassword)
                 .exchange()

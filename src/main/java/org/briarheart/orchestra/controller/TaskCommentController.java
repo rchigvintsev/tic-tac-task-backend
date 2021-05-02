@@ -16,7 +16,7 @@ import javax.validation.Valid;
  * @author Roman Chigvintsev
  */
 @RestController
-@RequestMapping("/task-comments")
+@RequestMapping("/v1/task-comments")
 @RequiredArgsConstructor
 public class TaskCommentController extends AbstractController {
     private final TaskCommentService taskCommentService;

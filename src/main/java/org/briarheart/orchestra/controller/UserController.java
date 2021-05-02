@@ -19,7 +19,7 @@ import java.util.Locale;
  * @author Roman Chigvintsev
  */
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/v1/users")
 @RequiredArgsConstructor
 public class UserController {
     @NonNull

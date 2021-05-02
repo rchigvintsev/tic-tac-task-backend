@@ -35,7 +35,7 @@ class TaskControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);
 
-        ResponseEntity<Task[]> response = restTemplate.exchange("http://localhost:{port}/tasks/unprocessed",
+        ResponseEntity<Task[]> response = restTemplate.exchange("http://localhost:{port}/v1/tasks/unprocessed",
                 HttpMethod.GET, new HttpEntity<>(headers), Task[].class, port);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -49,7 +49,7 @@ class TaskControllerIntegrationTest {
         addCookieHeader(headers);
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        ResponseEntity<Void> response = restTemplate.exchange("http://localhost:{port}/tasks/{taskId}/tags/{tagId}",
+        ResponseEntity<Void> response = restTemplate.exchange("http://localhost:{port}/v1/tasks/{taskId}/tags/{tagId}",
                 HttpMethod.PUT, new HttpEntity<>(headers), Void.class, port, 1, 1);
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
     }

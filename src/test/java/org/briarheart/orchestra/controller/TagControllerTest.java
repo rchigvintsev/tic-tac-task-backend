@@ -63,7 +63,7 @@ class TagControllerTest {
         when(tagService.getTags(user)).thenReturn(Flux.just(tag));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/tags")
+                .get().uri("/v1/tags")
                 .exchange()
 
                 .expectStatus().isOk()
@@ -79,7 +79,7 @@ class TagControllerTest {
         when(tagService.getTag(tag.getId(), user)).thenReturn(Mono.just(tag));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/tags/" + tag.getId())
+                .get().uri("/v1/tags/" + tag.getId())
                 .exchange()
 
                 .expectStatus().isOk()
@@ -95,7 +95,7 @@ class TagControllerTest {
         when(tagService.getTag(anyLong(), eq(user))).thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/tags/2")
+                .get().uri("/v1/tags/2")
                 .exchange()
 
                 .expectStatus().isNotFound()
@@ -115,7 +115,7 @@ class TagControllerTest {
         when(tagService.getUncompletedTasks(eq(tagId), eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/tags/" + tagId + "/tasks/uncompleted")
+                .get().uri("/v1/tags/" + tagId + "/tasks/uncompleted")
                 .exchange()
 
                 .expectStatus().isOk()
@@ -142,13 +142,13 @@ class TagControllerTest {
         expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .post().uri("/tags")
+                .post().uri("/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(tag)
                 .exchange()
 
                 .expectStatus().isCreated()
-                .expectHeader().valueEquals("Location", "/tags/" + tagId)
+                .expectHeader().valueEquals("Location", "/v1/tags/" + tagId)
                 .expectBody(Tag.class).isEqualTo(expectedResult);
     }
 
@@ -160,7 +160,7 @@ class TagControllerTest {
         Tag tag = Tag.builder().build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .post().uri("/tags")
+                .post().uri("/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(tag)
                 .exchange()
@@ -179,7 +179,7 @@ class TagControllerTest {
         Tag tag = Tag.builder().name(" ").build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .post().uri("/tags")
+                .post().uri("/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(tag)
                 .exchange()
@@ -198,7 +198,7 @@ class TagControllerTest {
         Tag tag = Tag.builder().name("L" + "o".repeat(43) + "ng name").build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .post().uri("/tags")
+                .post().uri("/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(tag)
                 .exchange()
@@ -221,7 +221,7 @@ class TagControllerTest {
         Tag tag = Tag.builder().name("New tag").build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .post().uri("/tags")
+                .post().uri("/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(tag)
                 .exchange()
@@ -247,7 +247,7 @@ class TagControllerTest {
         expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .put().uri("/tags/" + tagId)
+                .put().uri("/v1/tags/" + tagId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(tag)
                 .exchange()
@@ -266,7 +266,7 @@ class TagControllerTest {
         when(tagService.deleteTag(tagId, user)).thenReturn(Mono.empty());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .delete().uri("/tags/" + tagId)
+                .delete().uri("/v1/tags/" + tagId)
                 .exchange()
 
                 .expectStatus().isNoContent();

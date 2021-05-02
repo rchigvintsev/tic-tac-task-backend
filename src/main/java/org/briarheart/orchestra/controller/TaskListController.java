@@ -23,7 +23,7 @@ import java.net.URI;
  * @author Roman Chigvintsev
  */
 @RestController
-@RequestMapping("/task-lists")
+@RequestMapping("/v1/task-lists")
 @RequiredArgsConstructor
 public class TaskListController extends AbstractController {
     private final TaskListService taskListService;

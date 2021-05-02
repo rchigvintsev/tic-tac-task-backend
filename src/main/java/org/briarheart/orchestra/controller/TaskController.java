@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
  * @author Roman Chigvintsev
  */
 @RestController
-@RequestMapping("/tasks")
+@RequestMapping("/v1/tasks")
 @RequiredArgsConstructor
 public class TaskController extends AbstractController {
     private final TaskService taskService;

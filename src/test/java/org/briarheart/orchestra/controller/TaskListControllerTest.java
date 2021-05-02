@@ -64,7 +64,7 @@ class TaskListControllerTest {
         when(taskListService.getUncompletedTaskLists(user)).thenReturn(Flux.just(taskList));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/task-lists/uncompleted")
+                .get().uri("/v1/task-lists/uncompleted")
                 .exchange()
 
                 .expectStatus().isOk()
@@ -80,7 +80,7 @@ class TaskListControllerTest {
         when(taskListService.getTaskList(taskList.getId(), user)).thenReturn(Mono.just(taskList));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/task-lists/" + taskList.getId())
+                .get().uri("/v1//task-lists/" + taskList.getId())
                 .exchange()
 
                 .expectStatus().isOk()
@@ -97,7 +97,7 @@ class TaskListControllerTest {
                 .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/task-lists/2")
+                .get().uri("/v1/task-lists/2")
                 .exchange()
 
                 .expectStatus().isNotFound()
@@ -124,13 +124,13 @@ class TaskListControllerTest {
         expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .post().uri("/task-lists")
+                .post().uri("/v1/task-lists")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTaskList)
                 .exchange()
 
                 .expectStatus().isCreated()
-                .expectHeader().valueEquals("Location", "/task-lists/" + taskListId)
+                .expectHeader().valueEquals("Location", "/v1/task-lists/" + taskListId)
                 .expectBody(TaskList.class).isEqualTo(expectedResult);
     }
 
@@ -142,7 +142,7 @@ class TaskListControllerTest {
         TaskList newTaskList = TaskList.builder().build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .post().uri("/task-lists")
+                .post().uri("/v1/task-lists")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(newTaskList)
                 .exchange()
@@ -161,7 +161,7 @@ class TaskListControllerTest {
         TaskList taskList = TaskList.builder().name(" ").build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .post().uri("/task-lists")
+                .post().uri("/v1/task-lists")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(taskList)
                 .exchange()
@@ -188,7 +188,7 @@ class TaskListControllerTest {
         expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .put().uri("/task-lists/" + taskListId)
+                .put().uri("/v1/task-lists/" + taskListId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(taskList)
                 .exchange()
@@ -206,7 +206,7 @@ class TaskListControllerTest {
         when(taskListService.completeTaskList(taskListId, user)).thenReturn(Mono.empty());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .put().uri("/task-lists/completed/" + taskListId)
+                .put().uri("/v1/task-lists/completed/" + taskListId)
                 .exchange()
 
                 .expectStatus().isNoContent();
@@ -222,7 +222,7 @@ class TaskListControllerTest {
         when(taskListService.deleteTaskList(taskListId, user)).thenReturn(Mono.empty());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf()).delete()
-                .uri("/task-lists/" + taskListId).exchange()
+                .uri("/v1/task-lists/" + taskListId).exchange()
                 .expectStatus().isNoContent();
         verify(taskListService, times(1)).deleteTaskList(taskListId, user);
     }
@@ -237,7 +237,7 @@ class TaskListControllerTest {
                 .thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/task-lists/" + task.getTaskListId() + "/tasks")
+                .get().uri("/v1/task-lists/" + task.getTaskListId() + "/tasks")
                 .exchange()
 
                 .expectStatus().isOk()
@@ -254,7 +254,7 @@ class TaskListControllerTest {
         when(taskListService.addTask(taskListId, taskId, user)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .put().uri("/task-lists/" + taskListId + "/tasks/" + taskId)
+                .put().uri("/v1/task-lists/" + taskListId + "/tasks/" + taskId)
                 .exchange()
 
                 .expectStatus().isNoContent();
@@ -270,7 +270,7 @@ class TaskListControllerTest {
         when(taskListService.removeTask(taskListId, taskId, user)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .delete().uri("/task-lists/" + taskListId + "/tasks/" + taskId)
+                .delete().uri("/v1/task-lists/" + taskListId + "/tasks/" + taskId)
                 .exchange()
 
                 .expectStatus().isNoContent();
