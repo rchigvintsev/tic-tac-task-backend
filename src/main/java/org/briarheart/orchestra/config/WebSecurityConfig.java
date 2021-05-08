@@ -7,6 +7,7 @@ import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.security.oauth2.client.endpoint.ReactiveAccessTokenTypeWebClientFilter;
 import org.briarheart.orchestra.security.oauth2.client.userinfo.*;
 import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
+import org.briarheart.orchestra.security.oauth2.client.web.server.CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter;
 import org.briarheart.orchestra.security.oauth2.core.userdetails.DatabaseReactiveUserDetailsService;
 import org.briarheart.orchestra.security.web.server.authentication.*;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
@@ -38,7 +39,6 @@ import org.springframework.security.oauth2.client.userinfo.DefaultReactiveOAuth2
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
-import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizationCodeAuthenticationTokenConverter;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -120,8 +120,8 @@ public class WebSecurityConfig {
             ReactiveClientRegistrationRepository clientRegistrationRepository,
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository
     ) {
-        ServerOAuth2AuthorizationCodeAuthenticationTokenConverter converter
-                = new ServerOAuth2AuthorizationCodeAuthenticationTokenConverter(clientRegistrationRepository);
+        CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter converter;
+        converter = new CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter(clientRegistrationRepository);
         converter.setAuthorizationRequestRepository(authorizationRequestRepository);
         return converter;
     }

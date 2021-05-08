@@ -25,7 +25,7 @@ class DefaultOAuth2AuthorizationResponseConverterTest {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add(OAuth2ParameterNames.CODE, "12345");
         params.add(OAuth2ParameterNames.STATE, "abc");
-        OAuth2AuthorizationResponse response = converter.convert(params, "https://test.com");
+        OAuth2AuthorizationResponse response = converter.convert(params, "https://client.com/authorization/callback");
         assertNotNull(response);
         assertTrue(response.statusOk());
     }
@@ -36,7 +36,7 @@ class DefaultOAuth2AuthorizationResponseConverterTest {
         params.add(OAuth2ParameterNames.STATE, "abc");
         params.add(OAuth2ParameterNames.ERROR, "1024");
         params.add(OAuth2ParameterNames.ERROR_DESCRIPTION, "Something went wrong");
-        OAuth2AuthorizationResponse response = converter.convert(params, "https://test.com");
+        OAuth2AuthorizationResponse response = converter.convert(params, "https://client.com/authorization/callback");
         assertNotNull(response);
         assertTrue(response.statusError());
     }
@@ -44,7 +44,7 @@ class DefaultOAuth2AuthorizationResponseConverterTest {
     @Test
     void shouldThrowExceptionOnConvertWhenRequestParametersAreNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> converter.convert(null, "https://test.com"));
+                () -> converter.convert(null, "https://client.com/authorization/callback"));
         assertEquals("Request parameters must not be null", e.getMessage());
     }
 }

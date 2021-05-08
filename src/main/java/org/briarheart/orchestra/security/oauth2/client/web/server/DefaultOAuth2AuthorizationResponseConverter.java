@@ -7,7 +7,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /**
- * Default implementation of {@link OAuth2AuthorizationResponseConverter} for Authorization Code Flow.
+ * Default implementation of {@link OAuth2AuthorizationResponseConverter} for the authorization code grant type.
  *
  * @author Roman Chigvintsev
  */
