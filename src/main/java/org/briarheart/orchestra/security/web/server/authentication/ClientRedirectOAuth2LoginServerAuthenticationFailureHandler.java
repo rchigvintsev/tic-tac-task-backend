@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.security.web.server.authentication;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -23,6 +24,7 @@ import java.util.Collections;
  *
  * @author Roman Chigvintsev
  */
+@Slf4j
 public class ClientRedirectOAuth2LoginServerAuthenticationFailureHandler
         extends AbstractClientRedirectOAuth2LoginServerAuthenticationHandler
         implements ServerAuthenticationFailureHandler {
@@ -34,6 +36,7 @@ public class ClientRedirectOAuth2LoginServerAuthenticationFailureHandler
 
     @Override
     public Mono<Void> onAuthenticationFailure(WebFilterExchange webFilterExchange, AuthenticationException exception) {
+        log.debug(exception.getMessage(), exception);
         ServerWebExchange serverExchange = webFilterExchange.getExchange();
         return determineRedirectLocation(serverExchange)
                 .map(location -> {

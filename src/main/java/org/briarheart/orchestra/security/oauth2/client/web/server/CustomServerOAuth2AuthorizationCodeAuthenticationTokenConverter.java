@@ -43,11 +43,6 @@ public class CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter
             = new DefaultOAuth2AuthorizationResponseConverter();
 
     public CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter(
-            ReactiveClientRegistrationRepository clientRegistrationRepository) {
-        this(clientRegistrationRepository, Map.of());
-    }
-
-    public CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter(
             ReactiveClientRegistrationRepository clientRegistrationRepository,
             Map<String, OAuth2AuthorizationResponseConverter> authorizationResponseConverters
     ) {

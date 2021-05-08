@@ -8,6 +8,8 @@ import org.briarheart.orchestra.security.oauth2.client.endpoint.ReactiveAccessTo
 import org.briarheart.orchestra.security.oauth2.client.userinfo.*;
 import org.briarheart.orchestra.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
 import org.briarheart.orchestra.security.oauth2.client.web.server.CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter;
+import org.briarheart.orchestra.security.oauth2.client.web.server.FacebookOAuth2AuthorizationResponseConverter;
+import org.briarheart.orchestra.security.oauth2.client.web.server.OAuth2AuthorizationResponseConverter;
 import org.briarheart.orchestra.security.oauth2.core.userdetails.DatabaseReactiveUserDetailsService;
 import org.briarheart.orchestra.security.web.server.authentication.*;
 import org.briarheart.orchestra.security.web.server.authentication.accesstoken.AccessTokenService;
@@ -61,6 +63,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static org.briarheart.orchestra.security.authorization.UnauthenticatedReactiveAuthorizationManager.unauthenticated;
 import static org.briarheart.orchestra.security.web.server.authentication.ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler.DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME;
@@ -120,8 +123,14 @@ public class WebSecurityConfig {
             ReactiveClientRegistrationRepository clientRegistrationRepository,
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository
     ) {
+        Map<String, OAuth2AuthorizationResponseConverter> authResponseConverters = Map.of(
+                "facebook", new FacebookOAuth2AuthorizationResponseConverter()
+        );
         CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter converter;
-        converter = new CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter(clientRegistrationRepository);
+        converter = new CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter(
+                clientRegistrationRepository,
+                authResponseConverters
+        );
         converter.setAuthorizationRequestRepository(authorizationRequestRepository);
         return converter;
     }
