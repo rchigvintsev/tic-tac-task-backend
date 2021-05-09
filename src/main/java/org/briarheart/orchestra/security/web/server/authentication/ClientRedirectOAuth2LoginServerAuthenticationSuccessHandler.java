@@ -41,11 +41,12 @@ public class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler
 
     public ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler(
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
+            String clientRedirectUriTemplate,
             UserRepository userRepository,
             AccessTokenService accessTokenService,
             ObjectMapper objectMapper
     ) {
-        super(authorizationRequestRepository);
+        super(authorizationRequestRepository, clientRedirectUriTemplate);
         this.userRepository = userRepository;
         this.accessTokenService = accessTokenService;
         this.objectMapper = objectMapper;

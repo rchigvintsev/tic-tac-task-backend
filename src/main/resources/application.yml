@@ -20,23 +20,26 @@ spring:
             client-id: ${SECURITY_OAUTH2_GITHUB_CLIENT_ID}
             client-secret: ${SECURITY_OAUTH2_GITHUB_CLIENT_SECRET}
           vk:
-            clientName: VK
+            client-name: VK
             client-id: ${SECURITY_OAUTH2_VK_CLIENT_ID}
             client-secret: ${SECURITY_OAUTH2_VK_CLIENT_SECRET}
-            authorizationGrantType: authorization_code
-            clientAuthenticationMethod: post
+            authorization-grant-type: authorization_code
+            client-authentication-method: post
             scope: email
-            redirectUri: '{baseUrl}/{action}/oauth2/code/{registrationId}'
+            redirect-uri: '{baseUrl}/{action}/oauth2/code/{registrationId}'
         provider:
           vk:
-            authorizationUri: https://oauth.vk.com/authorize
-            tokenUri: https://oauth.vk.com/access_token
-            userInfoUri: https://api.vk.com/method/users.get
-            userNameAttribute: id
+            authorization-uri: https://oauth.vk.com/authorize
+            token-uri: https://oauth.vk.com/access_token
+            user-info-uri: https://api.vk.com/method/users.get
+            user-name-attribute: id
+
+        redirect-uri-template: 'http://localhost:4200/{[a-z]{2}}/oauth2/authorization/callback'
+
 
   jackson.visibility:
     getter: none
-    isGetter: none
+    is-getter: none
     setter: none
     field: any
 

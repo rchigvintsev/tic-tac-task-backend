@@ -35,6 +35,8 @@ import static org.mockito.Mockito.*;
  * @author Roman Chigvintsev
  */
 class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
+    private static final String CLIENT_REDIRECT_URI = "https://callback.me";
+
     private ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepositoryMock;
     private UserRepository userRepositoryMock;
     private AccessTokenService accessTokenServiceMock;
@@ -53,16 +55,15 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
         objectMapperMock = spy(ObjectMapper.class);
 
         handler = new ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler(authorizationRequestRepositoryMock,
-                userRepositoryMock, accessTokenServiceMock, objectMapperMock);
+                CLIENT_REDIRECT_URI, userRepositoryMock, accessTokenServiceMock, objectMapperMock);
         handler.setClientRedirectUriParameterName(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME);
     }
 
     @Test
     void shouldRedirectToUriSpecifiedByClient() {
-        final String CLIENT_REDIRECT_URI = "http://callback.me";
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .clientId("test-client")
-                .authorizationUri("http://authorize.me")
+                .authorizationUri("https://authorize.me")
                 .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, CLIENT_REDIRECT_URI))
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
@@ -82,8 +83,8 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
     void shouldCreateAccessToken() {
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .clientId("test-client")
-                .authorizationUri("http://authorize.me")
-                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, "http://callback.me"))
+                .authorizationUri("https://authorize.me")
+                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, CLIENT_REDIRECT_URI))
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
@@ -104,8 +105,8 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
     void shouldIncludeAccessTokenClaimsInRedirectUri() {
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .clientId("test-client")
-                .authorizationUri("http://authorize.me")
-                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, "http://callback.me"))
+                .authorizationUri("https://authorize.me")
+                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, CLIENT_REDIRECT_URI))
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
@@ -134,7 +135,7 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
     void shouldThrowExceptionWhenClientRedirectUriIsNotDetermined() {
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .clientId("test-client")
-                .authorizationUri("http://authorize.me")
+                .authorizationUri("https://authorize.me")
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
@@ -151,8 +152,8 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
     void shouldThrowExceptionWhenUserIsNotFound() {
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .clientId("test-client")
-                .authorizationUri("http://authorize.me")
-                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, "http://callback.me"))
+                .authorizationUri("https://authorize.me")
+                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, CLIENT_REDIRECT_URI))
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
@@ -170,8 +171,8 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
     void shouldThrowExceptionWhenClaimsCouldNotBeSerialized() throws JsonProcessingException {
         OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .clientId("test-client")
-                .authorizationUri("http://authorize.me")
-                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, "http://callback.me"))
+                .authorizationUri("https://authorize.me")
+                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, CLIENT_REDIRECT_URI))
                 .build();
         when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
                 .thenReturn(Mono.just(authorizationRequest));
@@ -185,6 +186,25 @@ class ClientRedirectOAuth2LoginServerAuthenticationSuccessHandlerTest {
         OAuth2AuthenticationException e = assertThrows(OAuth2AuthenticationException.class, () ->
                 handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block());
         assertEquals("Failed to serialize access token claims", e.getError().getDescription());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenClientRedirectUriIsNotValid() {
+        String clientRedirectUri = "https://invalid.uri";
+        OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode()
+                .clientId("test-client")
+                .authorizationUri("https://authorize.me")
+                .additionalParameters(Map.of(DEFAULT_CLIENT_REDIRECT_URI_PARAMETER_NAME, clientRedirectUri))
+                .build();
+        when(authorizationRequestRepositoryMock.loadAuthorizationRequest(any()))
+                .thenReturn(Mono.just(authorizationRequest));
+
+        WebFilterExchange webFilterExchangeMock = mockWebFilterExchange();
+        Authentication authenticationMock = mock(Authentication.class);
+
+        OAuth2AuthenticationException e = assertThrows(OAuth2AuthenticationException.class, () ->
+                handler.onAuthenticationSuccess(webFilterExchangeMock, authenticationMock).block());
+        assertEquals("Redirect to \"" + clientRedirectUri + "\" is not allowed", e.getMessage());
     }
 
     private WebFilterExchange mockWebFilterExchange() {

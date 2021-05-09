@@ -14,7 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.Collections;
+import java.util.Map;
 
 /**
  * This handler appends query parameter &quot;error&quot; with value &quot;true&quot; to the client specified redirect
@@ -29,9 +29,10 @@ public class ClientRedirectOAuth2LoginServerAuthenticationFailureHandler
         extends AbstractClientRedirectOAuth2LoginServerAuthenticationHandler
         implements ServerAuthenticationFailureHandler {
     public ClientRedirectOAuth2LoginServerAuthenticationFailureHandler(
-            ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository
+            ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
+            String clientRedirectUriTemplate
     ) {
-        super(authorizationRequestRepository);
+        super(authorizationRequestRepository, clientRedirectUriTemplate);
     }
 
     @Override
@@ -47,9 +48,7 @@ public class ClientRedirectOAuth2LoginServerAuthenticationFailureHandler
                             return URI.create(location);
                         }
                     }
-                    return UriComponentsBuilder.fromUriString(location)
-                            .queryParam("error", "true")
-                            .build(Collections.emptyMap());
+                    return UriComponentsBuilder.fromUriString(location).queryParam("error", "true").build(Map.of());
                 })
                 .flatMap(location -> getRedirectStrategy().sendRedirect(serverExchange, location));
     }

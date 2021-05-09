@@ -17,6 +17,7 @@ import org.briarheart.orchestra.security.web.server.authentication.accesstoken.S
 import org.briarheart.orchestra.security.web.server.authentication.jwt.CookieJwtRepository;
 import org.briarheart.orchestra.security.web.server.authentication.jwt.JwtService;
 import org.briarheart.orchestra.security.web.server.authentication.logout.AccessTokenLogoutHandler;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesRegistrationAdapter;
 import org.springframework.context.annotation.Bean;
@@ -76,6 +77,9 @@ import static org.springframework.security.crypto.factory.PasswordEncoderFactori
 @RequiredArgsConstructor
 public class WebSecurityConfig {
     private final ApplicationSecurityProperties securityProperties;
+
+    @Value("${spring.security.oauth2.client.redirect-uri-template}")
+    private String clientRedirectUriTemplate;
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(
@@ -152,7 +156,7 @@ public class WebSecurityConfig {
     ) {
         ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler handler;
         handler = new ClientRedirectOAuth2LoginServerAuthenticationSuccessHandler(authorizationRequestRepository,
-                userRepository, accessTokenService, objectMapper);
+                clientRedirectUriTemplate, userRepository, accessTokenService, objectMapper);
         handler.setRedirectStrategy(redirectStrategy);
         return handler;
     }
@@ -163,7 +167,8 @@ public class WebSecurityConfig {
             ServerRedirectStrategy redirectStrategy
     ) {
         ClientRedirectOAuth2LoginServerAuthenticationFailureHandler handler;
-        handler = new ClientRedirectOAuth2LoginServerAuthenticationFailureHandler(authorizationRequestRepository);
+        handler = new ClientRedirectOAuth2LoginServerAuthenticationFailureHandler(authorizationRequestRepository,
+                clientRedirectUriTemplate);
         handler.setRedirectStrategy(redirectStrategy);
         return handler;
     }
