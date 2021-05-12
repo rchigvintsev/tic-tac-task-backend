@@ -1,8 +1,7 @@
 package org.briarheart.orchestra.service;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.config.ApplicationInfoProperties;
 import org.briarheart.orchestra.data.EmailConfirmationTokenRepository;
 import org.briarheart.orchestra.data.EntityNotFoundException;
@@ -31,23 +30,36 @@ import java.util.UUID;
  * @author Roman Chigvintsev
  */
 @Component
-@RequiredArgsConstructor
+@Slf4j
 public class DefaultEmailConfirmationService implements EmailConfirmationService {
     private static final Duration DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT = Duration.of(24, ChronoUnit.HOURS);
 
-    @NonNull
     private final EmailConfirmationTokenRepository tokenRepository;
-    @NonNull
     private final UserRepository userRepository;
-    @NonNull
     private final ApplicationInfoProperties applicationInfo;
-    @NonNull
     private final MessageSourceAccessor messages;
-    @NonNull
     private final JavaMailSender mailSender;
 
     @Setter
     private Duration emailConfirmationTokenExpirationTimeout = DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT;
+
+    public DefaultEmailConfirmationService(EmailConfirmationTokenRepository tokenRepository,
+                                           UserRepository userRepository,
+                                           ApplicationInfoProperties applicationInfo,
+                                           MessageSourceAccessor messages,
+                                           JavaMailSender mailSender) {
+        Assert.notNull(tokenRepository, "Token repository must not be null");
+        Assert.notNull(userRepository, "User repository must not be null");
+        Assert.notNull(applicationInfo, "Application info properties must not be null");
+        Assert.notNull(messages, "Message source accessor must not be null");
+        Assert.notNull(mailSender, "Mail sender must not be null");
+
+        this.tokenRepository = tokenRepository;
+        this.userRepository = userRepository;
+        this.applicationInfo = applicationInfo;
+        this.messages = messages;
+        this.mailSender = mailSender;
+    }
 
     @Override
     public Mono<EmailConfirmationToken> sendEmailConfirmationLink(User user, Locale locale)
@@ -73,6 +85,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                     message.setSubject(subject);
                     message.setText(text);
                     mailSender.send(message);
+                    log.debug("Email confirmation link is sent to email {}", user.getEmail());
                     return token;
                 })
                 .onErrorMap(MailException.class, e -> {
@@ -110,7 +123,9 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                     user.setEmailConfirmed(true);
                     user.setEnabled(true);
                     user.setVersion(user.getVersion() + 1);
-                    return userRepository.save(user);
+                    return userRepository.save(user)
+                            .doOnSuccess(u -> log.debug("Email {} is confirmed for user with id {}",
+                                    user.getEmail(), user.getId()));
                 })
                 .then();
     }
@@ -125,6 +140,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                 .createdAt(createdAt)
                 .expiresAt(expiresAt)
                 .build();
-        return tokenRepository.save(token);
+        return tokenRepository.save(token)
+                .doOnSuccess(t -> log.debug("Email confirmation token with id {} is created", t.getId()));
     }
 }

@@ -1,6 +1,6 @@
 package org.briarheart.orchestra.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskCommentRepository;
 import org.briarheart.orchestra.model.TaskComment;
@@ -18,9 +18,14 @@ import java.time.ZoneOffset;
  * @author Roman Chigvintsev
  */
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class DefaultTaskCommentService implements TaskCommentService {
     private final TaskCommentRepository taskCommentRepository;
+
+    public DefaultTaskCommentService(TaskCommentRepository taskCommentRepository) {
+        Assert.notNull(taskCommentRepository, "Task comment repository must not be null");
+        this.taskCommentRepository = taskCommentRepository;
+    }
 
     @Override
     public Mono<TaskComment> updateComment(TaskComment comment) {
@@ -33,14 +38,16 @@ public class DefaultTaskCommentService implements TaskCommentService {
                     newComment.setTaskId(c.getTaskId());
                     newComment.setCreatedAt(c.getCreatedAt());
                     newComment.setUpdatedAt(getCurrentTime());
-                    return taskCommentRepository.save(newComment);
+                    return taskCommentRepository.save(newComment)
+                            .doOnSuccess(result -> log.debug("Task comment with id {} is updated", result.getId()));
                 });
     }
 
     @Override
     public Mono<Void> deleteComment(Long id, User user) {
         Assert.notNull(user, "User must not be null");
-        return taskCommentRepository.deleteByIdAndUserId(id, user.getId());
+        return taskCommentRepository.deleteByIdAndUserId(id, user.getId())
+                .doOnSuccess(v -> log.debug("Task comment with id {} is deleted", id));
     }
 
     protected LocalDateTime getCurrentTime() {

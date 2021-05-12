@@ -1,6 +1,6 @@
 package org.briarheart.orchestra.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TagRepository;
@@ -22,10 +22,18 @@ import reactor.core.publisher.Mono;
  * @author Roman Chigvintsev
  */
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class DefaultTagService implements TagService {
     private final TagRepository tagRepository;
     private final TaskRepository taskRepository;
+
+    public DefaultTagService(TagRepository tagRepository, TaskRepository taskRepository) {
+        Assert.notNull(tagRepository, "Tag repository must not be null");
+        Assert.notNull(taskRepository, "Task repository must not be null");
+
+        this.tagRepository = tagRepository;
+        this.taskRepository = taskRepository;
+    }
 
     @Override
     public Flux<Tag> getTags(User user) {
@@ -50,7 +58,8 @@ public class DefaultTagService implements TagService {
                 .switchIfEmpty(Mono.defer(() -> {
                     Tag newTag = new Tag(tag);
                     newTag.setId(null);
-                    return tagRepository.save(newTag);
+                    return tagRepository.save(newTag)
+                            .doOnSuccess(t -> log.debug("Tag with id {} is created", t.getId()));
                 }));
     }
 
@@ -60,18 +69,23 @@ public class DefaultTagService implements TagService {
         return findTag(tag.getId(), tag.getUserId())
                 .flatMap(t -> {
                     if (!t.getName().equals(tag.getName())) {
+                        // If tag name is changed try to find other tag with the same name in order
+                        // to ensure that tag name is unique in particular user's space.
                         return tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId());
                     }
                     return Mono.empty();
                 }).flatMap(t -> {
                     String message = "Tag with name \"" + tag.getName() + "\" already exists";
                     return Mono.<Tag>error(new EntityAlreadyExistsException(message));
-                }).switchIfEmpty(Mono.defer(() -> tagRepository.save(tag)));
+                }).switchIfEmpty(Mono.defer(() -> tagRepository.save(tag)
+                        .doOnSuccess(t -> log.debug("Tag with id {} is updated", t.getId()))));
     }
 
     @Override
     public Mono<Void> deleteTag(Long id, User user) throws EntityNotFoundException {
-        return getTag(id, user).flatMap(tagRepository::delete);
+        return getTag(id, user)
+                .flatMap(tagRepository::delete)
+                .doOnSuccess(v -> log.debug("Tag with id {} is deleted", id));
     }
 
     @Override

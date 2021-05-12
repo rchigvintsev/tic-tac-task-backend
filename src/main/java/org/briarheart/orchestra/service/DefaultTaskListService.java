@@ -1,6 +1,6 @@
 package org.briarheart.orchestra.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.TaskListRepository;
 import org.briarheart.orchestra.data.TaskRepository;
@@ -21,10 +21,18 @@ import reactor.core.publisher.Mono;
  * @author Roman Chigvintsev
  */
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class DefaultTaskListService implements TaskListService {
     private final TaskListRepository taskListRepository;
     private final TaskRepository taskRepository;
+
+    public DefaultTaskListService(TaskListRepository taskListRepository, TaskRepository taskRepository) {
+        Assert.notNull(taskListRepository, "Task list repository must not be null");
+        Assert.notNull(taskRepository, "Task repository must not be null");
+
+        this.taskListRepository = taskListRepository;
+        this.taskRepository = taskRepository;
+    }
 
     @Override
     public Flux<TaskList> getUncompletedTaskLists(User user) {
@@ -44,7 +52,8 @@ public class DefaultTaskListService implements TaskListService {
         return Mono.defer(() -> {
             TaskList newTaskList = new TaskList(taskList);
             newTaskList.setId(null);
-            return taskListRepository.save(newTaskList);
+            return taskListRepository.save(newTaskList)
+                    .doOnSuccess(l -> log.debug("Task list with id {} is created", l.getId()));
         });
     }
 
@@ -52,7 +61,8 @@ public class DefaultTaskListService implements TaskListService {
     public Mono<TaskList> updateTaskList(TaskList taskList) throws EntityNotFoundException {
         Assert.notNull(taskList, "Task list must not be null");
         return findTaskList(taskList.getId(), taskList.getUserId())
-                .flatMap(existingTaskList -> taskListRepository.save(taskList));
+                .flatMap(existingTaskList -> taskListRepository.save(taskList))
+                .doOnSuccess(l -> log.debug("Task list with id {} is updated", l.getId()));
     }
 
     @Override
@@ -62,13 +72,16 @@ public class DefaultTaskListService implements TaskListService {
                     Flux<Task> taskFlux = taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(id, user.getId(), 0, null);
                     return taskFlux.flatMap(task -> {
                         task.setStatus(TaskStatus.COMPLETED);
-                        return taskRepository.save(task);
+                        return taskRepository.save(task)
+                                .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId()));
                     }).then(Mono.just(true));
                 })
                 .flatMap(taskListAndFlag -> {
                     TaskList taskList = taskListAndFlag.getT1();
                     taskList.setCompleted(true);
-                    return taskListRepository.save(taskList).then();
+                    return taskListRepository.save(taskList)
+                            .doOnSuccess(l -> log.debug("Task list with id {} is completed", id))
+                            .then();
                 });
     }
 
@@ -76,11 +89,13 @@ public class DefaultTaskListService implements TaskListService {
     public Mono<Void> deleteTaskList(Long id, User user) throws EntityNotFoundException {
         return getTaskList(id, user)
                 .zipWhen(taskList -> taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(id, user.getId(), 0, null)
-                        .flatMap(taskRepository::delete)
+                        .flatMap(t -> taskRepository.delete(t)
+                                .doOnSuccess(v -> log.debug("Task with id {} is deleted", t.getId())))
                         .then(Mono.just(true)))
                 .flatMap(taskListAndFlag -> {
                     TaskList taskList = taskListAndFlag.getT1();
-                    return taskListRepository.delete(taskList);
+                    return taskListRepository.delete(taskList)
+                            .doOnSuccess(v -> log.debug("Task list with id {} is deleted", id));
                 });
     }
 
@@ -101,7 +116,9 @@ public class DefaultTaskListService implements TaskListService {
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + taskId + " is not found")))
                 .flatMap(task -> {
                     task.setTaskListId(taskListId);
-                    return taskRepository.save(task);
+                    return taskRepository.save(task)
+                            .doOnSuccess(t -> log.debug("Task with id {} is added to task list with id {}",
+                                    t.getId(), t.getTaskListId()));
                 })
                 .then();
     }
@@ -114,7 +131,9 @@ public class DefaultTaskListService implements TaskListService {
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + taskId + " is not found")))
                 .flatMap(task -> {
                     task.setTaskListId(null);
-                    return taskRepository.save(task);
+                    return taskRepository.save(task)
+                            .doOnSuccess(t -> log.debug("Task with id {} is removed from task list with id {}",
+                                    t.getId(), taskListId));
                 })
                 .then();
     }

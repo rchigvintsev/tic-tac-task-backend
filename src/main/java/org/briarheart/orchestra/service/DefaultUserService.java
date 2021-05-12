@@ -1,8 +1,7 @@
 package org.briarheart.orchestra.service;
 
 import io.jsonwebtoken.lang.Assert;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
@@ -20,18 +19,31 @@ import java.util.Locale;
  * @author Roman Chigvintsev
  */
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class DefaultUserService implements UserService {
-    @NonNull
     private final UserRepository userRepository;
-    @NonNull
     private final EmailConfirmationService emailConfirmationService;
-    @NonNull
     private final PasswordService passwordService;
-    @NonNull
     private final PasswordEncoder passwordEncoder;
-    @NonNull
     private final MessageSourceAccessor messages;
+
+    public DefaultUserService(UserRepository userRepository,
+                              EmailConfirmationService emailConfirmationService,
+                              PasswordService passwordService,
+                              PasswordEncoder passwordEncoder,
+                              MessageSourceAccessor messages) {
+        Assert.notNull(userRepository, "User repository must not be null");
+        Assert.notNull(emailConfirmationService, "Email confirmation service must not be null");
+        Assert.notNull(passwordService, "Password service must not be null");
+        Assert.notNull(passwordEncoder, "Password encoder must not be null");
+        Assert.notNull(messages, "Message source accessor must not be null");
+
+        this.userRepository = userRepository;
+        this.emailConfirmationService = emailConfirmationService;
+        this.passwordService = passwordService;
+        this.passwordEncoder = passwordEncoder;
+        this.messages = messages;
+    }
 
     @Override
     public Mono<User> createUser(User user, Locale locale) throws EntityAlreadyExistsException {
@@ -45,7 +57,8 @@ public class DefaultUserService implements UserService {
                     u.setPassword(encodePassword(user.getPassword()));
                     return userRepository.save(u);
                 })
-                .switchIfEmpty(Mono.defer(() -> createNewUser(user)))
+                .switchIfEmpty(Mono.defer(() -> createNewUser(user)
+                        .doOnSuccess(u -> log.debug("User with id {} is created", u.getId()))))
                 .map(this::clearPassword)
                 .flatMap(u -> emailConfirmationService.sendEmailConfirmationLink(u, locale).map(token -> u));
     }

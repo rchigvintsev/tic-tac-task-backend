@@ -1,8 +1,7 @@
 package org.briarheart.orchestra.service;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.config.ApplicationInfoProperties;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.PasswordResetConfirmationTokenRepository;
@@ -32,25 +31,40 @@ import java.util.UUID;
  * @author Roman Chigvintsev
  */
 @Component
-@RequiredArgsConstructor
+@Slf4j
 public class DefaultPasswordService implements PasswordService {
     private static final Duration DEFAULT_PASSWORD_RESET_TOKEN_EXPIRATION_TIMEOUT = Duration.of(24, ChronoUnit.HOURS);
 
-    @NonNull
     private final PasswordResetConfirmationTokenRepository tokenRepository;
-    @NonNull
     private final UserRepository userRepository;
-    @NonNull
     private final ApplicationInfoProperties applicationInfo;
-    @NonNull
     private final MessageSourceAccessor messages;
-    @NonNull
     private final JavaMailSender mailSender;
-    @NonNull
     private final PasswordEncoder passwordEncoder;
 
     @Setter
     private Duration passwordResetTokenExpirationTimeout = DEFAULT_PASSWORD_RESET_TOKEN_EXPIRATION_TIMEOUT;
+
+    public DefaultPasswordService(PasswordResetConfirmationTokenRepository tokenRepository,
+                                  UserRepository userRepository,
+                                  ApplicationInfoProperties applicationInfo,
+                                  MessageSourceAccessor messages,
+                                  JavaMailSender mailSender,
+                                  PasswordEncoder passwordEncoder) {
+        Assert.notNull(tokenRepository, "Token repository must not be null");
+        Assert.notNull(userRepository, "User repository must not be null");
+        Assert.notNull(applicationInfo, "Application info properties must not be null");
+        Assert.notNull(messages, "Message source accessor must not be null");
+        Assert.notNull(mailSender, "Mail sender must not be null");
+        Assert.notNull(passwordEncoder, "Password encoder must not be null");
+
+        this.tokenRepository = tokenRepository;
+        this.userRepository = userRepository;
+        this.applicationInfo = applicationInfo;
+        this.messages = messages;
+        this.mailSender = mailSender;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public Mono<PasswordResetConfirmationToken> sendPasswordResetLink(User user, Locale locale)
@@ -76,6 +90,7 @@ public class DefaultPasswordService implements PasswordService {
                     message.setSubject(subject);
                     message.setText(text);
                     mailSender.send(message);
+                    log.debug("Password reset confirmation link is sent to email {}", user.getEmail());
                     return token;
                 })
                 .onErrorMap(MailException.class, e -> {
@@ -103,14 +118,16 @@ public class DefaultPasswordService implements PasswordService {
                         + tokenValue + "\" is expired")))
                 .flatMap(token -> {
                     token.setValid(false);
-                    return tokenRepository.save(token);
+                    return tokenRepository.save(token)
+                            .doOnSuccess(t -> log.debug("Token with id {} is marked as invalid", t.getId()));
                 })
                 .flatMap(token -> userRepository.findById(userId))
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
                 .flatMap(user -> {
                     user.setPassword(encodePassword(newPassword));
                     user.setVersion(user.getVersion() + 1);
-                    return userRepository.save(user);
+                    return userRepository.save(user)
+                            .doOnSuccess(u -> log.debug("Password is reset for user with id {}", u.getId()));
                 })
                 .then();
     }
@@ -125,7 +142,8 @@ public class DefaultPasswordService implements PasswordService {
                 .createdAt(createdAt)
                 .expiresAt(expiresAt)
                 .build();
-        return tokenRepository.save(token);
+        return tokenRepository.save(token)
+                .doOnSuccess(t -> log.debug("Password reset confirmation token with id {} is created", t.getId()));
     }
 
     private String encodePassword(String rawPassword) {

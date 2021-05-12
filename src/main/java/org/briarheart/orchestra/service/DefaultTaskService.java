@@ -1,6 +1,6 @@
 package org.briarheart.orchestra.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.*;
 import org.briarheart.orchestra.model.*;
 import org.briarheart.orchestra.util.Pageables;
@@ -22,12 +22,27 @@ import java.util.stream.Collectors;
  * @author Roman Chigvintsev
  */
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class DefaultTaskService implements TaskService {
     private final TaskRepository taskRepository;
     private final TaskTagRelationRepository taskTagRelationRepository;
     private final TagRepository tagRepository;
     private final TaskCommentRepository taskCommentRepository;
+
+    public DefaultTaskService(TaskRepository taskRepository,
+                              TaskTagRelationRepository taskTagRelationRepository,
+                              TagRepository tagRepository,
+                              TaskCommentRepository taskCommentRepository) {
+        Assert.notNull(taskRepository, "Task repository must not be null");
+        Assert.notNull(taskTagRelationRepository, "Task-tag relation repository must not be null");
+        Assert.notNull(tagRepository, "Tag repository must not be null");
+        Assert.notNull(taskCommentRepository, "Task comment repository must not be null");
+
+        this.taskRepository = taskRepository;
+        this.taskTagRelationRepository = taskTagRelationRepository;
+        this.tagRepository = tagRepository;
+        this.taskCommentRepository = taskCommentRepository;
+    }
 
     @Override
     public Mono<Long> getUnprocessedTaskCount(User user) {
@@ -127,7 +142,7 @@ public class DefaultTaskService implements TaskService {
             if (newTask.getStatus() == null) {
                 newTask.setStatus(TaskStatus.UNPROCESSED);
             }
-            return taskRepository.save(newTask);
+            return taskRepository.save(newTask).doOnSuccess(t -> log.debug("Task with id {} is created", t.getId()));
         });
     }
 
@@ -142,9 +157,12 @@ public class DefaultTaskService implements TaskService {
                 updatedTask.setStatus(existingTask.getStatus());
             }
             if (updatedTask.getStatus() == TaskStatus.UNPROCESSED && updatedTask.getDeadline() != null) {
+                log.debug("Task with id {} is unprocessed and deadline is set. Changing task status to \"processed\".",
+                        task.getId());
                 updatedTask.setStatus(TaskStatus.PROCESSED);
             }
-            return taskRepository.save(updatedTask);
+            return taskRepository.save(updatedTask)
+                    .doOnSuccess(t -> log.debug("Task with id {} is updated", t.getId()));
         });
     }
 
@@ -152,13 +170,15 @@ public class DefaultTaskService implements TaskService {
     public Mono<Void> completeTask(Long id, User user) throws EntityNotFoundException {
         return getTask(id, user).flatMap(task -> {
             task.setStatus(TaskStatus.COMPLETED);
-            return taskRepository.save(task);
+            return taskRepository.save(task).doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId()));
         }).then();
     }
 
     @Override
     public Mono<Void> deleteTask(Long id, User user) throws EntityNotFoundException {
-        return getTask(id, user).flatMap(taskRepository::delete);
+        return getTask(id, user)
+                .flatMap(taskRepository::delete)
+                .doOnSuccess(v -> log.debug("Task with id {} is deleted", id));
     }
 
     @Override
@@ -182,14 +202,17 @@ public class DefaultTaskService implements TaskService {
         return getTask(taskId, user)
                 .flatMap(task -> findTag(tagId, user.getId()))
                 .flatMap(tag -> taskTagRelationRepository.findByTaskIdAndTagId(taskId, tagId))
-                .switchIfEmpty(Mono.defer(() -> taskTagRelationRepository.create(taskId, tagId)))
+                .switchIfEmpty(Mono.defer(()
+                        -> taskTagRelationRepository.create(taskId, tagId).doOnSuccess(relation
+                        -> log.debug("Tag with id {} is assigned to task with id {}", tagId, taskId))))
                 .then();
     }
 
     @Override
     public Mono<Void> removeTag(Long taskId, Long tagId, User user) throws EntityNotFoundException {
         return getTask(taskId, user)
-                .flatMap(task -> taskTagRelationRepository.deleteByTaskIdAndTagId(taskId, tagId));
+                .flatMap(task -> taskTagRelationRepository.deleteByTaskIdAndTagId(taskId, tagId))
+                .doOnSuccess(v -> log.debug("Tag with id {} is removed from task with id {}", tagId, taskId));
     }
 
     @Override
@@ -209,7 +232,8 @@ public class DefaultTaskService implements TaskService {
             newComment.setId(null);
             newComment.setCreatedAt(getCurrentTime());
             newComment.setUpdatedAt(null);
-            return taskCommentRepository.save(newComment);
+            return taskCommentRepository.save(newComment).doOnSuccess(c
+                    -> log.debug("Comment with id {} is added to task with id {}", c.getId(), c.getTaskId()));
         });
     }
 
