@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.security.oauth2.client.userinfo;
 
-import lombok.RequiredArgsConstructor;
+import io.jsonwebtoken.lang.Assert;
+import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.security.oauth2.core.user.OAuth2UserAttributeAccessor;
@@ -26,13 +27,23 @@ import java.util.Objects;
  * @see UserRepository
  * @see User
  */
-@RequiredArgsConstructor
+@Slf4j
 public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U extends OAuth2User>
         implements ReactiveOAuth2UserService<R, U> {
     private static final String MISSING_EMAIL_ATTRIBUTE_ERROR_CODE = "missing_email";
 
     private final List<ReactiveOAuth2UserLoader<R, U>> userLoaders;
     private final UserRepository userRepository;
+
+    public ReactiveOAuth2UserLoaderManager(List<ReactiveOAuth2UserLoader<R, U>> userLoaders,
+                                           UserRepository userRepository) {
+        Assert.notEmpty(userLoaders, "User loaders must not be null or empty");
+        Assert.notNull(userRepository, "User repository must not be null");
+
+        this.userLoaders = userLoaders;
+        this.userRepository = userRepository;
+    }
+
 
     /**
      * Returns an instance of {@link OAuth2User} after obtaining attributes of the End-User from the UserInfo Endpoint.
@@ -78,7 +89,7 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
                 .fullName(attrAccessor.getFullName())
                 .profilePictureUrl(attrAccessor.getPicture())
                 .build();
-        return userRepository.save(newUser);
+        return userRepository.save(newUser).doOnSuccess(u -> log.debug("User with id {} is created", u.getId()));
     }
 
     private Mono<User> updateUserIfNecessary(OAuth2UserAttributeAccessor attrAccessor, User user) {
@@ -86,17 +97,19 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
 
         if (!Objects.equals(user.getFullName(), attrAccessor.getFullName())) {
             user.setFullName(attrAccessor.getFullName());
+            log.debug("Full name of user with id {} is changed to {}", user.getId(), attrAccessor.getFullName());
             needUpdate = true;
         }
 
         if (!Objects.equals(user.getProfilePictureUrl(), attrAccessor.getPicture())) {
             user.setProfilePictureUrl(attrAccessor.getPicture());
+            log.debug("Profile picture of user with id {} is changed to {}", user.getId(), attrAccessor.getPicture());
             needUpdate = true;
         }
 
         if (needUpdate) {
             user.setVersion(user.getVersion() + 1);
-            return userRepository.save(user);
+            return userRepository.save(user).doOnSuccess(u -> log.debug("User with id {} is updated", u.getId()));
         }
 
         return Mono.just(user);
