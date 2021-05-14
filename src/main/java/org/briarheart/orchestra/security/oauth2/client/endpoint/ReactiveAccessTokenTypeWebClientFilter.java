@@ -1,7 +1,5 @@
 package org.briarheart.orchestra.security.oauth2.client.endpoint;
 
-import lombok.NonNull;
-import lombok.Setter;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,8 +45,6 @@ public class ReactiveAccessTokenTypeWebClientFilter implements ExchangeFilterFun
     private static final DataBufferFactory DEFAULT_DATA_BUFFER_FACTORY = new DefaultDataBufferFactory();
     private static final String DEFAULT_DEFAULT_TOKEN_TYPE = "Bearer";
 
-    @Setter
-    @NonNull
     private DataBufferFactory dataBufferFactory = DEFAULT_DATA_BUFFER_FACTORY;
 
     private String defaultTokenType = DEFAULT_DEFAULT_TOKEN_TYPE;
@@ -66,6 +62,11 @@ public class ReactiveAccessTokenTypeWebClientFilter implements ExchangeFilterFun
                             .map(this::addTokenTypeIfNecessary)
                             .map(params -> createNewResponse(response, params));
                 });
+    }
+
+    public void setDataBufferFactory(DataBufferFactory dataBufferFactory) {
+        Assert.notNull(dataBufferFactory, "Data buffer factory must not be null");
+        this.dataBufferFactory = dataBufferFactory;
     }
 
     public void setDefaultTokenType(String defaultTokenType) {

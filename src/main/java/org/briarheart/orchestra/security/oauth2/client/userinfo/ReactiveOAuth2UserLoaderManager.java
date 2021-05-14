@@ -35,6 +35,12 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
     private final List<ReactiveOAuth2UserLoader<R, U>> userLoaders;
     private final UserRepository userRepository;
 
+    /**
+     * Creates new instance of this class with the given user loaders and user repository.
+     *
+     * @param userLoaders user loaders (must not be {@code null} or empty)
+     * @param userRepository user repository (must not be {@code null})
+     */
     public ReactiveOAuth2UserLoaderManager(List<ReactiveOAuth2UserLoader<R, U>> userLoaders,
                                            UserRepository userRepository) {
         Assert.notEmpty(userLoaders, "User loaders must not be null or empty");

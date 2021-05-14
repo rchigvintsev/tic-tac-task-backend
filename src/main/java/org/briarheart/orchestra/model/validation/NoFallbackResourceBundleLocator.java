@@ -1,8 +1,6 @@
 package org.briarheart.orchestra.model.validation;
 
 import io.jsonwebtoken.lang.Assert;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.internal.util.privilegedactions.GetClassLoader;
 import org.hibernate.validator.messageinterpolation.AbstractMessageInterpolator;
@@ -22,9 +20,7 @@ import java.util.ResourceBundle.Control;
  * @author Roman Chigvintsev
  */
 @Slf4j
-@RequiredArgsConstructor
 public class NoFallbackResourceBundleLocator implements ResourceBundleLocator {
-    @NonNull
     private final String bundleName;
 
     /**
@@ -33,6 +29,16 @@ public class NoFallbackResourceBundleLocator implements ResourceBundleLocator {
      */
     public NoFallbackResourceBundleLocator() {
         this(AbstractMessageInterpolator.USER_VALIDATION_MESSAGES);
+    }
+
+    /**
+     * Creates new instance of this class with the given bundle name.
+     *
+     * @param bundleName bundle name (must not be {@code null} or empty)
+     */
+    public NoFallbackResourceBundleLocator(String bundleName) {
+        Assert.hasLength(bundleName, "Bundle name must not be null or empty");
+        this.bundleName = bundleName;
     }
 
     @Override

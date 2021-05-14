@@ -45,7 +45,7 @@ class NoFallbackResourceBundleLocatorTest {
 
     @Test
     void shouldThrowExceptionOnCreateWhenResourceBundleNameIsNull() {
-        assertThrows(NullPointerException.class, () -> new NoFallbackResourceBundleLocator(null));
+        assertThrows(IllegalArgumentException.class, () -> new NoFallbackResourceBundleLocator(null));
     }
 
     @Test

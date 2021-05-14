@@ -1,12 +1,11 @@
 package org.briarheart.orchestra.controller;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.EmailConfirmationService;
 import org.briarheart.orchestra.service.PasswordService;
 import org.briarheart.orchestra.service.UserService;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
@@ -20,14 +19,29 @@ import java.util.Locale;
  */
 @RestController
 @RequestMapping("/v1/users")
-@RequiredArgsConstructor
 public class UserController {
-    @NonNull
     private final UserService userService;
-    @NonNull
     private final EmailConfirmationService emailConfirmationService;
-    @NonNull
     private final PasswordService passwordService;
+
+    /**
+     * Creates new instance of this class with the given user, email confirmation, and password services.
+     *
+     * @param userService user service (must not be {@code null})
+     * @param emailConfirmationService email confirmation service (must not be {@code null})
+     * @param passwordService password service (must not be {@code null})
+     */
+    public UserController(UserService userService,
+                          EmailConfirmationService emailConfirmationService,
+                          PasswordService passwordService) {
+        Assert.notNull(userService, "User service must not be null");
+        Assert.notNull(emailConfirmationService, "Email confirmation service must not be null");
+        Assert.notNull(passwordService, "Password service must not be null");
+
+        this.userService = userService;
+        this.emailConfirmationService = emailConfirmationService;
+        this.passwordService = passwordService;
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

@@ -33,7 +33,7 @@ class EnumCodecTest {
 
     @Test
     void shouldThrowExceptionOnConstructWhenByteBufferAllocatorIsNull() {
-        assertThrows(NullPointerException.class, () -> new EnumCodec(null));
+        assertThrows(IllegalArgumentException.class, () -> new EnumCodec(null));
     }
 
     @Test

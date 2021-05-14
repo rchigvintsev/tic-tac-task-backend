@@ -7,8 +7,6 @@ import io.r2dbc.postgresql.codec.Codec;
 import io.r2dbc.postgresql.message.Format;
 import io.r2dbc.postgresql.type.PostgresqlObjectId;
 import io.r2dbc.postgresql.util.ByteBufUtils;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Mono;
 
@@ -21,10 +19,18 @@ import static io.r2dbc.postgresql.type.PostgresqlObjectId.*;
  *
  * @author Roman Chigvintsev
  */
-@RequiredArgsConstructor
 public class EnumCodec implements Codec<Enum<?>> {
-    @NonNull
     private final ByteBufAllocator byteBufAllocator;
+
+    /**
+     * Creates new instance of this class with the given byte buffer allocator.
+     *
+     * @param byteBufAllocator byte buffer allocator (must not be {@code null})
+     */
+    public EnumCodec(ByteBufAllocator byteBufAllocator) {
+        Assert.notNull(byteBufAllocator, "Byte buffer allocator must not be null");
+        this.byteBufAllocator = byteBufAllocator;
+    }
 
     @Override
     public boolean canDecode(int dataType, Format format, Class<?> type) {

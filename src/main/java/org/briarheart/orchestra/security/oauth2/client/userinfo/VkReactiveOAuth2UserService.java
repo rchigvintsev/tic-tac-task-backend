@@ -2,8 +2,6 @@ package org.briarheart.orchestra.security.oauth2.client.userinfo;
 
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.openid.connect.sdk.UserInfoErrorResponse;
-import lombok.NonNull;
-import lombok.Setter;
 import net.minidev.json.JSONObject;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -43,8 +41,6 @@ public class VkReactiveOAuth2UserService implements ReactiveOAuth2UserService<OA
     private static final String ERROR_CODE_MISSING_USER_INFO_URI = "missing_user_info_uri";
     private static final String ERROR_CODE_MISSING_USER_NAME_ATTRIBUTE = "missing_user_name_attribute";
 
-    @Setter
-    @NonNull
     private WebClient webClient = WebClient.create();
 
     @SuppressWarnings("unchecked")
@@ -102,6 +98,11 @@ public class VkReactiveOAuth2UserService implements ReactiveOAuth2UserService<OA
                         return new OAuth2AuthenticationException(oauth2Error, oauth2Error.toString(), t);
                     });
         });
+    }
+
+    public void setWebClient(WebClient webClient) {
+        Assert.notNull(webClient, "Web client must not be null");
+        this.webClient = webClient;
     }
 
     private String getUserInfoEndpointUri(ClientRegistration clientRegistration) {
