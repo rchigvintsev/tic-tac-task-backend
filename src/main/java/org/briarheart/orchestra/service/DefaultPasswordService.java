@@ -8,6 +8,10 @@ import org.briarheart.orchestra.data.PasswordResetConfirmationTokenRepository;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.PasswordResetConfirmationToken;
 import org.briarheart.orchestra.model.User;
+import org.joda.time.Period;
+import org.joda.time.PeriodType;
+import org.joda.time.format.PeriodFormat;
+import org.joda.time.format.PeriodFormatter;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
@@ -82,8 +86,10 @@ public class DefaultPasswordService implements PasswordService {
 
                     String subject = messages.getMessage("user.password-reset.message.subject",
                             new Object[]{applicationInfo.getName()}, locale);
+
+                    String linkExpiresAfter = formatPasswordResetTokenExpirationTimeout(locale);
                     String text = messages.getMessage("user.password-reset.message.text",
-                            new Object[]{user.getFullName(), passwordResetLink}, locale);
+                            new Object[]{user.getFullName(), passwordResetLink, linkExpiresAfter}, locale);
 
                     SimpleMailMessage message = new SimpleMailMessage();
                     message.setTo(user.getEmail());
@@ -148,5 +154,11 @@ public class DefaultPasswordService implements PasswordService {
 
     private String encodePassword(String rawPassword) {
         return passwordEncoder.encode(rawPassword);
+    }
+
+    private String formatPasswordResetTokenExpirationTimeout(Locale locale) {
+        Period period = new Period(passwordResetTokenExpirationTimeout.toMillis());
+        PeriodFormatter periodFormatter = PeriodFormat.wordBased(locale);
+        return periodFormatter.print(period.normalizedStandard(PeriodType.dayTime()));
     }
 }

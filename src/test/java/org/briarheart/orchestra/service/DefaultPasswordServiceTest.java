@@ -91,6 +91,18 @@ class DefaultPasswordServiceTest {
     }
 
     @Test
+    void shouldIncludeLinkExpirationTimoutIntoMessageText() {
+        User user = User.builder().id(1L).email("alice@mail.com").fullName("Alice").build();
+        PasswordResetConfirmationToken token = service.sendPasswordResetLink(user, Locale.ENGLISH).block();
+        assertNotNull(token);
+
+        ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(javaMailSender, times(1)).send(messageCaptor.capture());
+        SimpleMailMessage message = messageCaptor.getValue();
+        assertThat(message.getText(), containsString("1 day"));
+    }
+
+    @Test
     void shouldThrowExceptionOnPasswordResetLinkSendWhenUserIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> service.sendPasswordResetLink(null, Locale.ENGLISH).block());
