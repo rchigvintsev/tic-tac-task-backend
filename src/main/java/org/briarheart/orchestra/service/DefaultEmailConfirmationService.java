@@ -12,7 +12,6 @@ import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -29,10 +28,9 @@ import java.util.UUID;
  *
  * @author Roman Chigvintsev
  */
-@Component
 @Slf4j
 public class DefaultEmailConfirmationService implements EmailConfirmationService {
-    private static final Duration DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT = Duration.of(24, ChronoUnit.HOURS);
+    private static final Duration DEFAULT_TOKEN_EXPIRATION_TIMEOUT = Duration.of(24, ChronoUnit.HOURS);
 
     private final EmailConfirmationTokenRepository tokenRepository;
     private final UserRepository userRepository;
@@ -41,7 +39,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
     private final JavaMailSender mailSender;
 
     @Setter
-    private Duration emailConfirmationTokenExpirationTimeout = DEFAULT_EMAIL_CONFIRMATION_TOKEN_EXPIRATION_TIMEOUT;
+    private Duration emailConfirmationTokenExpirationTimeout = DEFAULT_TOKEN_EXPIRATION_TIMEOUT;
 
     public DefaultEmailConfirmationService(EmailConfirmationTokenRepository tokenRepository,
                                            UserRepository userRepository,

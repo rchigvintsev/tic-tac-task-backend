@@ -2,6 +2,8 @@ package org.briarheart.orchestra.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.briarheart.orchestra.data.EmailConfirmationTokenRepository;
+import org.briarheart.orchestra.data.PasswordResetConfirmationTokenRepository;
 import org.briarheart.orchestra.data.UserAuthorityRelationRepository;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.security.oauth2.client.endpoint.ReactiveAccessTokenTypeWebClientFilter;
@@ -17,12 +19,18 @@ import org.briarheart.orchestra.security.web.server.authentication.accesstoken.S
 import org.briarheart.orchestra.security.web.server.authentication.jwt.CookieJwtRepository;
 import org.briarheart.orchestra.security.web.server.authentication.jwt.JwtService;
 import org.briarheart.orchestra.security.web.server.authentication.logout.AccessTokenLogoutHandler;
+import org.briarheart.orchestra.service.DefaultEmailConfirmationService;
+import org.briarheart.orchestra.service.DefaultPasswordService;
+import org.briarheart.orchestra.service.EmailConfirmationService;
+import org.briarheart.orchestra.service.PasswordService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesRegistrationAdapter;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
@@ -61,6 +69,7 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -295,6 +304,33 @@ public class WebSecurityConfig {
         DelegatingPasswordEncoder passwordEncoder = (DelegatingPasswordEncoder) createDelegatingPasswordEncoder();
         passwordEncoder.setDefaultPasswordEncoderForMatches(new NeverMatchesPasswordEncoder());
         return passwordEncoder;
+    }
+
+    @Bean
+    public PasswordService passwordService(PasswordResetConfirmationTokenRepository tokenRepository,
+                                           UserRepository userRepository,
+                                           ApplicationInfoProperties applicationInfo,
+                                           MessageSourceAccessor messages,
+                                           JavaMailSender mailSender,
+                                           PasswordEncoder passwordEncoder) {
+        DefaultPasswordService passwordService = new DefaultPasswordService(tokenRepository, userRepository,
+                applicationInfo, messages, mailSender, passwordEncoder);
+        Duration tokenExpirationTimeout = securityProperties.getPasswordReset().getTokenExpirationTimeout();
+        passwordService.setPasswordResetTokenExpirationTimeout(tokenExpirationTimeout);
+        return passwordService;
+    }
+
+    @Bean
+    public EmailConfirmationService emailConfirmationService(EmailConfirmationTokenRepository tokenRepository,
+                                                             UserRepository userRepository,
+                                                             ApplicationInfoProperties applicationInfo,
+                                                             MessageSourceAccessor messages,
+                                                             JavaMailSender mailSender) {
+        DefaultEmailConfirmationService emailConfirmationService = new DefaultEmailConfirmationService(tokenRepository,
+                userRepository, applicationInfo, messages, mailSender);
+        Duration tokenExpirationTimeout = securityProperties.getEmailConfirmation().getTokenExpirationTimeout();
+        emailConfirmationService.setEmailConfirmationTokenExpirationTimeout(tokenExpirationTimeout);
+        return emailConfirmationService;
     }
 
     private CorsConfigurationSource createCorsConfigurationSource() {

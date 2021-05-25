@@ -17,7 +17,6 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -34,10 +33,9 @@ import java.util.UUID;
  *
  * @author Roman Chigvintsev
  */
-@Component
 @Slf4j
 public class DefaultPasswordService implements PasswordService {
-    private static final Duration DEFAULT_PASSWORD_RESET_TOKEN_EXPIRATION_TIMEOUT = Duration.of(24, ChronoUnit.HOURS);
+    private static final Duration DEFAULT_TOKEN_EXPIRATION_TIMEOUT = Duration.of(24, ChronoUnit.HOURS);
 
     private final PasswordResetConfirmationTokenRepository tokenRepository;
     private final UserRepository userRepository;
@@ -47,7 +45,7 @@ public class DefaultPasswordService implements PasswordService {
     private final PasswordEncoder passwordEncoder;
 
     @Setter
-    private Duration passwordResetTokenExpirationTimeout = DEFAULT_PASSWORD_RESET_TOKEN_EXPIRATION_TIMEOUT;
+    private Duration passwordResetTokenExpirationTimeout = DEFAULT_TOKEN_EXPIRATION_TIMEOUT;
 
     public DefaultPasswordService(PasswordResetConfirmationTokenRepository tokenRepository,
                                   UserRepository userRepository,
