@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
+import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.PasswordResetConfirmationToken;
@@ -213,5 +214,41 @@ class DefaultUserServiceTest {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> service.resetPassword(null, Locale.ENGLISH).block());
         assertEquals("Email address must not be null or empty", e.getMessage());
+    }
+
+    @Test
+    void shouldUpdateUser() {
+        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        when(userRepository.findByIdAndEmail(user.getId(), user.getEmail())).thenReturn(Mono.just(user));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        User updatedUser = new User(user);
+        updatedUser.setFullName("Alice Wonderland");
+        updatedUser.setEmailConfirmed(false);
+        updatedUser.setPassword(null);
+        updatedUser.setEnabled(false);
+
+        User expectedResult = new User(user);
+        expectedResult.setFullName(updatedUser.getFullName());
+        expectedResult.setPassword(null);
+        expectedResult.setVersion(1);
+
+        User result = service.updateUser(updatedUser).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldThrowExceptionOnUserUpdateWhenUserIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> service.updateUser(null));
+        assertEquals("User must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnUserUpdateWhenUserIsNotFound() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        when(userRepository.findByIdAndEmail(user.getId(), user.getEmail())).thenReturn(Mono.empty());
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> service.updateUser(user).block());
+        assertEquals("User with id " + user.getId() + " is not found", e.getMessage());
     }
 }

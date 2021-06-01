@@ -14,4 +14,7 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
 
     @Query("SELECT * FROM users WHERE email = :email AND enabled = :enabled")
     Mono<User> findByEmailAndEnabled(String email, boolean enabled);
+
+    @Query("SELECT * FROM users WHERE id = :id AND email = :email")
+    Mono<User> findByIdAndEmail(Long id, String email);
 }

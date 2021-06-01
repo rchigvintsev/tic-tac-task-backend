@@ -12,16 +12,19 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
 
 /**
  * @author Roman Chigvintsev
@@ -112,5 +115,39 @@ class UserControllerTest {
 
                 .expectStatus().isOk();
         verify(passwordService, times(1)).confirmPasswordReset(userId, token, newPassword);
+    }
+
+    @Test
+    void shouldUpdateUser() {
+        User authenticatedUser = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(authenticatedUser);
+
+        when(userService.updateUser(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        User updatedUser = User.builder()
+                .id(authenticatedUser.getId())
+                .email("alice.wonderland@mail.com")
+                .fullName("Alice Wonderland")
+                .build();
+
+        User expectedResult = new User(updatedUser);
+        expectedResult.setEmail(authenticatedUser.getEmail());
+        expectedResult.setAuthorities(new ArrayList<>());
+
+        testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
+                .put().uri("/v1/users/" + updatedUser.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(updatedUser)
+                .exchange()
+
+                .expectStatus().isOk()
+                .expectBody(User.class).isEqualTo(expectedResult);
+    }
+
+    private Authentication createAuthentication(User user) {
+        Authentication authenticationMock = mock(Authentication.class);
+        when(authenticationMock.getName()).thenReturn(user.getEmail());
+        when(authenticationMock.getPrincipal()).thenReturn(user);
+        return authenticationMock;
     }
 }

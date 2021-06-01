@@ -34,7 +34,6 @@ public class User implements UserDetails {
     private boolean emailConfirmed = true;
     @Version
     private long version;
-    @NotBlank
     @Size(max = 50)
     private String password;
     @Builder.Default

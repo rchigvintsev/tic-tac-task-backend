@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
+import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.User;
 import reactor.core.publisher.Mono;
 
@@ -32,4 +33,13 @@ public interface UserService {
      * @param locale current user's locale
      */
     Mono<Void> resetPassword(String email, Locale locale);
+
+    /**
+     * Updates user.
+     *
+     * @param user user to be updated (must not be {@code null})
+     * @return updated user
+     * @throws EntityNotFoundException if user is not found
+     */
+    Mono<User> updateUser(User user) throws EntityNotFoundException;
 }

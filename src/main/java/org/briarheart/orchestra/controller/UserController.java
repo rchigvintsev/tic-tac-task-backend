@@ -5,6 +5,7 @@ import org.briarheart.orchestra.service.EmailConfirmationService;
 import org.briarheart.orchestra.service.PasswordService;
 import org.briarheart.orchestra.service.UserService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ import java.util.Locale;
  */
 @RestController
 @RequestMapping("/v1/users")
-public class UserController {
+public class UserController extends AbstractController {
     private final UserService userService;
     private final EmailConfirmationService emailConfirmationService;
     private final PasswordService passwordService;
@@ -76,5 +77,12 @@ public class UserController {
             String newPassword = formData.getFirst("password");
             return passwordService.confirmPasswordReset(id, token, newPassword);
         });
+    }
+
+    @PutMapping("/{id}")
+    public Mono<User> updateUser(@Valid @RequestBody User user, @PathVariable Long id, Authentication authentication) {
+        user.setId(id);
+        user.setEmail(getUser(authentication).getEmail());
+        return userService.updateUser(user);
     }
 }

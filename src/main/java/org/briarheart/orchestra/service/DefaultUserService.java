@@ -3,6 +3,7 @@ package org.briarheart.orchestra.service;
 import io.jsonwebtoken.lang.Assert;
 import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
+import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.User;
 import org.springframework.context.support.MessageSourceAccessor;
@@ -71,6 +72,21 @@ public class DefaultUserService implements UserService {
                 .then();
     }
 
+    @Override
+    public Mono<User> updateUser(User user) {
+        Assert.notNull(user, "User must not be null");
+        return findUser(user.getId(), user.getEmail()).flatMap(existingUser -> {
+            User updatedUser = new User(user);
+            updatedUser.setEmailConfirmed(existingUser.isEmailConfirmed());
+            updatedUser.setVersion(existingUser.getVersion() + 1);
+            updatedUser.setPassword(existingUser.getPassword());
+            updatedUser.setEnabled(existingUser.isEnabled());
+            return userRepository.save(updatedUser)
+                    .map(this::clearPassword)
+                    .doOnSuccess(u -> log.debug("User with id {} is updated", u.getId()));
+        });
+    }
+
     private Mono<User> ensureEmailNotConfirmed(User user, Locale locale) {
         if (user.isEmailConfirmed()) {
             String message = messages.getMessage("user.registration.user-already-registered",
@@ -99,11 +115,16 @@ public class DefaultUserService implements UserService {
     }
 
     private String encodePassword(String rawPassword) {
-        return passwordEncoder.encode(rawPassword);
+        return rawPassword != null ? passwordEncoder.encode(rawPassword) : null;
     }
 
     private User clearPassword(User user) {
         user.setPassword(null);
         return user;
+    }
+
+    private Mono<User> findUser(Long id, String email) {
+        return userRepository.findByIdAndEmail(id, email)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + id + " is not found")));
     }
 }
