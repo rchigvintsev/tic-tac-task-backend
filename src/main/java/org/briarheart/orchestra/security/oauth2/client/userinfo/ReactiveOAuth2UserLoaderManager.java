@@ -16,7 +16,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Implementation of {@link ReactiveOAuth2UserService} that delegates loading of OAuth 2 user attributes to one of
@@ -74,12 +73,8 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
                                     "OAuth2 user \"" + user.getName() + "\" does not have an email", null);
                             throw new OAuth2AuthenticationException(oauth2Error);
                         }
-                        // TODO: compare current authentication provider with the one saved in the database since
-                        //  user may at first sign up with Facebook and then sign up again with Google while using
-                        //  the same email.
                         return userRepository.findByEmail(attrAccessor.getEmail())
-                                .switchIfEmpty(Mono.defer(() -> createNewUser(attrAccessor)))
-                                .flatMap(u -> updateUserIfNecessary(attrAccessor, u));
+                                .switchIfEmpty(Mono.defer(() -> createNewUser(attrAccessor)));
                     }).map(Tuple2::getT1);
                 }).orElseThrow(() -> {
                     String clientRegId = userRequest.getClientRegistration().getRegistrationId();
@@ -96,28 +91,5 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
                 .profilePictureUrl(attrAccessor.getPicture())
                 .build();
         return userRepository.save(newUser).doOnSuccess(u -> log.debug("User with id {} is created", u.getId()));
-    }
-
-    private Mono<User> updateUserIfNecessary(OAuth2UserAttributeAccessor attrAccessor, User user) {
-        boolean needUpdate = false;
-
-        if (!Objects.equals(user.getFullName(), attrAccessor.getFullName())) {
-            user.setFullName(attrAccessor.getFullName());
-            log.debug("Full name of user with id {} is changed to {}", user.getId(), attrAccessor.getFullName());
-            needUpdate = true;
-        }
-
-        if (!Objects.equals(user.getProfilePictureUrl(), attrAccessor.getPicture())) {
-            user.setProfilePictureUrl(attrAccessor.getPicture());
-            log.debug("Profile picture of user with id {} is changed to {}", user.getId(), attrAccessor.getPicture());
-            needUpdate = true;
-        }
-
-        if (needUpdate) {
-            user.setVersion(user.getVersion() + 1);
-            return userRepository.save(user).doOnSuccess(u -> log.debug("User with id {} is updated", u.getId()));
-        }
-
-        return Mono.just(user);
     }
 }

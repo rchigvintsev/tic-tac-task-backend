@@ -37,7 +37,7 @@ class ReactiveOidcUserLoaderManagerTest {
             entry("sub", "test"),
             entry("email", "test@example.com"),
             entry("name", "John Doe"),
-            entry("picture", "http://example.com/picture")
+            entry("picture", "https://example.com/picture")
     );
     private static final ClientRegistration CLIENT_REGISTRATION = TestClientRegistrations.clientRegistration().build();
 
@@ -72,44 +72,6 @@ class ReactiveOidcUserLoaderManagerTest {
 
         manager.loadUser(userRequestMock).block();
         verify(userRepositoryMock, times(1)).save(any());
-    }
-
-    @SuppressWarnings("UnassignedFluxMonoInstance")
-    @Test
-    void shouldUpdateExistingUserInDatabase() {
-        OidcUser oidcUserMock = mockOidcUser(CLAIMS);
-        when(userLoaderMock.loadUser(any())).thenReturn(Mono.just(oidcUserMock));
-
-        User user = new User();
-        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.just(user));
-        when(userRepositoryMock.save(any())).then((Answer<Mono<User>>) invoc -> Mono.just(invoc.getArgument(0)));
-
-        MockOidcUserRequest userRequestMock = new MockOidcUserRequest(CLIENT_REGISTRATION, CLAIMS);
-
-        manager.loadUser(userRequestMock).block();
-        verify(userRepositoryMock, times(1)).save(any());
-        assertEquals(1, user.getVersion());
-        assertEquals(CLAIMS.get("name"), user.getFullName());
-        assertEquals(CLAIMS.get("picture"), user.getProfilePictureUrl());
-    }
-
-    @SuppressWarnings("UnassignedFluxMonoInstance")
-    @Test
-    void shouldDoNothingWhenExistingUserDataIsActual() {
-        OidcUser oidcUserMock = mockOidcUser(CLAIMS);
-        when(userLoaderMock.loadUser(any())).thenReturn(Mono.just(oidcUserMock));
-
-        User user = new User();
-        user.setFullName(CLAIMS.get("name").toString());
-        user.setProfilePictureUrl(CLAIMS.get("picture").toString());
-
-        when(userRepositoryMock.findByEmail(anyString())).thenReturn(Mono.just(user));
-        when(userRepositoryMock.save(any())).then((Answer<Mono<User>>) invoc -> Mono.just(invoc.getArgument(0)));
-
-        MockOidcUserRequest userRequestMock = new MockOidcUserRequest(CLIENT_REGISTRATION, CLAIMS);
-
-        manager.loadUser(userRequestMock).block();
-        verify(userRepositoryMock, times(0)).save(any());
     }
 
     @Test
