@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.ImageRepository;
 import org.briarheart.orchestra.model.Image;
@@ -14,6 +15,7 @@ import reactor.core.publisher.Mono;
  * @author Roman Chigvintsev
  */
 @Service
+@Slf4j
 public class DefaultImageService implements ImageService {
     private final ImageRepository imageRepository;
 
@@ -27,5 +29,15 @@ public class DefaultImageService implements ImageService {
         Assert.notNull(user, "User must not be null");
         return imageRepository.findByIdAndUserId(id, user.getId())
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Image with id " + id + " is not found")));
+    }
+
+    @Override
+    public Mono<Image> createImage(Image image) {
+        Assert.notNull(image, "Image must not be null");
+        return Mono.defer(() -> {
+            Image newImage = new Image(image);
+            newImage.setId(null);
+            return imageRepository.save(newImage).doOnSuccess(t -> log.debug("Image with id {} is created", t.getId()));
+        });
     }
 }

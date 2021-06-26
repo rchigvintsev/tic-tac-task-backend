@@ -11,9 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Mono;
 
 import java.util.Base64;
@@ -22,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
 
 /**
@@ -56,7 +62,8 @@ class ImageControllerTest {
         Image image = Image.builder()
                 .id(2L)
                 .userId(user.getId())
-                .imageData(Base64.getDecoder().decode(TEST_JPEG))
+                .data(Base64.getDecoder().decode(TEST_JPEG))
+                .type(MediaType.IMAGE_JPEG.toString())
                 .build();
         when(imageService.getImage(image.getId(), user)).thenReturn(Mono.just(image));
 
@@ -65,7 +72,7 @@ class ImageControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(byte[].class).isEqualTo(image.getImageData());
+                .expectBody(byte[].class).isEqualTo(image.getData());
     }
 
     @Test
@@ -82,6 +89,35 @@ class ImageControllerTest {
                 .expectStatus().isNotFound()
                 .expectBody()
                 .jsonPath("$.message").isEqualTo(errorMessage);
+    }
+
+    @Test
+    void shouldCreateImage() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        long imageId = 2L;
+
+        when(imageService.createImage(any(Image.class))).thenAnswer(args -> {
+            Image i = args.getArgument(0);
+            i.setId(imageId);
+            return Mono.just(i);
+        });
+
+        MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
+        multipartBodyBuilder.part("image", new ByteArrayResource(Base64.getDecoder().decode(TEST_JPEG)))
+                .filename("test.jpg")
+                .contentType(MediaType.IMAGE_JPEG);
+        MultiValueMap<String, HttpEntity<?>> form = multipartBodyBuilder.build();
+
+        testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
+                .post().uri("/v1/images")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .bodyValue(form)
+                .exchange()
+
+                .expectStatus().isCreated()
+                .expectHeader().valueEquals("Location", "/v1/images/" + imageId);
     }
 
     private Authentication createAuthentication(User user) {

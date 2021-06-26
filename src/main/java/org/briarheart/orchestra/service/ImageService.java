@@ -20,4 +20,12 @@ public interface ImageService {
      * @throws EntityNotFoundException if image is not found by id or does not belong to the given user
      */
     Mono<Image> getImage(Long id, User user) throws EntityNotFoundException;
+
+    /**
+     * Creates new image.
+     *
+     * @param image image to be created (must not be {@code null})
+     * @return created image
+     */
+    Mono<Image> createImage(Image image);
 }

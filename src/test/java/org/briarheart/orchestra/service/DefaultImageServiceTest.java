@@ -10,6 +10,7 @@ import reactor.core.publisher.Mono;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -58,5 +59,31 @@ class DefaultImageServiceTest {
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> service.getImage(imageId, user).block());
         assertEquals("Image with id " + imageId + " is not found", e.getMessage());
+    }
+
+    @Test
+    void shouldCreateImage() {
+        long imageId = 1L;
+        when(imageRepository.save(any(Image.class))).thenAnswer(args -> {
+            Image i = args.getArgument(0);
+            if (i.getId() == null) {
+                i.setId(imageId);
+            }
+            return Mono.just(i);
+        });
+
+        Image image = new Image();
+
+        Image expectedResult = new Image(image);
+        expectedResult.setId(imageId);
+
+        Image result = service.createImage(image).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldThrowExceptionOnImageCreateWhenImageIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> service.createImage(null));
+        assertEquals("Image must not be null", e.getMessage());
     }
 }
