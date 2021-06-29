@@ -2,9 +2,11 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.data.ProfilePictureRepository;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
 import org.briarheart.orchestra.model.PasswordResetConfirmationToken;
+import org.briarheart.orchestra.model.ProfilePicture;
 import org.briarheart.orchestra.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,14 +31,18 @@ import static org.mockito.Mockito.*;
 class DefaultUserServiceTest {
     private DefaultUserService service;
     private UserRepository userRepository;
+    private ProfilePictureRepository profilePictureRepository;
     private EmailConfirmationService emailConfirmationService;
     private PasswordService passwordService;
     private PasswordEncoder passwordEncoder;
+    private MessageSourceAccessor messages;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
+
+        profilePictureRepository = mock(ProfilePictureRepository.class);
 
         emailConfirmationService = mock(EmailConfirmationService.class);
         when(emailConfirmationService.sendEmailConfirmationLink(any(User.class), eq(Locale.ENGLISH)))
@@ -72,10 +78,57 @@ class DefaultUserServiceTest {
 
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("messages");
-        MessageSourceAccessor messages = new MessageSourceAccessor(messageSource);
+        messages = new MessageSourceAccessor(messageSource);
 
-        service = new DefaultUserService(userRepository, emailConfirmationService, passwordService, passwordEncoder,
-                messages);
+        service = new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService,
+                passwordService, passwordEncoder, messages);
+    }
+
+    @Test
+    void shouldThrowExceptionOnConstructWhenUserRepositoryIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> new DefaultUserService(null,
+                profilePictureRepository, emailConfirmationService, passwordService, passwordEncoder, messages));
+        assertEquals("User repository must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnConstructWhenProfilePictureRepositoryIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
+                -> new DefaultUserService(userRepository, null, emailConfirmationService, passwordService,
+                passwordEncoder, messages));
+        assertEquals("Profile picture repository must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnConstructWhenEmailConfirmationServiceIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
+                -> new DefaultUserService(userRepository, profilePictureRepository, null, passwordService,
+                passwordEncoder, messages));
+        assertEquals("Email confirmation service must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnConstructWhenPasswordServiceIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
+                -> new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService, null,
+                passwordEncoder, messages));
+        assertEquals("Password service must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnConstructWhenPasswordEncoderIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
+                -> new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService,
+                passwordService, null, messages));
+        assertEquals("Password encoder must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnConstructWhenMessageSourceAccessorIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
+                -> new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService,
+                passwordService, passwordEncoder, null));
+        assertEquals("Message source accessor must not be null", e.getMessage());
     }
 
     @Test
@@ -250,5 +303,58 @@ class DefaultUserServiceTest {
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> service.updateUser(user).block());
         assertEquals("User with id " + user.getId() + " is not found", e.getMessage());
+    }
+
+    @Test
+    void shouldReturnProfilePicture() {
+        Long userId = 1L;
+        ProfilePicture profilePicture = ProfilePicture.builder().userId(userId).build();
+        when(profilePictureRepository.findById(userId)).thenReturn(Mono.just(profilePicture));
+
+        ProfilePicture result = service.getProfilePicture(profilePicture.getUserId()).block();
+        assertEquals(profilePicture, result);
+    }
+
+    @Test
+    void shouldThrowExceptionOnProfilePictureGetWhenProfilePictureIsNotFound() {
+        Long userId = 1L;
+        when(profilePictureRepository.findById(userId)).thenReturn(Mono.empty());
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> service.getProfilePicture(userId).block());
+        assertEquals("Profile picture associated with user with id " + userId + " is not found", e.getMessage());
+    }
+
+    @Test
+    void shouldCreateProfilePicture() {
+        long userId = 1L;
+        when(profilePictureRepository.findById(userId)).thenReturn(Mono.empty());
+        when(profilePictureRepository.create(any(ProfilePicture.class)))
+                .thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        ProfilePicture profilePicture = ProfilePicture.builder().userId(userId).build();
+
+        ProfilePicture result = service.updateProfilePicture(profilePicture).block();
+        assertNotNull(result);
+        verify(profilePictureRepository, times(1)).create(profilePicture);
+    }
+
+    @Test
+    void shouldUpdateProfilePicture() {
+        long userId = 1L;
+        ProfilePicture profilePicture = ProfilePicture.builder().userId(userId).build();
+        when(profilePictureRepository.findById(userId)).thenReturn(Mono.just(profilePicture));
+        when(profilePictureRepository.save(any(ProfilePicture.class)))
+                .thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        ProfilePicture result = service.updateProfilePicture(profilePicture).block();
+        assertNotNull(result);
+        verify(profilePictureRepository, times(1)).save(profilePicture);
+    }
+
+    @Test
+    void shouldThrowExceptionOnProfilePictureUpdateWhenProfilePictureIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> service.updateProfilePicture(null));
+        assertEquals("Profile picture must not be null", e.getMessage());
     }
 }

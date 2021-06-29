@@ -28,9 +28,9 @@ public interface EmailConfirmationService {
      *
      * @param userId id of user whose email must be confirmed
      * @param token  email confirmation token
-     * @throws EntityNotFoundException                if user is not found by id or given email confirmation token is
-     *                                                not registered for user
-     * @throws TokenExpiredException if the given email confirmation token is expired
+     * @throws EntityNotFoundException if user is not found by id or given email confirmation token is
+     *                                 not registered for user
+     * @throws TokenExpiredException   if the given email confirmation token is expired
      */
     Mono<Void> confirmEmail(Long userId, String token) throws EntityNotFoundException, TokenExpiredException;
 }

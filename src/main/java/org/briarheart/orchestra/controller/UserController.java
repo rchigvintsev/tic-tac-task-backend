@@ -1,18 +1,32 @@
 package org.briarheart.orchestra.controller;
 
+import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.model.ProfilePicture;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.EmailConfirmationService;
 import org.briarheart.orchestra.service.PasswordService;
 import org.briarheart.orchestra.service.UserService;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.http.codec.multipart.Part;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import java.io.ByteArrayOutputStream;
+import java.net.URI;
 import java.util.Locale;
 
 /**
@@ -28,9 +42,9 @@ public class UserController extends AbstractController {
     /**
      * Creates new instance of this class with the given user, email confirmation, and password services.
      *
-     * @param userService user service (must not be {@code null})
+     * @param userService              user service (must not be {@code null})
      * @param emailConfirmationService email confirmation service (must not be {@code null})
-     * @param passwordService password service (must not be {@code null})
+     * @param passwordService          password service (must not be {@code null})
      */
     public UserController(UserService userService,
                           EmailConfirmationService emailConfirmationService,
@@ -84,5 +98,64 @@ public class UserController extends AbstractController {
         user.setId(id);
         user.setEmail(getUser(authentication).getEmail());
         return userService.updateUser(user);
+    }
+
+    @GetMapping(path = "/{id}/profile-picture")
+    public Mono<ResponseEntity<Resource>> getProfilePicture(
+            @PathVariable("id") Long id,
+            Authentication authentication
+    ) {
+        ensureValidUserId(id, authentication);
+        return userService.getProfilePicture(id).map(picture -> {
+            ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
+            if (picture.getType() != null) {
+                bodyBuilder.contentType(MediaType.parseMediaType(picture.getType()));
+            }
+            return bodyBuilder.contentLength(picture.getData().length).body(new ByteArrayResource(picture.getData()));
+        });
+    }
+
+    @PutMapping("/{id}/profile-picture")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> updateProfilePicture(
+            @PathVariable Long id,
+            @RequestPart("profilePicture") Mono<FilePart> profilePicture,
+            Authentication authentication,
+            ServerHttpRequest request
+    ) {
+        User user = getUser(authentication);
+        ensureValidUserId(id, user);
+        return profilePicture.flatMapMany(Part::content)
+                .reduce(new ByteArrayOutputStream(), (buffer, content) -> {
+                    buffer.writeBytes(content.asByteBuffer().array());
+                    DataBufferUtils.release(content);
+                    return buffer;
+                }).zipWith(profilePicture.map(Part::headers))
+                .flatMap(contentAndHeaders -> {
+                    byte[] pictureBytes = contentAndHeaders.getT1().toByteArray();
+                    HttpHeaders headers = contentAndHeaders.getT2();
+                    MediaType contentType = headers.getContentType();
+                    String pictureType = contentType != null ? contentType.toString() : null;
+                    ProfilePicture picture = ProfilePicture.builder()
+                            .userId(id)
+                            .data(pictureBytes)
+                            .type(pictureType)
+                            .build();
+                    return userService.updateProfilePicture(picture);
+                }).flatMap(picture -> {
+                    URI profilePictureUri = UriComponentsBuilder.fromHttpRequest(request).build().toUri();
+                    user.setProfilePictureUrl(profilePictureUri.toString());
+                    return userService.updateUser(user);
+                }).then();
+    }
+
+    private void ensureValidUserId(Long id, Authentication authentication) {
+        ensureValidUserId(id, getUser(authentication));
+    }
+
+    private void ensureValidUserId(Long id, User user) {
+        if (!user.getId().equals(id)) {
+            throw new EntityNotFoundException("User with id " + id + " is not found");
+        }
     }
 }

@@ -1,6 +1,6 @@
 package org.briarheart.orchestra.data;
 
-import lombok.RequiredArgsConstructor;
+import io.jsonwebtoken.lang.Assert;
 import org.briarheart.orchestra.model.TaskTagRelation;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -13,12 +13,16 @@ import java.util.Objects;
  * @author Roman Chigvintsev
  */
 @Component
-@RequiredArgsConstructor
 public class TaskTagRelationCreatorImpl implements TaskTagRelationCreator {
     @SuppressWarnings("SqlResolve")
     private static final String SQL_CREATE_TASK_TAG_RELATION = "INSERT INTO tasks_tags (task_id, tag_id) VALUES (?, ?)";
 
     private final JdbcTemplate jdbcTemplate;
+
+    public TaskTagRelationCreatorImpl(JdbcTemplate jdbcTemplate) {
+        Assert.notNull(jdbcTemplate, "JDBC template must not be null");
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     @Override
     public Mono<TaskTagRelation> create(Long taskId, Long tagId) {

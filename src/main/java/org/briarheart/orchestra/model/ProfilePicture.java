@@ -13,21 +13,19 @@ import java.util.Arrays;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class Image {
+public class ProfilePicture {
     @Id
-    private Long id;
     private Long userId;
     private byte[] data;
     private String type;
 
     /**
-     * Creates copy of the given image.
+     * Creates copy of the given profile picture.
      *
-     * @param other image to be copied (must not be {@code null})
+     * @param other profile picture to be copied (must not be {@code null})
      */
-    public Image(Image other) {
-        Assert.notNull(other, "Image must not be null");
-        this.id = other.id;
+    public ProfilePicture(ProfilePicture other) {
+        Assert.notNull(other, "User profile picture must not be null");
         this.userId = other.userId;
         this.data = other.data != null ? Arrays.copyOf(other.data, other.data.length) : null;
         this.type = other.type;

@@ -4,7 +4,9 @@ import io.jsonwebtoken.lang.Assert;
 import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.data.ProfilePictureRepository;
 import org.briarheart.orchestra.data.UserRepository;
+import org.briarheart.orchestra.model.ProfilePicture;
 import org.briarheart.orchestra.model.User;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,23 +25,27 @@ import java.util.Locale;
 @Slf4j
 public class DefaultUserService implements UserService {
     private final UserRepository userRepository;
+    private final ProfilePictureRepository profilePictureRepository;
     private final EmailConfirmationService emailConfirmationService;
     private final PasswordService passwordService;
     private final PasswordEncoder passwordEncoder;
     private final MessageSourceAccessor messages;
 
     public DefaultUserService(UserRepository userRepository,
+                              ProfilePictureRepository profilePictureRepository,
                               EmailConfirmationService emailConfirmationService,
                               PasswordService passwordService,
                               PasswordEncoder passwordEncoder,
                               MessageSourceAccessor messages) {
         Assert.notNull(userRepository, "User repository must not be null");
+        Assert.notNull(profilePictureRepository, "Profile picture repository must not be null");
         Assert.notNull(emailConfirmationService, "Email confirmation service must not be null");
         Assert.notNull(passwordService, "Password service must not be null");
         Assert.notNull(passwordEncoder, "Password encoder must not be null");
         Assert.notNull(messages, "Message source accessor must not be null");
 
         this.userRepository = userRepository;
+        this.profilePictureRepository = profilePictureRepository;
         this.emailConfirmationService = emailConfirmationService;
         this.passwordService = passwordService;
         this.passwordEncoder = passwordEncoder;
@@ -85,6 +91,26 @@ public class DefaultUserService implements UserService {
                     .map(this::clearPassword)
                     .doOnSuccess(u -> log.debug("User with id {} is updated", u.getId()));
         });
+    }
+
+    @Override
+    public Mono<ProfilePicture> getProfilePicture(Long userId) throws EntityNotFoundException {
+        return profilePictureRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Profile picture associated with user with id "
+                        + userId + " is not found")));
+    }
+
+    @Override
+    public Mono<ProfilePicture> updateProfilePicture(ProfilePicture picture) {
+        Assert.notNull(picture, "Profile picture must not be null");
+        return profilePictureRepository.findById(picture.getUserId())
+                .hasElement()
+                .flatMap(found -> {
+                    if (found) {
+                        return profilePictureRepository.save(picture);
+                    }
+                    return profilePictureRepository.create(picture);
+                });
     }
 
     private Mono<User> ensureEmailNotConfirmed(User user, Locale locale) {

@@ -2,6 +2,7 @@ package org.briarheart.orchestra.service;
 
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
+import org.briarheart.orchestra.model.ProfilePicture;
 import org.briarheart.orchestra.model.User;
 import reactor.core.publisher.Mono;
 
@@ -42,4 +43,8 @@ public interface UserService {
      * @throws EntityNotFoundException if user is not found
      */
     Mono<User> updateUser(User user) throws EntityNotFoundException;
+
+    Mono<ProfilePicture> getProfilePicture(Long userId) throws EntityNotFoundException;
+
+    Mono<ProfilePicture> updateProfilePicture(ProfilePicture picture);
 }
