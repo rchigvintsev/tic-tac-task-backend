@@ -333,7 +333,7 @@ class DefaultUserServiceTest {
 
         ProfilePicture profilePicture = ProfilePicture.builder().userId(userId).build();
 
-        ProfilePicture result = service.updateProfilePicture(profilePicture).block();
+        ProfilePicture result = service.saveProfilePicture(profilePicture).block();
         assertNotNull(result);
         verify(profilePictureRepository, times(1)).create(profilePicture);
     }
@@ -346,15 +346,15 @@ class DefaultUserServiceTest {
         when(profilePictureRepository.save(any(ProfilePicture.class)))
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        ProfilePicture result = service.updateProfilePicture(profilePicture).block();
+        ProfilePicture result = service.saveProfilePicture(profilePicture).block();
         assertNotNull(result);
         verify(profilePictureRepository, times(1)).save(profilePicture);
     }
 
     @Test
-    void shouldThrowExceptionOnProfilePictureUpdateWhenProfilePictureIsNull() {
+    void shouldThrowExceptionOnProfilePictureSaveWhenProfilePictureIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> service.updateProfilePicture(null));
+                () -> service.saveProfilePicture(null));
         assertEquals("Profile picture must not be null", e.getMessage());
     }
 }

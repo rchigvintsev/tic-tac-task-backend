@@ -205,11 +205,11 @@ class UserControllerTest {
     }
 
     @Test
-    void shouldUpdateProfilePicture() {
+    void shouldSaveProfilePicture() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(userService.updateProfilePicture(any(ProfilePicture.class)))
+        when(userService.saveProfilePicture(any(ProfilePicture.class)))
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
@@ -228,11 +228,11 @@ class UserControllerTest {
     }
 
     @Test
-    void shouldUpdateUserProfilePictureUrlOnProfilePictureUpdate() {
+    void shouldUpdateUserProfilePictureUrlOnProfilePictureSave() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(userService.updateProfilePicture(any(ProfilePicture.class)))
+        when(userService.saveProfilePicture(any(ProfilePicture.class)))
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();

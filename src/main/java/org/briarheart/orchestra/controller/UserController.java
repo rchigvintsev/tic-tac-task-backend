@@ -117,7 +117,7 @@ public class UserController extends AbstractController {
 
     @PutMapping("/{id}/profile-picture")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> updateProfilePicture(
+    public Mono<Void> saveProfilePicture(
             @PathVariable Long id,
             @RequestPart("profilePicture") Mono<FilePart> profilePicture,
             Authentication authentication,
@@ -141,7 +141,7 @@ public class UserController extends AbstractController {
                             .data(pictureBytes)
                             .type(pictureType)
                             .build();
-                    return userService.updateProfilePicture(picture);
+                    return userService.saveProfilePicture(picture);
                 }).flatMap(picture -> {
                     URI profilePictureUri = UriComponentsBuilder.fromHttpRequest(request).build().toUri();
                     user.setProfilePictureUrl(profilePictureUri.toString());

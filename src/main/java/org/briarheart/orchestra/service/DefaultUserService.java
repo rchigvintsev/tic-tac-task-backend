@@ -101,7 +101,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public Mono<ProfilePicture> updateProfilePicture(ProfilePicture picture) {
+    public Mono<ProfilePicture> saveProfilePicture(ProfilePicture picture) {
         Assert.notNull(picture, "Profile picture must not be null");
         return profilePictureRepository.findById(picture.getUserId())
                 .hasElement()

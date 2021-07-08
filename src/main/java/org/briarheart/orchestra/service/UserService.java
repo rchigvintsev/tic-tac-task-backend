@@ -44,7 +44,20 @@ public interface UserService {
      */
     Mono<User> updateUser(User user) throws EntityNotFoundException;
 
+    /**
+     * Returns profile picture associated with user with the given id.
+     *
+     * @param userId user id
+     * @return profile picture or empty stream if user does not have a profile picture
+     * @throws EntityNotFoundException if user is not found by id
+     */
     Mono<ProfilePicture> getProfilePicture(Long userId) throws EntityNotFoundException;
 
-    Mono<ProfilePicture> updateProfilePicture(ProfilePicture picture);
+    /**
+     * Creates new or updates existing profile picture.
+     *
+     * @param picture profile picture to be created/updated (must not be {@code null})
+     * @return created/updated profile picture
+     */
+    Mono<ProfilePicture> saveProfilePicture(ProfilePicture picture);
 }
