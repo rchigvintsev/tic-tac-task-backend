@@ -14,13 +14,13 @@ import java.util.Locale;
  */
 public interface PasswordService {
     /**
-     * Sends password reset link to the given user.
+     * Sends password reset link to the given email address provided user with such email address exists and enabled.
+     * Does nothing otherwise.
      *
-     * @param user   user to which password reset link should be sent (must not be {@code null})
+     * @param email email address of user whose password should be reset (must not be {@code null} or empty)
      * @param locale current user's locale
-     * @throws UnableToSendMessageException if error occurred while trying to send password reset link
      */
-    Mono<PasswordResetConfirmationToken> sendPasswordResetLink(User user, Locale locale) throws UnableToSendMessageException;
+    Mono<Void> resetPassword(String email, Locale locale);
 
     /**
      * Resets user's password provided the given confirmation token is valid.

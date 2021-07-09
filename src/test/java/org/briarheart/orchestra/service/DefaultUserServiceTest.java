@@ -5,7 +5,6 @@ import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.ProfilePictureRepository;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.EmailConfirmationToken;
-import org.briarheart.orchestra.model.PasswordResetConfirmationToken;
 import org.briarheart.orchestra.model.ProfilePicture;
 import org.briarheart.orchestra.model.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +32,6 @@ class DefaultUserServiceTest {
     private UserRepository userRepository;
     private ProfilePictureRepository profilePictureRepository;
     private EmailConfirmationService emailConfirmationService;
-    private PasswordService passwordService;
     private PasswordEncoder passwordEncoder;
     private MessageSourceAccessor messages;
 
@@ -59,20 +57,6 @@ class DefaultUserServiceTest {
                     return Mono.just(emailConfirmationToken);
                 });
 
-        passwordService = mock(PasswordService.class);
-        when(passwordService.sendPasswordResetLink(any(User.class), eq(Locale.ENGLISH))).thenAnswer(args -> {
-            User user = args.getArgument(0);
-            PasswordResetConfirmationToken passwordResetConfirmationToken = PasswordResetConfirmationToken.builder()
-                    .id(1L)
-                    .userId(user.getId())
-                    .email(user.getEmail())
-                    .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                    .createdAt(LocalDateTime.now(ZoneOffset.UTC))
-                    .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(24, ChronoUnit.HOURS))
-                    .build();
-            return Mono.just(passwordResetConfirmationToken);
-        });
-
         passwordEncoder = mock(PasswordEncoder.class);
         when(passwordEncoder.encode(anyString())).thenAnswer(args -> args.getArgument(0));
 
@@ -81,45 +65,35 @@ class DefaultUserServiceTest {
         messages = new MessageSourceAccessor(messageSource);
 
         service = new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService,
-                passwordService, passwordEncoder, messages);
+                passwordEncoder, messages);
     }
 
     @Test
     void shouldThrowExceptionOnConstructWhenUserRepositoryIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> new DefaultUserService(null,
-                profilePictureRepository, emailConfirmationService, passwordService, passwordEncoder, messages));
+                profilePictureRepository, emailConfirmationService, passwordEncoder, messages));
         assertEquals("User repository must not be null", e.getMessage());
     }
 
     @Test
     void shouldThrowExceptionOnConstructWhenProfilePictureRepositoryIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
-                -> new DefaultUserService(userRepository, null, emailConfirmationService, passwordService,
-                passwordEncoder, messages));
+                -> new DefaultUserService(userRepository, null, emailConfirmationService, passwordEncoder, messages));
         assertEquals("Profile picture repository must not be null", e.getMessage());
     }
 
     @Test
     void shouldThrowExceptionOnConstructWhenEmailConfirmationServiceIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
-                -> new DefaultUserService(userRepository, profilePictureRepository, null, passwordService,
-                passwordEncoder, messages));
+                -> new DefaultUserService(userRepository, profilePictureRepository, null, passwordEncoder, messages));
         assertEquals("Email confirmation service must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldThrowExceptionOnConstructWhenPasswordServiceIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
-                -> new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService, null,
-                passwordEncoder, messages));
-        assertEquals("Password service must not be null", e.getMessage());
     }
 
     @Test
     void shouldThrowExceptionOnConstructWhenPasswordEncoderIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
-                -> new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService,
-                passwordService, null, messages));
+                -> new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService, null,
+                messages));
         assertEquals("Password encoder must not be null", e.getMessage());
     }
 
@@ -127,7 +101,7 @@ class DefaultUserServiceTest {
     void shouldThrowExceptionOnConstructWhenMessageSourceAccessorIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, ()
                 -> new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService,
-                passwordService, passwordEncoder, null));
+                passwordEncoder, null));
         assertEquals("Message source accessor must not be null", e.getMessage());
     }
 
@@ -244,29 +218,6 @@ class DefaultUserServiceTest {
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository, times(1)).save(userCaptor.capture());
         assertEquals(newUser.getPassword(), userCaptor.getValue().getPassword());
-    }
-
-    @Test
-    void shouldSendPasswordResetLinkToUserOnPasswordReset() {
-        User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
-        service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
-        verify(passwordService, times(1)).sendPasswordResetLink(user, Locale.ENGLISH);
-    }
-
-    @Test
-    void shouldDoNothingOnPasswordResetWhenUserIsNotFound() {
-        String email = "alice@mail.com";
-        when(userRepository.findByEmailAndEnabled(email, true)).thenReturn(Mono.empty());
-        service.resetPassword(email, Locale.ENGLISH).block();
-        verify(passwordService, never()).sendPasswordResetLink(any(User.class), any(Locale.class));
-    }
-
-    @Test
-    void shouldThrowExceptionOnPasswordResetWhenEmailIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> service.resetPassword(null, Locale.ENGLISH).block());
-        assertEquals("Email address must not be null or empty", e.getMessage());
     }
 
     @Test

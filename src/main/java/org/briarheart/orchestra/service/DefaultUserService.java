@@ -27,27 +27,23 @@ public class DefaultUserService implements UserService {
     private final UserRepository userRepository;
     private final ProfilePictureRepository profilePictureRepository;
     private final EmailConfirmationService emailConfirmationService;
-    private final PasswordService passwordService;
     private final PasswordEncoder passwordEncoder;
     private final MessageSourceAccessor messages;
 
     public DefaultUserService(UserRepository userRepository,
                               ProfilePictureRepository profilePictureRepository,
                               EmailConfirmationService emailConfirmationService,
-                              PasswordService passwordService,
                               PasswordEncoder passwordEncoder,
                               MessageSourceAccessor messages) {
         Assert.notNull(userRepository, "User repository must not be null");
         Assert.notNull(profilePictureRepository, "Profile picture repository must not be null");
         Assert.notNull(emailConfirmationService, "Email confirmation service must not be null");
-        Assert.notNull(passwordService, "Password service must not be null");
         Assert.notNull(passwordEncoder, "Password encoder must not be null");
         Assert.notNull(messages, "Message source accessor must not be null");
 
         this.userRepository = userRepository;
         this.profilePictureRepository = profilePictureRepository;
         this.emailConfirmationService = emailConfirmationService;
-        this.passwordService = passwordService;
         this.passwordEncoder = passwordEncoder;
         this.messages = messages;
     }
@@ -68,14 +64,6 @@ public class DefaultUserService implements UserService {
                         .doOnSuccess(u -> log.debug("User with id {} is created", u.getId()))))
                 .map(this::clearPassword)
                 .flatMap(u -> emailConfirmationService.sendEmailConfirmationLink(u, locale).map(token -> u));
-    }
-
-    @Override
-    public Mono<Void> resetPassword(String email, Locale locale) {
-        Assert.hasLength(email, "Email address must not be null or empty");
-        return userRepository.findByEmailAndEnabled(email, true)
-                .flatMap(user -> passwordService.sendPasswordResetLink(user, locale))
-                .then();
     }
 
     @Override

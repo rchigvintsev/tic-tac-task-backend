@@ -101,7 +101,7 @@ class UserControllerTest {
     @Test
     void shouldResetPassword() {
         String email = "alice@mail.com";
-        when(userService.resetPassword(email, Locale.ENGLISH)).thenReturn(Mono.just(true).then());
+        when(passwordService.resetPassword(email, Locale.ENGLISH)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf())
                 .post().uri("/v1/users/password/reset")
@@ -111,7 +111,7 @@ class UserControllerTest {
                 .exchange()
 
                 .expectStatus().isOk();
-        verify(userService, times(1)).resetPassword(email, Locale.ENGLISH);
+        verify(passwordService, times(1)).resetPassword(email, Locale.ENGLISH);
     }
 
     @Test

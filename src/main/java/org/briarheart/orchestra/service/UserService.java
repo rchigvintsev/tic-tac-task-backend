@@ -27,15 +27,6 @@ public interface UserService {
     Mono<User> createUser(User user, Locale locale) throws EntityAlreadyExistsException;
 
     /**
-     * Sends password reset link to the given email address provided user with such email address exists and enabled.
-     * Does nothing otherwise.
-     *
-     * @param email email address of user whose password should be reset (must not be {@code null} or empty)
-     * @param locale current user's locale
-     */
-    Mono<Void> resetPassword(String email, Locale locale);
-
-    /**
      * Updates user.
      *
      * @param user user to be updated (must not be {@code null})

@@ -25,7 +25,8 @@ import java.util.Locale;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -67,9 +68,11 @@ class DefaultPasswordServiceTest {
     }
 
     @Test
-    void shouldSendPasswordResetLinkToUser() {
+    void shouldSendPasswordResetLinkToUserOnPasswordReset() {
         User user = User.builder().email("alice@mail.com").fullName("Alice").build();
-        service.sendPasswordResetLink(user, Locale.ENGLISH).block();
+        when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
+
+        service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender, times(1)).send(messageCaptor.capture());
         SimpleMailMessage message = messageCaptor.getValue();
@@ -79,8 +82,14 @@ class DefaultPasswordServiceTest {
     @Test
     void shouldIncludePasswordResetLinkIntoMessageText() {
         User user = User.builder().id(1L).email("alice@mail.com").fullName("Alice").build();
-        PasswordResetConfirmationToken token = service.sendPasswordResetLink(user, Locale.ENGLISH).block();
-        assertNotNull(token);
+        when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
+
+        service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
+
+        ArgumentCaptor<PasswordResetConfirmationToken> tokenCaptor
+                = ArgumentCaptor.forClass(PasswordResetConfirmationToken.class);
+        verify(tokenRepository, times(1)).save(tokenCaptor.capture());
+        PasswordResetConfirmationToken token = tokenCaptor.getValue();
 
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender, times(1)).send(messageCaptor.capture());
@@ -91,10 +100,11 @@ class DefaultPasswordServiceTest {
     }
 
     @Test
-    void shouldIncludeLinkExpirationTimoutIntoMessageText() {
+    void shouldIncludeLinkExpirationTimeoutIntoMessageText() {
         User user = User.builder().id(1L).email("alice@mail.com").fullName("Alice").build();
-        PasswordResetConfirmationToken token = service.sendPasswordResetLink(user, Locale.ENGLISH).block();
-        assertNotNull(token);
+        when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
+
+        service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
 
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender, times(1)).send(messageCaptor.capture());
@@ -103,18 +113,28 @@ class DefaultPasswordServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionOnPasswordResetLinkSendWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> service.sendPasswordResetLink(null, Locale.ENGLISH).block());
-        assertEquals("User must not be null", e.getMessage());
+    void shouldDoNothingOnPasswordResetWhenUserIsNotFound() {
+        String email = "alice@mail.com";
+        when(userRepository.findByEmailAndEnabled(email, true)).thenReturn(Mono.empty());
+        service.resetPassword(email, Locale.ENGLISH).block();
+        verify(tokenRepository, never()).save(any(PasswordResetConfirmationToken.class));
     }
 
     @Test
-    void shouldThrowExceptionOnPasswordResetLinkSendWhenMailExceptionIsThrown() {
-        User user = User.builder().email("alice@mail.com").fullName("Alice").build();
+    void shouldThrowExceptionOnPasswordResetWhenEmailIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> service.resetPassword(null, Locale.ENGLISH).block());
+        assertEquals("Email address must not be null or empty", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnPasswordResetWhenMailExceptionIsThrown() {
+        User user = User.builder().id(1L).email("alice@mail.com").fullName("Alice").build();
+        when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
+
         doThrow(new MailSendException("Something went wrong")).when(javaMailSender).send(any(SimpleMailMessage.class));
         assertThrows(UnableToSendMessageException.class,
-                () -> service.sendPasswordResetLink(user, Locale.ENGLISH).block());
+                () -> service.resetPassword("alice@mail.com", Locale.ENGLISH).block());
     }
 
     @Test

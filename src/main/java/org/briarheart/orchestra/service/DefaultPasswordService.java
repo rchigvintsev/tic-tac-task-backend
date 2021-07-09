@@ -69,10 +69,40 @@ public class DefaultPasswordService implements PasswordService {
     }
 
     @Override
-    public Mono<PasswordResetConfirmationToken> sendPasswordResetLink(User user, Locale locale)
-            throws UnableToSendMessageException {
-        Assert.notNull(user, "User must not be null");
+    public Mono<Void> resetPassword(String email, Locale locale) {
+        Assert.hasLength(email, "Email address must not be null or empty");
+        return userRepository.findByEmailAndEnabled(email, true)
+                .flatMap(user -> sendPasswordResetLink(user, locale))
+                .then();
+    }
 
+    @Override
+    public Mono<Void> confirmPasswordReset(Long userId, String tokenValue, String newPassword)
+            throws EntityNotFoundException, TokenExpiredException {
+        return tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(userId, tokenValue, true)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Password reset confirmation token \""
+                        + tokenValue + "\" is not registered for user with id " + userId)))
+                .filter(token -> !token.isExpired())
+                .switchIfEmpty(Mono.error(new TokenExpiredException("Password reset confirmation token \""
+                        + tokenValue + "\" is expired")))
+                .flatMap(token -> {
+                    token.setValid(false);
+                    return tokenRepository.save(token)
+                            .doOnSuccess(t -> log.debug("Token with id {} is marked as invalid", t.getId()));
+                })
+                .flatMap(token -> userRepository.findById(userId))
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
+                .flatMap(user -> {
+                    user.setPassword(encodePassword(newPassword));
+                    user.setVersion(user.getVersion() + 1);
+                    return userRepository.save(user)
+                            .doOnSuccess(u -> log.debug("Password is reset for user with id {}", u.getId()));
+                })
+                .then();
+    }
+
+    private Mono<PasswordResetConfirmationToken> sendPasswordResetLink(User user, Locale locale)
+            throws UnableToSendMessageException {
         return createPasswordResetToken(user)
                 .map(token -> {
                     String passwordResetLink = UriComponentsBuilder.fromHttpUrl(applicationInfo.getUrl())
@@ -109,31 +139,6 @@ public class DefaultPasswordService implements PasswordService {
                     }
                     return new UnableToSendMessageException(message, localizedMessage, e);
                 });
-    }
-
-    @Override
-    public Mono<Void> confirmPasswordReset(Long userId, String tokenValue, String newPassword)
-            throws EntityNotFoundException, TokenExpiredException {
-        return tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(userId, tokenValue, true)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Password reset confirmation token \""
-                        + tokenValue + "\" is not registered for user with id " + userId)))
-                .filter(token -> !token.isExpired())
-                .switchIfEmpty(Mono.error(new TokenExpiredException("Password reset confirmation token \""
-                        + tokenValue + "\" is expired")))
-                .flatMap(token -> {
-                    token.setValid(false);
-                    return tokenRepository.save(token)
-                            .doOnSuccess(t -> log.debug("Token with id {} is marked as invalid", t.getId()));
-                })
-                .flatMap(token -> userRepository.findById(userId))
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
-                .flatMap(user -> {
-                    user.setPassword(encodePassword(newPassword));
-                    user.setVersion(user.getVersion() + 1);
-                    return userRepository.save(user)
-                            .doOnSuccess(u -> log.debug("Password is reset for user with id {}", u.getId()));
-                })
-                .then();
     }
 
     private Mono<PasswordResetConfirmationToken> createPasswordResetToken(User user) {

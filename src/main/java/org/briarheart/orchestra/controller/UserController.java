@@ -78,7 +78,7 @@ public class UserController extends AbstractController {
                 String errorMessage = "A value for \"email\" form parameter must be provided";
                 return Mono.error(new RequiredFormParameterMissingException(errorMessage));
             }
-            return userService.resetPassword(email, locale);
+            return passwordService.resetPassword(email, locale);
         });
     }
 
