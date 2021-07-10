@@ -223,7 +223,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldUpdateUser() {
         User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
-        when(userRepository.findByIdAndEmail(user.getId(), user.getEmail())).thenReturn(Mono.just(user));
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         User updatedUser = new User(user);
@@ -250,7 +250,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldThrowExceptionOnUserUpdateWhenUserIsNotFound() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
-        when(userRepository.findByIdAndEmail(user.getId(), user.getEmail())).thenReturn(Mono.empty());
+        when(userRepository.findById(user.getId())).thenReturn(Mono.empty());
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> service.updateUser(user).block());
         assertEquals("User with id " + user.getId() + " is not found", e.getMessage());

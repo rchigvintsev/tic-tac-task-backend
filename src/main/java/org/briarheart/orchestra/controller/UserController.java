@@ -4,8 +4,10 @@ import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.ProfilePicture;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.EmailConfirmationService;
+import org.briarheart.orchestra.service.InvalidPasswordException;
 import org.briarheart.orchestra.service.PasswordService;
 import org.briarheart.orchestra.service.UserService;
+import org.briarheart.orchestra.util.Errors;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -93,10 +95,24 @@ public class UserController extends AbstractController {
         });
     }
 
+    @PostMapping("/{id}/password")
+    public Mono<Void> changePassword(@PathVariable Long id,
+                                     ServerWebExchange exchange,
+                                     Authentication authentication) {
+        ensureValidUserId(id, authentication);
+        return exchange.getFormData()
+                .flatMap(formData -> {
+                    String currentPassword = formData.getFirst("currentPassword");
+                    String newPassword = formData.getFirst("newPassword");
+                    return passwordService.changePassword(id, currentPassword, newPassword);
+                })
+                .onErrorMap(InvalidPasswordException.class,
+                        e -> Errors.createFieldError("currentPassword", "Password is not valid"));
+    }
+
     @PutMapping("/{id}")
     public Mono<User> updateUser(@Valid @RequestBody User user, @PathVariable Long id, Authentication authentication) {
-        user.setId(id);
-        user.setEmail(getUser(authentication).getEmail());
+        ensureValidUserId(id, authentication);
         return userService.updateUser(user);
     }
 

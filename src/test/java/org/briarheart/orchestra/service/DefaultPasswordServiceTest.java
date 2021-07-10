@@ -62,6 +62,11 @@ class DefaultPasswordServiceTest {
 
         passwordEncoder = mock(PasswordEncoder.class);
         when(passwordEncoder.encode(anyString())).thenAnswer(args -> args.getArgument(0));
+        when(passwordEncoder.matches(anyString(), anyString())).thenAnswer(args -> {
+            String rawPassword = args.getArgument(0);
+            String encodedPassword = args.getArgument(1);
+            return rawPassword.equals(encodedPassword);
+        });
 
         service = new DefaultPasswordService(tokenRepository, userRepository, appInfo, messages, javaMailSender,
                 passwordEncoder);
@@ -219,7 +224,7 @@ class DefaultPasswordServiceTest {
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> service.confirmPasswordReset(userId, tokenValue, "qwerty").block());
         assertEquals("Password reset confirmation token \"" + tokenValue + "\" is not registered for user with id "
-                        + userId, e.getMessage());
+                + userId, e.getMessage());
     }
 
     @Test
@@ -259,5 +264,41 @@ class DefaultPasswordServiceTest {
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> service.confirmPasswordReset(userId, token.getTokenValue(), "qwerty").block());
         assertEquals("User with id " + userId + " is not found", e.getMessage());
+    }
+
+    @Test
+    void shouldChangePassword() {
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .build();
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
+
+        User updatedUser = new User(user);
+        updatedUser.setVersion(user.getVersion() + 1);
+        updatedUser.setPassword("s3cret");
+
+        service.changePassword(user.getId(), user.getPassword(), updatedUser.getPassword()).block();
+        verify(userRepository, times(1)).save(updatedUser);
+    }
+
+    @Test
+    void shouldThrowExceptionOnPasswordChangeWhenUserIsNotFound() {
+        long userId = 1L;
+        when(userRepository.findById(userId)).thenReturn(Mono.empty());
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> service.changePassword(userId, "secret", "s3cret").block());
+        assertEquals("User with id " + userId + " is not found", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnPasswordChangeWhenPasswordsDoNotMatch() {
+        User user = User.builder().id(1L).password("secret").build();
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
+        assertThrows(InvalidPasswordException.class,
+                () -> service.changePassword(user.getId(), "qwerty", "s3cret").block());
     }
 }

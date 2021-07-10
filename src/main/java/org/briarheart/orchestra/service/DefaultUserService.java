@@ -69,16 +69,20 @@ public class DefaultUserService implements UserService {
     @Override
     public Mono<User> updateUser(User user) {
         Assert.notNull(user, "User must not be null");
-        return findUser(user.getId(), user.getEmail()).flatMap(existingUser -> {
-            User updatedUser = new User(user);
-            updatedUser.setEmailConfirmed(existingUser.isEmailConfirmed());
-            updatedUser.setVersion(existingUser.getVersion() + 1);
-            updatedUser.setPassword(existingUser.getPassword());
-            updatedUser.setEnabled(existingUser.isEnabled());
-            return userRepository.save(updatedUser)
-                    .map(this::clearPassword)
-                    .doOnSuccess(u -> log.debug("User with id {} is updated", u.getId()));
-        });
+        Long userId = user.getId();
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
+                .flatMap(existingUser -> {
+                    User updatedUser = new User(user);
+                    updatedUser.setEmail(existingUser.getEmail());
+                    updatedUser.setEmailConfirmed(existingUser.isEmailConfirmed());
+                    updatedUser.setVersion(existingUser.getVersion() + 1);
+                    updatedUser.setPassword(existingUser.getPassword());
+                    updatedUser.setEnabled(existingUser.isEnabled());
+                    return userRepository.save(updatedUser)
+                            .map(this::clearPassword)
+                            .doOnSuccess(u -> log.debug("User with id {} is updated", u.getId()));
+                });
     }
 
     @Override
@@ -135,10 +139,5 @@ public class DefaultUserService implements UserService {
     private User clearPassword(User user) {
         user.setPassword(null);
         return user;
-    }
-
-    private Mono<User> findUser(Long id, String email) {
-        return userRepository.findByIdAndEmail(id, email)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + id + " is not found")));
     }
 }

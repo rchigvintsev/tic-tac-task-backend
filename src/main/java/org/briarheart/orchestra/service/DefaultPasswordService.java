@@ -90,8 +90,7 @@ public class DefaultPasswordService implements PasswordService {
                     return tokenRepository.save(token)
                             .doOnSuccess(t -> log.debug("Token with id {} is marked as invalid", t.getId()));
                 })
-                .flatMap(token -> userRepository.findById(userId))
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
+                .flatMap(token -> findUser(userId))
                 .flatMap(user -> {
                     user.setPassword(encodePassword(newPassword));
                     user.setVersion(user.getVersion() + 1);
@@ -99,6 +98,21 @@ public class DefaultPasswordService implements PasswordService {
                             .doOnSuccess(u -> log.debug("Password is reset for user with id {}", u.getId()));
                 })
                 .then();
+    }
+
+    @Override
+    public Mono<Void> changePassword(Long userId, String currentPassword, String newPassword) {
+        return findUser(userId)
+                .flatMap(user -> {
+                    if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                        return Mono.error(new InvalidPasswordException());
+                    }
+                    return Mono.just(user);
+                }).map(user -> {
+                    user.setPassword(encodePassword(newPassword));
+                    user.setVersion(user.getVersion() + 1);
+                    return userRepository.save(user);
+                }).then();
     }
 
     private Mono<PasswordResetConfirmationToken> sendPasswordResetLink(User user, Locale locale)
@@ -163,5 +177,10 @@ public class DefaultPasswordService implements PasswordService {
         Period period = new Period(passwordResetTokenExpirationTimeout.toMillis());
         PeriodFormatter periodFormatter = PeriodFormat.wordBased(locale);
         return periodFormatter.print(period.normalizedStandard(PeriodType.dayTime()));
+    }
+
+    private Mono<User> findUser(Long id) {
+        return userRepository.findById(id)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + id + " is not found")));
     }
 }

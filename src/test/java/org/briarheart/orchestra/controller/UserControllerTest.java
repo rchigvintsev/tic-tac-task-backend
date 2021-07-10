@@ -5,6 +5,7 @@ import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.ProfilePicture;
 import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.service.EmailConfirmationService;
+import org.briarheart.orchestra.service.InvalidPasswordException;
 import org.briarheart.orchestra.service.PasswordService;
 import org.briarheart.orchestra.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -143,18 +144,60 @@ class UserControllerTest {
     }
 
     @Test
+    void shouldChangePassword() {
+        User authenticatedUser = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        Authentication authenticationMock = createAuthentication(authenticatedUser);
+
+        long userId = 1L;
+        String newPassword = "s3cret";
+        when(passwordService.changePassword(userId, authenticatedUser.getPassword(), newPassword))
+                .thenReturn(Mono.just(true).then());
+
+        testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
+                .post().uri("/v1/users/{id}/password", userId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("currentPassword=" + authenticatedUser.getPassword() + "&newPassword=" + newPassword)
+                .exchange()
+
+                .expectStatus().isOk();
+        verify(passwordService, times(1)).changePassword(userId, authenticatedUser.getPassword(), newPassword);
+    }
+
+    @Test
+    void shouldRejectPasswordChangingWhenCurrentPasswordIsNotValid() {
+        User authenticatedUser = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        Authentication authenticationMock = createAuthentication(authenticatedUser);
+
+        long userId = 1L;
+        String currentPassword = "qwerty";
+        String newPassword = "s3cret";
+        when(passwordService.changePassword(userId, currentPassword, newPassword))
+                .thenReturn(Mono.error(new InvalidPasswordException()));
+
+        testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
+                .post().uri("/v1/users/{id}/password", userId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("currentPassword=" + currentPassword + "&newPassword=" + newPassword)
+                .exchange()
+
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.fieldErrors").exists()
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Password is not valid");;
+    }
+
+    @Test
     void shouldUpdateUser() {
         User authenticatedUser = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(authenticatedUser);
 
         User updatedUser = User.builder()
                 .id(authenticatedUser.getId())
-                .email("alice.wonderland@mail.com")
+                .email(authenticatedUser.getEmail())
                 .fullName("Alice Wonderland")
                 .build();
 
         User expectedResult = new User(updatedUser);
-        expectedResult.setEmail(authenticatedUser.getEmail());
         expectedResult.setAuthorities(new ArrayList<>());
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
