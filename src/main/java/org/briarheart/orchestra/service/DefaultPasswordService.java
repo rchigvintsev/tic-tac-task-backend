@@ -108,7 +108,7 @@ public class DefaultPasswordService implements PasswordService {
                         return Mono.error(new InvalidPasswordException());
                     }
                     return Mono.just(user);
-                }).map(user -> {
+                }).flatMap(user -> {
                     user.setPassword(encodePassword(newPassword));
                     user.setVersion(user.getVersion() + 1);
                     return userRepository.save(user);
