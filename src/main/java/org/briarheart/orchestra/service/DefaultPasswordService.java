@@ -105,7 +105,7 @@ public class DefaultPasswordService implements PasswordService {
         return findUser(userId)
                 .flatMap(user -> {
                     if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-                        return Mono.error(new InvalidPasswordException());
+                        return Mono.error(new InvalidPasswordException(currentPassword));
                     }
                     return Mono.just(user);
                 }).flatMap(user -> {

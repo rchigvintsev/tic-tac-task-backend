@@ -1,5 +1,6 @@
 package org.briarheart.orchestra.controller;
 
+import org.briarheart.orchestra.config.I18nConfig;
 import org.briarheart.orchestra.config.PermitAllSecurityConfig;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.ProfilePicture;
@@ -8,6 +9,8 @@ import org.briarheart.orchestra.service.EmailConfirmationService;
 import org.briarheart.orchestra.service.InvalidPasswordException;
 import org.briarheart.orchestra.service.PasswordService;
 import org.briarheart.orchestra.service.UserService;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +33,7 @@ import java.util.Base64;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -41,8 +45,9 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
  */
 @ExtendWith(SpringExtension.class)
 @WebFluxTest(UserController.class)
-@Import(PermitAllSecurityConfig.class)
+@Import({PermitAllSecurityConfig.class, I18nConfig.class})
 class UserControllerTest {
+    private static final Locale DEFAULT_LOCALE = Locale.getDefault();
     private static final String TEST_JPEG = "/9j/4AAQSkZJRgABAQEAeAB4AAD/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAABAAEAAAAAA"
             + "AD/2wBDAAIBAQIBAQICAgICAgICAwUDAwMDAwYEBAMFBwYHBwcGBwcICQsJCAgKCAcHCg0KCgsMDAwMBwkODw0MDgsMDAz/2wBDAQIC"
             + "AgMDAwYDAwYMCAcIDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAz/wAARCAAyADIDASIAAhE"
@@ -64,9 +69,26 @@ class UserControllerTest {
     @MockBean
     private PasswordService passwordService;
 
+    @BeforeAll
+    static void beforeAll() {
+        Locale.setDefault(Locale.ENGLISH);
+    }
+
+    @AfterAll
+    static void afterAll() {
+        Locale.setDefault(DEFAULT_LOCALE);
+    }
+
     @BeforeEach
     void setUp() {
         when(userService.updateUser(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+    }
+
+    @Test
+    void shouldThrowExceptionOnConstructWhenMessageSourceAccessorIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new UserController(userService, emailConfirmationService, passwordService, null));
+        assertEquals("Message source accessor must not be null", e.getMessage());
     }
 
     @Test
@@ -172,7 +194,7 @@ class UserControllerTest {
         String currentPassword = "qwerty";
         String newPassword = "s3cret";
         when(passwordService.changePassword(userId, currentPassword, newPassword))
-                .thenReturn(Mono.error(new InvalidPasswordException()));
+                .thenReturn(Mono.error(new InvalidPasswordException(currentPassword)));
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
                 .post().uri("/v1/users/{id}/password", userId)
@@ -183,7 +205,7 @@ class UserControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.fieldErrors").exists()
-                .jsonPath("$.fieldErrors[0].message").isEqualTo("Password is not valid");;
+                .jsonPath("$.fieldErrors[0].message").isEqualTo("Invalid password");
     }
 
     @Test

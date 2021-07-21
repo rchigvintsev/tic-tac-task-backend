@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.util;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.MapBindingResult;
 import org.springframework.web.bind.support.WebExchangeBindException;
 
@@ -31,12 +32,14 @@ public class Errors {
      * Creates instance of {@link WebExchangeBindException} with one field error.
      *
      * @param fieldName field name
+     * @param fieldValue field value
      * @param errorMessage error message
      * @return instance of {@link WebExchangeBindException}
      */
-    public static WebExchangeBindException createFieldError(String fieldName, String errorMessage) {
-        WebExchangeBindException e = new WebExchangeBindException(new MethodParameter(DUMMY_CONSTRUCTOR, -1),
-                new MapBindingResult(Collections.emptyMap(), "dummy"));
+    public static WebExchangeBindException createFieldError(String fieldName, String fieldValue, String errorMessage) {
+        MethodParameter parameter = new MethodParameter(DUMMY_CONSTRUCTOR, -1);
+        BindingResult bindingResult = new MapBindingResult(Collections.singletonMap(fieldName, fieldValue), "dummy");
+        WebExchangeBindException e = new WebExchangeBindException(parameter, bindingResult);
         e.rejectValue(fieldName, "", errorMessage);
         return e;
     }

@@ -8,6 +8,7 @@ import org.briarheart.orchestra.service.InvalidPasswordException;
 import org.briarheart.orchestra.service.PasswordService;
 import org.briarheart.orchestra.service.UserService;
 import org.briarheart.orchestra.util.Errors;
+import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -40,6 +41,7 @@ public class UserController extends AbstractController {
     private final UserService userService;
     private final EmailConfirmationService emailConfirmationService;
     private final PasswordService passwordService;
+    private final MessageSourceAccessor messages;
 
     /**
      * Creates new instance of this class with the given user, email confirmation, and password services.
@@ -47,17 +49,21 @@ public class UserController extends AbstractController {
      * @param userService              user service (must not be {@code null})
      * @param emailConfirmationService email confirmation service (must not be {@code null})
      * @param passwordService          password service (must not be {@code null})
+     * @param messages                 source of localized messages (must not be {@code null})
      */
     public UserController(UserService userService,
                           EmailConfirmationService emailConfirmationService,
-                          PasswordService passwordService) {
+                          PasswordService passwordService,
+                          MessageSourceAccessor messages) {
         Assert.notNull(userService, "User service must not be null");
         Assert.notNull(emailConfirmationService, "Email confirmation service must not be null");
         Assert.notNull(passwordService, "Password service must not be null");
+        Assert.notNull(messages, "Message source accessor must not be null");
 
         this.userService = userService;
         this.emailConfirmationService = emailConfirmationService;
         this.passwordService = passwordService;
+        this.messages = messages;
     }
 
     @PostMapping
@@ -106,8 +112,10 @@ public class UserController extends AbstractController {
                     String newPassword = formData.getFirst("newPassword");
                     return passwordService.changePassword(id, currentPassword, newPassword);
                 })
-                .onErrorMap(InvalidPasswordException.class,
-                        e -> Errors.createFieldError("currentPassword", "Password is not valid"));
+                .onErrorMap(InvalidPasswordException.class, e -> {
+                    String message = messages.getMessage("invalid-password");
+                    return Errors.createFieldError("currentPassword", e.getPassword(), message);
+                });
     }
 
     @PutMapping("/{id}")
