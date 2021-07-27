@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.service;
 
 import io.jsonwebtoken.lang.Assert;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
@@ -24,11 +25,16 @@ import java.util.Locale;
 @Service
 @Slf4j
 public class DefaultUserService implements UserService {
+    private static final int DEFAULT_PROFILE_PICTURE_FILE_MAX_SIZE = 1024 * 1024 * 3; // 3 Mb
+
     private final UserRepository userRepository;
     private final ProfilePictureRepository profilePictureRepository;
     private final EmailConfirmationService emailConfirmationService;
     private final PasswordEncoder passwordEncoder;
     private final MessageSourceAccessor messages;
+
+    @Setter
+    private int profilePictureFileMaxSize = DEFAULT_PROFILE_PICTURE_FILE_MAX_SIZE;
 
     public DefaultUserService(UserRepository userRepository,
                               ProfilePictureRepository profilePictureRepository,
@@ -95,6 +101,11 @@ public class DefaultUserService implements UserService {
     @Override
     public Mono<ProfilePicture> saveProfilePicture(ProfilePicture picture) {
         Assert.notNull(picture, "Profile picture must not be null");
+        if (picture.getData().length > profilePictureFileMaxSize) {
+            return Mono.error(new FileTooLargeException("Profile picture file size must not be greater than "
+                    + profilePictureFileMaxSize + " byte(s)"));
+        }
+
         return profilePictureRepository.findById(picture.getUserId())
                 .hasElement()
                 .flatMap(found -> {

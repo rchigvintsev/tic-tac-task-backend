@@ -282,7 +282,7 @@ class DefaultUserServiceTest {
         when(profilePictureRepository.create(any(ProfilePicture.class)))
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        ProfilePicture profilePicture = ProfilePicture.builder().userId(userId).build();
+        ProfilePicture profilePicture = ProfilePicture.builder().userId(userId).data(new byte[] {0}).build();
 
         ProfilePicture result = service.saveProfilePicture(profilePicture).block();
         assertNotNull(result);
@@ -292,7 +292,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldUpdateProfilePicture() {
         long userId = 1L;
-        ProfilePicture profilePicture = ProfilePicture.builder().userId(userId).build();
+        ProfilePicture profilePicture = ProfilePicture.builder().userId(userId).data(new byte[] {0}).build();
         when(profilePictureRepository.findById(userId)).thenReturn(Mono.just(profilePicture));
         when(profilePictureRepository.save(any(ProfilePicture.class)))
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
@@ -307,5 +307,15 @@ class DefaultUserServiceTest {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> service.saveProfilePicture(null));
         assertEquals("Profile picture must not be null", e.getMessage());
+    }
+
+
+    @Test
+    void shouldThrowExceptionOnProfilePictureSaveWhenProfilePictureFileIsTooLarge() {
+        service.setProfilePictureFileMaxSize(1);
+        ProfilePicture profilePicture = ProfilePicture.builder().data(new byte[] {0, 1}).build();
+        FileTooLargeException e = assertThrows(FileTooLargeException.class,
+                () -> service.saveProfilePicture(profilePicture).block());
+        assertEquals("Profile picture file size must not be greater than 1 byte(s)", e.getMessage());
     }
 }

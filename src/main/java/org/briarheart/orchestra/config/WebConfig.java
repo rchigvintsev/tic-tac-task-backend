@@ -7,6 +7,7 @@ import org.briarheart.orchestra.controller.format.LocalDateTimeFormatter;
 import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.validation.NoFallbackResourceBundleLocator;
+import org.briarheart.orchestra.service.FileTooLargeException;
 import org.briarheart.orchestra.web.error.ApiErrorAttributes;
 import org.briarheart.orchestra.web.error.HttpStatusExceptionTypeMapper;
 import org.briarheart.orchestra.web.filter.LocaleContextFilter;
@@ -57,7 +58,7 @@ public class WebConfig implements WebFluxConfigurer {
             if (exceptionType == EntityNotFoundException.class) {
                 return HttpStatus.NOT_FOUND;
             }
-            if (exceptionType == EntityAlreadyExistsException.class) {
+            if (exceptionType == EntityAlreadyExistsException.class || exceptionType == FileTooLargeException.class) {
                 return HttpStatus.BAD_REQUEST;
             }
             return null;
