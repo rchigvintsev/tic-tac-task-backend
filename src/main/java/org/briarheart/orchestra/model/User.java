@@ -37,6 +37,8 @@ public class User implements UserDetails {
     @Size(max = 50)
     private String password;
     @Builder.Default
+    private boolean admin = false;
+    @Builder.Default
     private boolean enabled = true;
     @Size(max = 255)
     private String fullName;
@@ -58,6 +60,7 @@ public class User implements UserDetails {
         this.emailConfirmed = user.emailConfirmed;
         this.version = user.version;
         this.password = user.password;
+        this.admin = user.admin;
         this.enabled = user.enabled;
         this.fullName = user.fullName;
         this.profilePictureUrl = user.profilePictureUrl;
