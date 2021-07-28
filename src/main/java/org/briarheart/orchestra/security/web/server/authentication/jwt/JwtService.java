@@ -62,6 +62,7 @@ public class JwtService implements AccessTokenService {
             claims.put(JwtClaim.EMAIL.getName(), user.getEmail());
             claims.put(JwtClaim.FULL_NAME.getName(), user.getFullName());
             claims.put(JwtClaim.PROFILE_PICTURE_URL.getName(), user.getProfilePictureUrl());
+            claims.put(JwtClaim.ADMIN.getName(), user.isAdmin());
 
             LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
             LocalDateTime expiration = now.plus(accessTokenValiditySeconds, ChronoUnit.SECONDS);

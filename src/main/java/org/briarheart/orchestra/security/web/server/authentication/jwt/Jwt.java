@@ -45,6 +45,12 @@ public class Jwt implements AccessToken {
     }
 
     @Override
+    public boolean isAdmin() {
+        Object admin = claims.get(JwtClaim.ADMIN.getName());
+        return admin != null && (boolean) admin;
+    }
+
+    @Override
     public Instant getIssuedAt() {
         return Instant.ofEpochSecond((Long) claims.get(Claims.ISSUED_AT));
     }

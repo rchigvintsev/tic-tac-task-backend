@@ -30,6 +30,7 @@ public class AccessTokenReactiveAuthenticationManager implements ReactiveAuthent
                             .email(accessToken.getEmail())
                             .fullName(accessToken.getFullName())
                             .profilePictureUrl(accessToken.getProfilePictureUrl())
+                            .admin(accessToken.isAdmin())
                             .build();
                     return new AccessTokenAuthentication(accessToken, principal);
                 });

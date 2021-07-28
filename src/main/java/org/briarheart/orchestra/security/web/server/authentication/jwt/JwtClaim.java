@@ -10,7 +10,8 @@ public enum JwtClaim {
     ISSUED_AT("iat"),
     EXPIRATION_TIME("exp"),
     FULL_NAME("name"),
-    PROFILE_PICTURE_URL("picture");
+    PROFILE_PICTURE_URL("picture"),
+    ADMIN("admin");
 
     private final String name;
 

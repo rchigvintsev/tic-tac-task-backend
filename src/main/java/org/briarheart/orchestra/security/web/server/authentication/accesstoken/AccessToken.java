@@ -20,6 +20,8 @@ public interface AccessToken extends Serializable {
 
     String getProfilePictureUrl();
 
+    boolean isAdmin();
+
     Instant getIssuedAt();
 
     Instant getExpiration();
