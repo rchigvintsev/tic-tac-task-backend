@@ -12,6 +12,7 @@ import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,8 +24,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
@@ -64,6 +67,24 @@ public class UserController extends AbstractController {
         this.emailConfirmationService = emailConfirmationService;
         this.passwordService = passwordService;
         this.messages = messages;
+    }
+
+    @GetMapping("/count")
+    public Mono<Long> getUserCount(Authentication authentication) {
+        User user = getUser(authentication);
+        if (!user.isAdmin()) {
+            return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN));
+        }
+        return userService.getUserCount();
+    }
+
+    @GetMapping
+    public Flux<User> getUsers(Authentication authentication, Pageable pageable) {
+        User user = getUser(authentication);
+        if (!user.isAdmin()) {
+            return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN));
+        }
+        return userService.getUsers(pageable);
     }
 
     @PostMapping

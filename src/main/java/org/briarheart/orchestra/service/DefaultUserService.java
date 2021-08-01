@@ -9,9 +9,12 @@ import org.briarheart.orchestra.data.ProfilePictureRepository;
 import org.briarheart.orchestra.data.UserRepository;
 import org.briarheart.orchestra.model.ProfilePicture;
 import org.briarheart.orchestra.model.User;
+import org.briarheart.orchestra.util.Pageables;
 import org.springframework.context.support.MessageSourceAccessor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
@@ -52,6 +55,17 @@ public class DefaultUserService implements UserService {
         this.emailConfirmationService = emailConfirmationService;
         this.passwordEncoder = passwordEncoder;
         this.messages = messages;
+    }
+
+    @Override
+    public Mono<Long> getUserCount() {
+
+    }
+
+    @Override
+    public Flux<User> getUsers(Pageable pageable) {
+        return userRepository.findAll(Pageables.getOffset(pageable), Pageables.getLimit(pageable))
+                .map(this::clearPassword);
     }
 
     @Override

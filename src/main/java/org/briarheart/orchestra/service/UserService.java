@@ -4,6 +4,8 @@ import org.briarheart.orchestra.data.EntityAlreadyExistsException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.model.ProfilePicture;
 import org.briarheart.orchestra.model.User;
+import org.springframework.data.domain.Pageable;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Locale;
@@ -15,6 +17,16 @@ import java.util.Locale;
  * @see User
  */
 public interface UserService {
+    Mono<Long> getUserCount();
+
+    /**
+     * Returns all users.
+     *
+     * @param pageable paging restriction
+     * @return registered users
+     */
+    Flux<User> getUsers(Pageable pageable);
+
     /**
      * Creates new user along with sending email confirmation link to user's email address. Newly created user will be
      * disabled until his/her email is confirmed.
