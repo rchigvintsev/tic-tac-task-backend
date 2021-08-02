@@ -26,6 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.MultiValueMap;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -89,6 +90,59 @@ class UserControllerTest {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> new UserController(userService, emailConfirmationService, passwordService, null));
         assertEquals("Message source accessor must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldReturnNumberOfAllUsers() {
+        User user = User.builder().id(1L).email("alice@mail.com").admin(true).build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        long userCount = 3L;
+        when(userService.getUserCount()).thenReturn(Mono.just(userCount));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/v1/users/count")
+                .exchange()
+
+                .expectStatus().isOk()
+                .expectBody(Long.class).isEqualTo(userCount);
+    }
+
+    @Test
+    void shouldReturnForbiddenStatusCodeOnUserCountGetWhenCurrentUserIsNotAdmin() {
+        User user = User.builder().id(1L).email("alice@mail.com").admin(false).build();
+        Authentication authenticationMock = createAuthentication(user);
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/v1/users/count")
+                .exchange()
+
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void shouldReturnAllUsers() {
+        User user = User.builder().id(1L).email("alice@mail.com").admin(true).authorities(null).build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        when(userService.getUsers(any())).thenReturn(Flux.just(user));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/v1/users")
+                .exchange()
+
+                .expectStatus().isOk()
+                .expectBody(User[].class).isEqualTo(new User[]{user});
+    }
+
+    @Test
+    void shouldReturnForbiddenStatusCodeOnUsersGetWhenCurrentUserIsNotAdmin() {
+        User user = User.builder().id(1L).email("alice@mail.com").admin(false).build();
+        Authentication authenticationMock = createAuthentication(user);
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/v1/users")
+                .exchange()
+
+                .expectStatus().isForbidden();
     }
 
     @Test

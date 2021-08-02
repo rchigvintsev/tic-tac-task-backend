@@ -59,7 +59,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public Mono<Long> getUserCount() {
-
+        return userRepository.count();
     }
 
     @Override

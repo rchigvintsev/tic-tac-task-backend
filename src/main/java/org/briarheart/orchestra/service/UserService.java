@@ -17,6 +17,11 @@ import java.util.Locale;
  * @see User
  */
 public interface UserService {
+    /**
+     * Returns number of all users.
+     *
+     * @return number of all registered users
+     */
     Mono<Long> getUserCount();
 
     /**

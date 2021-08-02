@@ -12,7 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -103,6 +106,31 @@ class DefaultUserServiceTest {
                 -> new DefaultUserService(userRepository, profilePictureRepository, emailConfirmationService,
                 passwordEncoder, null));
         assertEquals("Message source accessor must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldReturnNumberOfAllUsers() {
+        long userCount = 3L;
+        when(userRepository.count()).thenReturn(Mono.just(userCount));
+        Long result = service.getUserCount().block();
+        assertEquals(userCount, result);
+    }
+
+    @Test
+    void shouldReturnAllUsers() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        when(userRepository.findAll(0, null)).thenReturn(Flux.just(user));
+        User result = service.getUsers(Pageable.unpaged()).blockFirst();
+        assertEquals(user, result);
+    }
+
+    @Test
+    void shouldReturnAllUsersWithPagingRestriction() {
+        User user = User.builder().id(1L).email("alice@mail.com").build();
+        PageRequest pageRequest = PageRequest.of(3, 50);
+        when(userRepository.findAll(pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(user));
+        User result = service.getUsers(pageRequest).blockFirst();
+        assertEquals(user, result);
     }
 
     @Test
@@ -308,7 +336,6 @@ class DefaultUserServiceTest {
                 () -> service.saveProfilePicture(null));
         assertEquals("Profile picture must not be null", e.getMessage());
     }
-
 
     @Test
     void shouldThrowExceptionOnProfilePictureSaveWhenProfilePictureFileIsTooLarge() {
