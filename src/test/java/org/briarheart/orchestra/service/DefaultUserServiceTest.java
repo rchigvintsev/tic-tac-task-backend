@@ -119,7 +119,7 @@ class DefaultUserServiceTest {
     @Test
     void shouldReturnAllUsers() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
-        when(userRepository.findAll(0, null)).thenReturn(Flux.just(user));
+        when(userRepository.findAllOrderByIdAsc(0, null)).thenReturn(Flux.just(user));
         User result = service.getUsers(Pageable.unpaged()).blockFirst();
         assertEquals(user, result);
     }
@@ -128,7 +128,8 @@ class DefaultUserServiceTest {
     void shouldReturnAllUsersWithPagingRestriction() {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(userRepository.findAll(pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(user));
+        when(userRepository.findAllOrderByIdAsc(pageRequest.getOffset(), pageRequest.getPageSize()))
+                .thenReturn(Flux.just(user));
         User result = service.getUsers(pageRequest).blockFirst();
         assertEquals(user, result);
     }

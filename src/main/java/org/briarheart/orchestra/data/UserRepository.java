@@ -10,8 +10,8 @@ import reactor.core.publisher.Mono;
  * @author Roman Chigvintsev
  */
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
-    @Query("SELECT * FROM users LIMIT :limit OFFSET :offset")
-    Flux<User> findAll(long offset, Integer limit);
+    @Query("SELECT * FROM users ORDER BY id ASC LIMIT :limit OFFSET :offset")
+    Flux<User> findAllOrderByIdAsc(long offset, Integer limit);
 
     @Query("SELECT * FROM users WHERE email = :email")
     Mono<User> findByEmail(String email);

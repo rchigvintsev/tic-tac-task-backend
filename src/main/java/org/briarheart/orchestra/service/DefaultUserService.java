@@ -64,7 +64,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public Flux<User> getUsers(Pageable pageable) {
-        return userRepository.findAll(Pageables.getOffset(pageable), Pageables.getLimit(pageable))
+        return userRepository.findAllOrderByIdAsc(Pageables.getOffset(pageable), Pageables.getLimit(pageable))
                 .map(this::clearPassword);
     }
 
