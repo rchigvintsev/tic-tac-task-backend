@@ -10,6 +10,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,6 +29,8 @@ class DefaultTaskCommentServiceTest {
     @BeforeEach
     void setUp() {
         taskCommentRepository = mock(TaskCommentRepository.class);
+
+        currentTime = LocalDateTime.now(ZoneOffset.UTC);
         taskCommentService = new DefaultTaskCommentService(taskCommentRepository) {
             @Override
             protected LocalDateTime getCurrentTime() {
@@ -43,7 +46,7 @@ class DefaultTaskCommentServiceTest {
                 .userId(2L)
                 .taskId(3L)
                 .commentText("Test comment")
-                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                .createdAt(currentTime)
                 .build();
 
         when(taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId()))
@@ -55,10 +58,56 @@ class DefaultTaskCommentServiceTest {
         updatedComment.setCreatedAt(null);
         updatedComment.setTaskId(null);
 
-        currentTime = LocalDateTime.now(ZoneOffset.UTC);
-
         TaskComment expectedResult = new TaskComment(comment);
         expectedResult.setCommentText(updatedComment.getCommentText());
+        expectedResult.setUpdatedAt(currentTime);
+
+        TaskComment result = taskCommentService.updateComment(updatedComment).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeCreatedAtFieldOnCommentUpdate() {
+        TaskComment comment = TaskComment.builder()
+                .id(1L)
+                .userId(2L)
+                .taskId(3L)
+                .commentText("Test comment")
+                .createdAt(currentTime)
+                .build();
+
+        when(taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId()))
+                .thenReturn(Mono.just(comment));
+        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        TaskComment updatedComment = new TaskComment(comment);
+        updatedComment.setCreatedAt(currentTime.minus(1, ChronoUnit.HOURS));
+
+        TaskComment expectedResult = new TaskComment(comment);
+        expectedResult.setUpdatedAt(currentTime);
+
+        TaskComment result = taskCommentService.updateComment(updatedComment).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeTaskIdFieldOnCommentUpdate() {
+        TaskComment comment = TaskComment.builder()
+                .id(1L)
+                .userId(2L)
+                .taskId(3L)
+                .commentText("Test comment")
+                .createdAt(currentTime)
+                .build();
+
+        when(taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId()))
+                .thenReturn(Mono.just(comment));
+        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        TaskComment updatedComment = new TaskComment(comment);
+        updatedComment.setTaskId(4L);
+
+        TaskComment expectedResult = new TaskComment(comment);
         expectedResult.setUpdatedAt(currentTime);
 
         TaskComment result = taskCommentService.updateComment(updatedComment).block();

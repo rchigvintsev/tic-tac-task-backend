@@ -80,15 +80,25 @@ class DefaultTaskListServiceTest {
         long taskListId = 2L;
         when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> {
             TaskList l = args.getArgument(0);
-            if (l.getId() == null) {
-                l.setId(taskListId);
-            }
+            l.setId(taskListId);
             return Mono.just(l);
         });
 
-        TaskList taskList = TaskList.builder().id(-1L).userId(1L).name("New task list").build();
+        TaskList taskList = TaskList.builder().userId(1L).name("New task list").build();
         TaskList expectedResult = new TaskList(taskList);
         expectedResult.setId(taskListId);
+
+        TaskList result = taskListService.createTaskList(taskList).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToMarkTaskListCompletedOnTaskListCreate() {
+        when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        TaskList taskList = TaskList.builder().userId(1L).name("New task list").completed(true).build();
+        TaskList expectedResult = new TaskList(taskList);
+        expectedResult.setCompleted(false);
 
         TaskList result = taskListService.createTaskList(taskList).block();
         assertEquals(expectedResult, result);
@@ -113,6 +123,20 @@ class DefaultTaskListServiceTest {
 
         TaskList result = taskListService.updateTaskList(updatedTaskList).block();
         assertEquals(updatedTaskList, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeCompletedFieldOnTaskListUpdate() {
+        TaskList taskList = TaskList.builder().id(2L).userId(1L).name("Test task list").build();
+        when(taskListRepository.findByIdAndUserId(taskList.getId(), taskList.getUserId()))
+                .thenReturn(Mono.just(taskList));
+        when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        TaskList updatedTaskList = new TaskList(taskList);
+        updatedTaskList.setCompleted(true);
+
+        TaskList result = taskListService.updateTaskList(updatedTaskList).block();
+        assertEquals(taskList, result);
     }
 
     @Test
@@ -230,8 +254,8 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(task.getTaskListId(), user.getId())).thenReturn(Mono.just(taskList));
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(task.getTaskListId(), user.getId(), pageRequest.getOffset(),
-                pageRequest.getPageSize())).thenReturn(Flux.just(task));
+        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(task.getTaskListId(), user.getId(),
+                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
         Task result = taskListService.getTasks(taskList.getId(), user, pageRequest).blockFirst();
         assertEquals(task, result);

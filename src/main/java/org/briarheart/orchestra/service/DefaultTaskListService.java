@@ -50,8 +50,9 @@ public class DefaultTaskListService implements TaskListService {
     public Mono<TaskList> createTaskList(TaskList taskList) {
         Assert.notNull(taskList, "Task list must not be null");
         return Mono.defer(() -> {
-            TaskList newTaskList = new TaskList(taskList);
-            newTaskList.setId(null);
+            TaskList newTaskList = new TaskList();
+            newTaskList.setUserId(taskList.getUserId());
+            newTaskList.setName(taskList.getName());
             return taskListRepository.save(newTaskList)
                     .doOnSuccess(l -> log.debug("Task list with id {} is created", l.getId()));
         });
@@ -61,7 +62,10 @@ public class DefaultTaskListService implements TaskListService {
     public Mono<TaskList> updateTaskList(TaskList taskList) throws EntityNotFoundException {
         Assert.notNull(taskList, "Task list must not be null");
         return findTaskList(taskList.getId(), taskList.getUserId())
-                .flatMap(existingTaskList -> taskListRepository.save(taskList))
+                .flatMap(existingTaskList -> {
+                    existingTaskList.setName(taskList.getName());
+                    return taskListRepository.save(existingTaskList);
+                })
                 .doOnSuccess(l -> log.debug("Task list with id {} is updated", l.getId()));
     }
 
@@ -69,7 +73,8 @@ public class DefaultTaskListService implements TaskListService {
     public Mono<Void> completeTaskList(Long id, User user) throws EntityNotFoundException {
         return getTaskList(id, user)
                 .zipWhen(taskList -> {
-                    Flux<Task> taskFlux = taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(id, user.getId(), 0, null);
+                    Flux<Task> taskFlux = taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(id, user.getId(),
+                            0, null);
                     return taskFlux.flatMap(task -> {
                         task.setStatus(TaskStatus.COMPLETED);
                         return taskRepository.save(task)
@@ -88,7 +93,8 @@ public class DefaultTaskListService implements TaskListService {
     @Override
     public Mono<Void> deleteTaskList(Long id, User user) throws EntityNotFoundException {
         return getTaskList(id, user)
-                .zipWhen(taskList -> taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(id, user.getId(), 0, null)
+                .zipWhen(taskList -> taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(id, user.getId(), 0,
+                        null)
                         .flatMap(t -> taskRepository.delete(t)
                                 .doOnSuccess(v -> log.debug("Task with id {} is deleted", t.getId())))
                         .then(Mono.just(true)))
@@ -104,7 +110,8 @@ public class DefaultTaskListService implements TaskListService {
         return getTaskList(taskListId, user).flatMapMany(taskList -> {
             long offset = Pageables.getOffset(pageable);
             Integer limit = Pageables.getLimit(pageable);
-            return taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(taskList.getId(), user.getId(), offset, limit);
+            return taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(taskList.getId(), user.getId(), offset,
+                    limit);
         });
     }
 

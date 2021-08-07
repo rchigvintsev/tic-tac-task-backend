@@ -353,19 +353,55 @@ class DefaultTaskServiceTest {
         long taskId = 2L;
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> {
             Task t = args.getArgument(0);
-            if (t.getId() == null) {
-                t.setId(taskId);
-            }
+            t.setId(taskId);
             return Mono.just(t);
         });
 
-        Task task = Task.builder().id(-1L).userId(1L).taskListId(-2L).title("New task").build();
+        Task task = Task.builder().userId(1L).status(TaskStatus.PROCESSED).title("New task").build();
 
         Task expectedResult = new Task(task);
         expectedResult.setId(taskId);
         expectedResult.setCreatedAt(currentTime);
-        expectedResult.setStatus(TaskStatus.UNPROCESSED);
+
+        Task result = taskService.createTask(task).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToSetTaskListIdFieldOnTaskCreate() {
+        long taskId = 2L;
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> {
+            Task t = args.getArgument(0);
+            t.setId(taskId);
+            return Mono.just(t);
+        });
+
+        Task task = Task.builder().userId(1L).taskListId(2L).status(TaskStatus.PROCESSED).title("New task").build();
+
+        Task expectedResult = new Task(task);
+        expectedResult.setId(taskId);
         expectedResult.setTaskListId(null);
+        expectedResult.setCreatedAt(currentTime);
+
+        Task result = taskService.createTask(task).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldSetTaskStatusToUnprocessedOnTaskCreateWhenStatusIsNotProvided() {
+        long taskId = 2L;
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> {
+            Task t = args.getArgument(0);
+            t.setId(taskId);
+            return Mono.just(t);
+        });
+
+        Task task = Task.builder().userId(1L).title("New task").build();
+
+        Task expectedResult = new Task(task);
+        expectedResult.setId(taskId);
+        expectedResult.setStatus(TaskStatus.UNPROCESSED);
+        expectedResult.setCreatedAt(currentTime);
 
         Task result = taskService.createTask(task).block();
         assertEquals(expectedResult, result);
@@ -393,15 +429,69 @@ class DefaultTaskServiceTest {
 
         Task updatedTask = new Task(task);
         updatedTask.setTitle("Updated test task");
-        updatedTask.setCreatedAt(null);
-        updatedTask.setStatus(null);
-        updatedTask.setTaskListId(30L);
-
-        Task expectedResult = new Task(task);
-        expectedResult.setTitle(updatedTask.getTitle());
 
         Task result = taskService.updateTask(updatedTask).block();
-        assertEquals(expectedResult, result);
+        assertEquals(updatedTask, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeTaskListIdFieldOnTaskUpdate() {
+        Task task = Task.builder()
+                .id(1L)
+                .userId(2L)
+                .taskListId(3L)
+                .title("Test task")
+                .createdAt(currentTime)
+                .status(TaskStatus.PROCESSED)
+                .build();
+        when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        Task updatedTask = new Task(task);
+        updatedTask.setTaskListId(4L);
+
+        Task result = taskService.updateTask(updatedTask).block();
+        assertEquals(task, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeCreatedAtFieldOnTaskUpdate() {
+        Task task = Task.builder()
+                .id(1L)
+                .userId(2L)
+                .taskListId(3L)
+                .title("Test task")
+                .createdAt(currentTime)
+                .status(TaskStatus.PROCESSED)
+                .build();
+        when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        Task updatedTask = new Task(task);
+        updatedTask.setCreatedAt(currentTime.minus(1, ChronoUnit.HOURS));
+
+        Task result = taskService.updateTask(updatedTask).block();
+        assertEquals(task, result);
+    }
+
+    @Test
+    void shouldNotAllowToMarkTaskCompletedOnTaskUpdate() {
+        Task task = Task.builder()
+                .id(1L)
+                .userId(2L)
+                .taskListId(3L)
+                .title("Test task")
+                .createdAt(currentTime)
+                .status(TaskStatus.PROCESSED)
+                .build();
+        when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        Task updatedTask = new Task(task);
+        updatedTask.setStatus(TaskStatus.COMPLETED);
+
+        Task result = taskService.updateTask(updatedTask).block();
+        assertEquals(task, result);
     }
 
     @Test
@@ -411,8 +501,7 @@ class DefaultTaskServiceTest {
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         Task updatedTask = new Task(task);
-        updatedTask.setTitle("Updated test task");
-        updatedTask.setDeadline(LocalDateTime.now(ZoneOffset.UTC).plus(3, ChronoUnit.DAYS));
+        updatedTask.setDeadline(currentTime.plus(3, ChronoUnit.DAYS));
 
         Task result = taskService.updateTask(updatedTask).block();
         assertNotNull(result);
@@ -673,9 +762,7 @@ class DefaultTaskServiceTest {
 
         when(taskCommentRepository.save(any())).thenAnswer(args -> {
             TaskComment comment = args.getArgument(0);
-            if (comment.getId() == null) {
-                comment.setId(commentId);
-            }
+            comment.setId(commentId);
             return Mono.just(comment);
         });
 
@@ -683,7 +770,34 @@ class DefaultTaskServiceTest {
                 .commentText("New comment")
                 .userId(task.getUserId())
                 .taskId(task.getId())
-                .updatedAt(LocalDateTime.now(ZoneOffset.UTC))
+                .build();
+
+        TaskComment expectedResult = new TaskComment(newComment);
+        expectedResult.setId(commentId);
+        expectedResult.setCreatedAt(currentTime);
+
+        TaskComment result = taskService.addComment(newComment).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToSetUpdatedAtFieldOnCommentAdd() {
+        Task task = Task.builder().id(2L).userId(1L).title("Test task").build();
+        when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
+
+        long commentId = 3L;
+
+        when(taskCommentRepository.save(any())).thenAnswer(args -> {
+            TaskComment comment = args.getArgument(0);
+            comment.setId(commentId);
+            return Mono.just(comment);
+        });
+
+        TaskComment newComment = TaskComment.builder()
+                .commentText("New comment")
+                .userId(task.getUserId())
+                .taskId(task.getId())
+                .updatedAt(currentTime)
                 .build();
 
         TaskComment expectedResult = new TaskComment(newComment);

@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
 import java.util.Locale;
 
 /**
@@ -93,13 +92,11 @@ public class DefaultUserService implements UserService {
         return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
                 .flatMap(existingUser -> {
-                    User updatedUser = new User(user);
-                    updatedUser.setEmail(existingUser.getEmail());
-                    updatedUser.setEmailConfirmed(existingUser.isEmailConfirmed());
-                    updatedUser.setVersion(existingUser.getVersion() + 1);
-                    updatedUser.setPassword(existingUser.getPassword());
-                    updatedUser.setEnabled(existingUser.isEnabled());
-                    return userRepository.save(updatedUser)
+                    existingUser.setVersion(existingUser.getVersion() + 1);
+                    existingUser.setEnabled(user.isEnabled());
+                    existingUser.setFullName(user.getFullName());
+                    existingUser.setProfilePictureUrl(user.getProfilePictureUrl());
+                    return userRepository.save(existingUser)
                             .map(this::clearPassword)
                             .doOnSuccess(u -> log.debug("User with id {} is updated", u.getId()));
                 });
@@ -147,13 +144,11 @@ public class DefaultUserService implements UserService {
     }
 
     private Mono<User> createNewUser(User user) {
-        User newUser = new User(user);
-        newUser.setId(null);
-        newUser.setEmailConfirmed(false);
-        newUser.setVersion(0L);
+        User newUser = new User();
+        newUser.setEmail(user.getEmail());
         newUser.setPassword(encodePassword(user.getPassword()));
-        newUser.setEnabled(false);
-        newUser.setAuthorities(Collections.emptySet());
+        newUser.setFullName(user.getFullName());
+        newUser.setProfilePictureUrl(user.getProfilePictureUrl());
         return userRepository.save(newUser);
     }
 

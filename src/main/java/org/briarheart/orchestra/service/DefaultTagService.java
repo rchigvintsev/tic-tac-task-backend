@@ -56,8 +56,10 @@ public class DefaultTagService implements TagService {
                     return Mono.<Tag>error(new EntityAlreadyExistsException(message));
                 })
                 .switchIfEmpty(Mono.defer(() -> {
-                    Tag newTag = new Tag(tag);
-                    newTag.setId(null);
+                    Tag newTag = new Tag();
+                    newTag.setUserId(tag.getUserId());
+                    newTag.setName(tag.getName());
+                    newTag.setColor(tag.getColor());
                     return tagRepository.save(newTag)
                             .doOnSuccess(t -> log.debug("Tag with id {} is created", t.getId()));
                 }));

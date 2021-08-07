@@ -97,19 +97,19 @@ public class DefaultTaskService implements TaskService {
     ) {
         Assert.notNull(user, "User must not be null");
         if (deadlineFrom == null && deadlineTo == null) {
-            return taskRepository.findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(),
-                    Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+            return taskRepository.findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED,
+                    user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
         if (deadlineFrom == null) {
-            return taskRepository.findByDeadlineLessThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(deadlineTo, TaskStatus.PROCESSED,
-                    user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+            return taskRepository.findByDeadlineLessThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(deadlineTo,
+                    TaskStatus.PROCESSED, user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
         if (deadlineTo == null) {
-            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(deadlineFrom, TaskStatus.PROCESSED,
-                    user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(deadlineFrom,
+                    TaskStatus.PROCESSED, user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
         }
-        return taskRepository.findByDeadlineBetweenAndStatusAndUserIdOrderByCreatedAtAsc(deadlineFrom, deadlineTo, TaskStatus.PROCESSED,
-                user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+        return taskRepository.findByDeadlineBetweenAndStatusAndUserIdOrderByCreatedAtAsc(deadlineFrom, deadlineTo,
+                TaskStatus.PROCESSED, user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
     }
 
     @Override
@@ -135,13 +135,14 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> createTask(Task task) {
         Assert.notNull(task, "Task must not be null");
         return Mono.defer(() -> {
-            Task newTask = new Task(task);
-            newTask.setId(null);
-            newTask.setTaskListId(null);
+            Task newTask = new Task();
+            newTask.setUserId(task.getUserId());
+            newTask.setTitle(task.getTitle());
+            newTask.setDescription(task.getDescription());
+            newTask.setStatus(determineTaskStatus(task));
             newTask.setCreatedAt(getCurrentTime());
-            if (newTask.getStatus() == null) {
-                newTask.setStatus(TaskStatus.UNPROCESSED);
-            }
+            newTask.setDeadline(task.getDeadline());
+            newTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
             return taskRepository.save(newTask).doOnSuccess(t -> log.debug("Task with id {} is created", t.getId()));
         });
     }
@@ -150,18 +151,12 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> updateTask(Task task) throws EntityNotFoundException {
         Assert.notNull(task, "Task must not be null");
         return findTask(task.getId(), task.getUserId()).flatMap(existingTask -> {
-            Task updatedTask = new Task(task);
-            updatedTask.setTaskListId(existingTask.getTaskListId());
-            updatedTask.setCreatedAt(existingTask.getCreatedAt());
-            if (updatedTask.getStatus() == null) {
-                updatedTask.setStatus(existingTask.getStatus());
-            }
-            if (updatedTask.getStatus() == TaskStatus.UNPROCESSED && updatedTask.getDeadline() != null) {
-                log.debug("Task with id {} is unprocessed and deadline is set. Changing task status to \"processed\".",
-                        task.getId());
-                updatedTask.setStatus(TaskStatus.PROCESSED);
-            }
-            return taskRepository.save(updatedTask)
+            existingTask.setTitle(task.getTitle());
+            existingTask.setDescription(task.getDescription());
+            existingTask.setStatus(determineTaskStatus(task));
+            existingTask.setDeadline(task.getDeadline());
+            existingTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
+            return taskRepository.save(existingTask)
                     .doOnSuccess(t -> log.debug("Task with id {} is updated", t.getId()));
         });
     }
@@ -228,10 +223,11 @@ public class DefaultTaskService implements TaskService {
     public Mono<TaskComment> addComment(TaskComment comment) throws EntityNotFoundException {
         Assert.notNull(comment, "Task comment must not be null");
         return findTask(comment.getTaskId(), comment.getUserId()).flatMap(task -> {
-            TaskComment newComment = new TaskComment(comment);
-            newComment.setId(null);
+            TaskComment newComment = new TaskComment();
+            newComment.setTaskId(comment.getTaskId());
+            newComment.setUserId(comment.getUserId());
+            newComment.setCommentText(comment.getCommentText());
             newComment.setCreatedAt(getCurrentTime());
-            newComment.setUpdatedAt(null);
             return taskCommentRepository.save(newComment).doOnSuccess(c
                     -> log.debug("Comment with id {} is added to task with id {}", c.getId(), c.getTaskId()));
         });
@@ -249,5 +245,15 @@ public class DefaultTaskService implements TaskService {
     private Mono<Tag> findTag(Long id, Long userId) {
         return tagRepository.findByIdAndUserId(id, userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")));
+    }
+
+    private TaskStatus determineTaskStatus(Task task) {
+        TaskStatus result = task.getStatus() == TaskStatus.PROCESSED ? TaskStatus.PROCESSED : TaskStatus.UNPROCESSED;
+        if (result == TaskStatus.UNPROCESSED && task.getDeadline() != null) {
+            log.debug("Task with id {} is unprocessed and deadline is set. Changing task status to \"processed\".",
+                    task.getId());
+            result = TaskStatus.PROCESSED;
+        }
+        return result;
     }
 }

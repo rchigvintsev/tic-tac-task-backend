@@ -20,7 +20,8 @@ public class TaskList {
     @NotBlank
     @Size(max = 255)
     private String name;
-    private boolean completed;
+    @Builder.Default
+    private boolean completed = false;
 
     /**
      * Creates copy of the given task list.

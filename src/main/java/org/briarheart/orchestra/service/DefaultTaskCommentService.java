@@ -33,12 +33,10 @@ public class DefaultTaskCommentService implements TaskCommentService {
         return taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId())
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task comment with id " + comment.getId()
                         + " is not found")))
-                .flatMap(c -> {
-                    TaskComment newComment = new TaskComment(comment);
-                    newComment.setTaskId(c.getTaskId());
-                    newComment.setCreatedAt(c.getCreatedAt());
-                    newComment.setUpdatedAt(getCurrentTime());
-                    return taskCommentRepository.save(newComment)
+                .flatMap(existingComment -> {
+                    existingComment.setCommentText(comment.getCommentText());
+                    existingComment.setUpdatedAt(getCurrentTime());
+                    return taskCommentRepository.save(existingComment)
                             .doOnSuccess(result -> log.debug("Task comment with id {} is updated", result.getId()));
                 });
     }

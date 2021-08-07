@@ -14,6 +14,7 @@ import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -143,6 +145,19 @@ class DefaultUserServiceTest {
     }
 
     @Test
+    void shouldNotAllowToSetAdminFieldOnUserCreate() {
+        User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").admin(true).build();
+        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
+
+        User expectedUser = new User(newUser);
+        expectedUser.setAdmin(false);
+        expectedUser.setPassword(null);
+
+        User result = service.createUser(newUser, Locale.ENGLISH).block();
+        assertEquals(expectedUser, result);
+    }
+
+    @Test
     void shouldEncodePasswordOnUserCreate() {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
         when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
@@ -257,14 +272,78 @@ class DefaultUserServiceTest {
 
         User updatedUser = new User(user);
         updatedUser.setFullName("Alice Wonderland");
-        updatedUser.setEmailConfirmed(false);
-        updatedUser.setPassword(null);
-        updatedUser.setEnabled(false);
+
+        User expectedResult = new User(updatedUser);
+        expectedResult.setVersion(1);
+        expectedResult.setPassword(null);
+
+        User result = service.updateUser(updatedUser).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeEmailFieldOnUserUpdate() {
+        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        User updatedUser = new User(user);
+        updatedUser.setEmail("bob@mail.com");
 
         User expectedResult = new User(user);
-        expectedResult.setFullName(updatedUser.getFullName());
-        expectedResult.setPassword(null);
         expectedResult.setVersion(1);
+        expectedResult.setPassword(null);
+
+        User result = service.updateUser(updatedUser).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeEmailConfirmedFieldOnUserUpdate() {
+        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        User updatedUser = new User(user);
+        updatedUser.setEmailConfirmed(false);
+
+        User expectedResult = new User(user);
+        expectedResult.setVersion(1);
+        expectedResult.setPassword(null);
+
+        User result = service.updateUser(updatedUser).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeAdminFieldOnUserUpdate() {
+        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        User updatedUser = new User(user);
+        updatedUser.setAdmin(true);
+
+        User expectedResult = new User(user);
+        expectedResult.setVersion(1);
+        expectedResult.setPassword(null);
+
+        User result = service.updateUser(updatedUser).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeAuthoritiesFieldOnUserUpdate() {
+        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        User updatedUser = new User(user);
+        updatedUser.setAuthorities(List.of(new SimpleGrantedAuthority("ROLE_SUPER_HERO")));
+
+        User expectedResult = new User(user);
+        expectedResult.setVersion(1);
+        expectedResult.setPassword(null);
 
         User result = service.updateUser(updatedUser).block();
         assertEquals(expectedResult, result);
