@@ -52,7 +52,7 @@ class TaskCommentControllerTest {
 
     @Test
     void shouldUpdateComment() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authentication = createAuthentication(user);
 
         when(taskCommentService.updateComment(any(TaskComment.class)))
@@ -79,7 +79,7 @@ class TaskCommentControllerTest {
 
     @Test
     void shouldDeleteComment() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authentication = createAuthentication(user);
 
         long commentId = 2L;

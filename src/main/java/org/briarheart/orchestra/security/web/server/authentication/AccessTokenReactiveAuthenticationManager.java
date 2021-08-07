@@ -28,6 +28,8 @@ public class AccessTokenReactiveAuthenticationManager implements ReactiveAuthent
                     User principal = User.builder()
                             .id(Long.parseLong(accessToken.getSubject()))
                             .email(accessToken.getEmail())
+                            .emailConfirmed(true)
+                            .enabled(true)
                             .fullName(accessToken.getFullName())
                             .profilePictureUrl(accessToken.getProfilePictureUrl())
                             .admin(accessToken.isAdmin())

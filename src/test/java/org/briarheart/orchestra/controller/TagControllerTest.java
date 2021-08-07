@@ -56,7 +56,7 @@ class TagControllerTest {
 
     @Test
     void shouldReturnAllTags() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
@@ -72,7 +72,7 @@ class TagControllerTest {
 
     @Test
     void shouldReturnTagById() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
@@ -88,7 +88,7 @@ class TagControllerTest {
 
     @Test
     void shouldReturnNotFoundStatusCodeWhenTagIsNotFoundById() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Tag is not found";
@@ -105,7 +105,7 @@ class TagControllerTest {
 
     @Test
     void shouldReturnUncompletedTasksForTag() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
@@ -124,7 +124,7 @@ class TagControllerTest {
 
     @Test
     void shouldCreateTag() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long tagId = 2L;
@@ -154,7 +154,7 @@ class TagControllerTest {
 
     @Test
     void shouldRejectTagCreationWhenNameIsNull() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Tag tag = Tag.builder().build();
@@ -173,7 +173,7 @@ class TagControllerTest {
 
     @Test
     void shouldRejectTagCreationWhenNameIsBlank() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Tag tag = Tag.builder().name(" ").build();
@@ -192,7 +192,7 @@ class TagControllerTest {
 
     @Test
     void shouldRejectTagCreationWhenNameIsTooLong() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Tag tag = Tag.builder().name("L" + "o".repeat(43) + "ng name").build();
@@ -211,7 +211,7 @@ class TagControllerTest {
 
     @Test
     void shouldReturnBadRequestStatusCodeOnTagCreateWhenTagAlreadyExists() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Tag already exists";
@@ -233,7 +233,7 @@ class TagControllerTest {
 
     @Test
     void shouldUpdateTag() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         when(tagService.updateTag(any(Tag.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
@@ -258,7 +258,7 @@ class TagControllerTest {
 
     @Test
     void shouldDeleteTag() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long tagId = 2L;

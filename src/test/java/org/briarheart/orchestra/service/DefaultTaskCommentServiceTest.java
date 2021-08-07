@@ -132,7 +132,7 @@ class DefaultTaskCommentServiceTest {
 
     @Test
     void shouldDeleteComment() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         long commentId = 2L;
         when(taskCommentRepository.deleteByIdAndUserId(commentId, user.getId())).thenReturn(Mono.just(true).then());
         taskCommentService.deleteComment(commentId, user).block();

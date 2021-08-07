@@ -62,7 +62,7 @@ class DefaultEmailConfirmationServiceTest {
 
     @Test
     void shouldSendEmailConfirmationLinkToUser() {
-        User user = User.builder().email("alice@mail.com").fullName("Alice").build();
+        User user = User.builder().email("alice@mail.com").emailConfirmed(true).enabled(true).fullName("Alice").build();
         service.sendEmailConfirmationLink(user, Locale.ENGLISH).block();
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender, times(1)).send(messageCaptor.capture());
@@ -72,7 +72,13 @@ class DefaultEmailConfirmationServiceTest {
 
     @Test
     void shouldIncludeEmailConfirmationLinkIntoMessageText() {
-        User user = User.builder().id(1L).email("alice@mail.com").fullName("Alice").build();
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .fullName("Alice")
+                .build();
         EmailConfirmationToken token = service.sendEmailConfirmationLink(user, Locale.ENGLISH).block();
         assertNotNull(token);
 
@@ -93,7 +99,7 @@ class DefaultEmailConfirmationServiceTest {
 
     @Test
     void shouldThrowExceptionOnEmailConfirmationLinkSendWhenMailExceptionIsThrown() {
-        User user = User.builder().email("alice@mail.com").fullName("Alice").build();
+        User user = User.builder().email("alice@mail.com").emailConfirmed(true).enabled(true).fullName("Alice").build();
         doThrow(new MailSendException("Something went wrong")).when(javaMailSender).send(any(SimpleMailMessage.class));
         assertThrows(UnableToSendMessageException.class,
                 () -> service.sendEmailConfirmationLink(user, Locale.ENGLISH).block());
@@ -169,7 +175,7 @@ class DefaultEmailConfirmationServiceTest {
 
     @Test
     void shouldDoNothingOnEmailConfirmWhenEmailIsAlreadyConfirmed() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         EmailConfirmationToken token = EmailConfirmationToken.builder()
                 .id(2L)
                 .userId(user.getId())

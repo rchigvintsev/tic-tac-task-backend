@@ -36,7 +36,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldReturnAllUncompletedTaskLists() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         when(taskListRepository.findByCompletedAndUserId(false, user.getId())).thenReturn(Flux.just(taskList));
 
@@ -53,7 +53,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldReturnTaskListById() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
 
@@ -70,7 +70,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskListGetWhenTaskListIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(taskListRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class, () -> taskListService.getTaskList(2L, user).block());
     }
@@ -148,7 +148,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldCompleteTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
@@ -165,7 +165,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldCompleteTasksOnTaskListComplete() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         Task task = Task.builder().id(3L).userId(user.getId()).taskListId(taskList.getId()).title("Test task").build();
 
@@ -191,7 +191,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskListCompleteWhenTaskListIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         long taskListId = 2L;
         when(taskListRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
@@ -201,7 +201,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldDeleteTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
@@ -215,7 +215,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldDeleteTasksOnTaskListDelete() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         Task task = Task.builder().id(3L).userId(user.getId()).taskListId(taskList.getId()).title("Test task").build();
 
@@ -238,7 +238,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskListDeleteWhenTaskListIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         long taskListId = 2L;
         when(taskListRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
@@ -248,7 +248,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldReturnTasksForTaskListWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         Task task = Task.builder().id(3L).userId(user.getId()).taskListId(taskList.getId()).title("Test task").build();
 
@@ -270,7 +270,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldThrowExceptionOnTasksGetWhenTaskListIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         long taskListId = 2L;
         when(taskListRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
@@ -280,7 +280,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldAddTaskToTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
 
@@ -304,7 +304,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskAddWhenTaskListIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
 
@@ -318,7 +318,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskAddWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
 
@@ -332,7 +332,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldRemoveTaskFromTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
 
@@ -356,7 +356,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskRemoveWhenTaskListIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         long taskListId = 2L;
         Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").build();
 
@@ -370,7 +370,7 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskRemoveWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
         long taskId = 3L;
 

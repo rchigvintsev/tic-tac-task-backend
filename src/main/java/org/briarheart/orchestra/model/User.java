@@ -31,7 +31,7 @@ public class User implements UserDetails {
     @Size(max = 255)
     private String email;
     @Builder.Default
-    private boolean emailConfirmed = true;
+    private boolean emailConfirmed = false;
     @Version
     private long version;
     @Size(max = 50)
@@ -39,7 +39,7 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean admin = false;
     @Builder.Default
-    private boolean enabled = true;
+    private boolean enabled = false;
     @Size(max = 255)
     private String fullName;
     @Size(max = 2_000)

@@ -50,7 +50,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfAllUnprocessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(taskRepository.countAllByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId())).thenReturn(Mono.just(1L));
         assertEquals(1L, taskService.getUnprocessedTaskCount(user).block());
     }
@@ -64,7 +64,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllUnprocessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.UNPROCESSED, user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
@@ -75,11 +75,11 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllUnprocessedTasksWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.UNPROCESSED, user.getId(), pageRequest.getOffset(),
-                pageRequest.getPageSize())).thenReturn(Flux.just(task));
+        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.UNPROCESSED, user.getId(),
+                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
         Task result = taskService.getUnprocessedTasks(user, pageRequest).blockFirst();
         assertEquals(task, result);
@@ -94,7 +94,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfAllProcessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(taskRepository.countAllByStatusAndUserId(TaskStatus.PROCESSED, user.getId())).thenReturn(Mono.just(1L));
         assertEquals(1L, taskService.getProcessedTaskCount(user).block());
     }
@@ -108,7 +108,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllProcessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
         when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
@@ -119,11 +119,11 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllProcessedTasksWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(), pageRequest.getOffset(),
-                pageRequest.getPageSize())).thenReturn(Flux.just(task));
+        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(),
+                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
         Task result = taskService.getProcessedTasks(user, pageRequest).blockFirst();
         assertEquals(task, result);
@@ -138,7 +138,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadlineDateBetween() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         LocalDateTime deadlineFrom = LocalDateTime.now();
         LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
         when(taskRepository.countAllByDeadlineBetweenAndStatusAndUserId(
@@ -159,7 +159,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadlineDateBetween() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         LocalDateTime deadlineFrom = LocalDateTime.now();
         LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
         Task task = Task.builder()
@@ -184,7 +184,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadlineDateLessThanOrEqual() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
         when(taskRepository.countAllByDeadlineLessThanEqualAndStatusAndUserId(
                 deadlineTo,
@@ -196,7 +196,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadlineDateLessThanOrEqual() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
         Task task = Task.builder()
                 .id(2L)
@@ -219,7 +219,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         LocalDateTime deadlineFrom = LocalDateTime.now();
         when(taskRepository.countAllByDeadlineGreaterThanEqualAndStatusAndUserId(
                 deadlineFrom,
@@ -231,7 +231,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         LocalDateTime deadlineFrom = LocalDateTime.now();
         Task task = Task.builder()
                 .id(2L)
@@ -254,7 +254,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithoutDeadlineDate() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(taskRepository.countAllByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId()))
                 .thenReturn(Mono.just(1L));
         assertEquals(1L, taskService.getProcessedTaskCount(null, null, user).block());
@@ -262,10 +262,10 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnProcessedTasksWithoutDeadlineDate() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
-        when(taskRepository.findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(), 0, null))
-                .thenReturn(Flux.just(task));
+        when(taskRepository.findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED,
+                user.getId(), 0, null)).thenReturn(Flux.just(task));
 
         Task result = taskService.getProcessedTasks(null, null, user, null).blockFirst();
         assertEquals(task, result);
@@ -280,7 +280,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnNumberOfAllUncompletedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(taskRepository.countAllByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId())).thenReturn(Mono.just(1L));
         assertEquals(1L, taskService.getUncompletedTaskCount(user).block());
     }
@@ -294,7 +294,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllUncompletedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
         when(taskRepository.findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
@@ -304,11 +304,11 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnUncompletedTasksWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, user.getId(), pageRequest.getOffset(),
-                pageRequest.getPageSize())).thenReturn(Flux.just(task));
+        when(taskRepository.findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, user.getId(),
+                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
         Task result = taskService.getUncompletedTasks(user, pageRequest).blockFirst();
         assertEquals(task, result);
@@ -323,7 +323,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnTaskById() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
 
@@ -340,7 +340,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskGetWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         long taskId = 2L;
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
@@ -369,17 +369,11 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldNotAllowToSetTaskListIdFieldOnTaskCreate() {
-        long taskId = 2L;
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> {
-            Task t = args.getArgument(0);
-            t.setId(taskId);
-            return Mono.just(t);
-        });
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         Task task = Task.builder().userId(1L).taskListId(2L).status(TaskStatus.PROCESSED).title("New task").build();
 
         Task expectedResult = new Task(task);
-        expectedResult.setId(taskId);
         expectedResult.setTaskListId(null);
         expectedResult.setCreatedAt(currentTime);
 
@@ -389,17 +383,11 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldSetTaskStatusToUnprocessedOnTaskCreateWhenStatusIsNotProvided() {
-        long taskId = 2L;
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> {
-            Task t = args.getArgument(0);
-            t.setId(taskId);
-            return Mono.just(t);
-        });
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         Task task = Task.builder().userId(1L).title("New task").build();
 
         Task expectedResult = new Task(task);
-        expectedResult.setId(taskId);
         expectedResult.setStatus(TaskStatus.UNPROCESSED);
         expectedResult.setCreatedAt(currentTime);
 
@@ -525,7 +513,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldCompleteTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
@@ -543,7 +531,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskCompleteWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
@@ -554,7 +542,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldDeleteTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
 
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
@@ -573,7 +561,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskDeleteWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
@@ -584,7 +572,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllTagsForTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         Tag tag = Tag.builder().id(3L).userId(user.getId()).name("Test tag").build();
 
@@ -606,7 +594,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagsGetWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
@@ -617,7 +605,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldAssignTagToTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         Tag tag = Tag.builder().id(3L).userId(user.getId()).name("Test tag").build();
 
@@ -640,7 +628,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagAssignWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         long taskId = 3L;
 
@@ -654,7 +642,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagAssignWhenTagIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         Long tagId = 3L;
 
@@ -668,7 +656,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRemoveTagFromTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
         Tag tag = Tag.builder().id(3L).name("Test tag").userId(user.getId()).build();
 
@@ -689,7 +677,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagRemoveWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Long taskId = 2L;
         Long tagId = 3L;
 
@@ -701,7 +689,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllCommentsForTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         TaskComment comment = TaskComment.builder()
                 .id(3L)
@@ -720,7 +708,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnCommentsForTaskWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(1L).userId(user.getId()).title("Test task").build();
         TaskComment comment = TaskComment.builder()
                 .id(3L)
@@ -747,7 +735,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnCommentsGetWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class,
                 () -> taskService.getComments(1L, user, Pageable.unpaged()).blockFirst());
@@ -785,13 +773,7 @@ class DefaultTaskServiceTest {
         Task task = Task.builder().id(2L).userId(1L).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
 
-        long commentId = 3L;
-
-        when(taskCommentRepository.save(any())).thenAnswer(args -> {
-            TaskComment comment = args.getArgument(0);
-            comment.setId(commentId);
-            return Mono.just(comment);
-        });
+        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         TaskComment newComment = TaskComment.builder()
                 .commentText("New comment")
@@ -801,7 +783,6 @@ class DefaultTaskServiceTest {
                 .build();
 
         TaskComment expectedResult = new TaskComment(newComment);
-        expectedResult.setId(commentId);
         expectedResult.setCreatedAt(currentTime);
         expectedResult.setUpdatedAt(null);
 

@@ -57,7 +57,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldReturnAllUncompletedTaskLists() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
@@ -73,7 +73,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldReturnTaskListById() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
@@ -89,7 +89,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldReturnNotFoundStatusCodeWhenTaskListIsNotFoundById() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Task list is not found";
@@ -107,7 +107,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldCreateTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskListId = 2L;
@@ -136,7 +136,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldRejectTaskListCreationWhenNameIsNull() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         TaskList newTaskList = TaskList.builder().build();
@@ -155,7 +155,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldRejectTaskListCreationWhenNameIsBlank() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         TaskList taskList = TaskList.builder().name(" ").build();
@@ -174,7 +174,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldUpdateTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         when(taskListService.updateTaskList(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
@@ -199,7 +199,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldCompleteTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskListId = 2L;
@@ -215,7 +215,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldDeleteTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskListId = 2L;
@@ -229,7 +229,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldReturnTasksForTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().id(2L).userId(user.getId()).taskListId(3L).title("Test task").build();
@@ -246,7 +246,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldAddTaskToTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskListId = 2L;
@@ -262,7 +262,7 @@ class TaskListControllerTest {
 
     @Test
     void shouldRemoveTaskFromTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskListId = 2L;

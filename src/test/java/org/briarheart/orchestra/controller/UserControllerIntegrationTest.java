@@ -13,11 +13,14 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.*;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.MultiValueMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -97,6 +100,30 @@ class UserControllerIntegrationTest {
         ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.POST,
                 new HttpEntity<>("password=qwerty", headers), Void.class, port, userId, token);
         assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void shouldSaveProfilePicture() {
+        long userId = TestUsers.JOHN_DOE.getId();
+        String url = "http://localhost:{port}/v1/users/{userId}/profile-picture";
+
+        HttpHeaders headers = new HttpHeaders();
+        addCookieHeader(headers);
+        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
+        multipartBodyBuilder.part("profilePicture", new ClassPathResource("test-image.png"))
+                .filename("test-image.png")
+                .contentType(MediaType.IMAGE_PNG);
+        MultiValueMap<String, HttpEntity<?>> form = multipartBodyBuilder.build();
+
+        ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.PUT, new HttpEntity<>(form, headers),
+                Void.class, port, userId);
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+    }
+
+    private void addCookieHeader(HttpHeaders headers) {
+        headers.add(HttpHeaders.COOKIE, "access_token=" + TestAccessTokens.JOHN_DOE);
     }
 
     public static class TestJavaMailSenderConfiguration {

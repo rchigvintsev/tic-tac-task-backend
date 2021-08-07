@@ -35,7 +35,7 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldReturnAllTags() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         when(tagRepository.findByUserId(user.getId())).thenReturn(Flux.just(tag));
 
@@ -52,7 +52,7 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldReturnTagById() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
 
@@ -71,7 +71,7 @@ class DefaultTagServiceTest {
     void shouldThrowExceptionOnTagGetWhenTagIsNotFound() {
         when(tagRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         long tagId = 2L;
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> tagService.getTag(tagId, user).block());
         assertEquals("Tag with id " + tagId + " is not found", e.getMessage());
@@ -159,7 +159,7 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldDeleteTag() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
 
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
@@ -181,7 +181,7 @@ class DefaultTagServiceTest {
         when(tagRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
 
         long tagId = 1L;
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
 
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> tagService.deleteTag(tagId, user).block());
@@ -190,7 +190,7 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldReturnAllUncompletedTasksForTag() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
 

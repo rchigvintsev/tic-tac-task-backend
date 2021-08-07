@@ -126,8 +126,7 @@ public class UserController extends AbstractController {
     public Mono<Void> changePassword(@PathVariable Long id,
                                      ServerWebExchange exchange,
                                      Authentication authentication) {
-        ensureValidUserId(id, authentication);
-        return exchange.getFormData()
+        return ensureValidUserId(id, authentication).then(exchange.getFormData()
                 .flatMap(formData -> {
                     String currentPassword = formData.getFirst("currentPassword");
                     String newPassword = formData.getFirst("newPassword");
@@ -136,13 +135,13 @@ public class UserController extends AbstractController {
                 .onErrorMap(InvalidPasswordException.class, e -> {
                     String message = messages.getMessage("invalid-password");
                     return Errors.createFieldError("currentPassword", e.getPassword(), message);
-                });
+                }));
     }
 
     @PutMapping("/{id}")
     public Mono<User> updateUser(@Valid @RequestBody User user, @PathVariable Long id, Authentication authentication) {
-        ensureValidUserId(id, authentication);
-        return userService.updateUser(user);
+        user.setId(id);
+        return ensureValidUserId(id, authentication).then(userService.updateUser(user));
     }
 
     @GetMapping(path = "/{id}/profile-picture")
@@ -150,14 +149,13 @@ public class UserController extends AbstractController {
             @PathVariable("id") Long id,
             Authentication authentication
     ) {
-        ensureValidUserId(id, authentication);
-        return userService.getProfilePicture(id).map(picture -> {
+        return ensureValidUserId(id, authentication).then(userService.getProfilePicture(id).map(picture -> {
             ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
             if (picture.getType() != null) {
                 bodyBuilder.contentType(MediaType.parseMediaType(picture.getType()));
             }
             return bodyBuilder.contentLength(picture.getData().length).body(new ByteArrayResource(picture.getData()));
-        });
+        }));
     }
 
     @PutMapping("/{id}/profile-picture")
@@ -168,9 +166,8 @@ public class UserController extends AbstractController {
             Authentication authentication,
             ServerHttpRequest request
     ) {
-        User user = getUser(authentication);
-        ensureValidUserId(id, user);
-        return profilePicture.flatMapMany(Part::content)
+        User currentUser = getUser(authentication);
+        return ensureValidUserId(id, currentUser).then(profilePicture.flatMapMany(Part::content)
                 .reduce(new ByteArrayOutputStream(), (buffer, content) -> {
                     buffer.writeBytes(content.asByteBuffer().array());
                     DataBufferUtils.release(content);
@@ -189,18 +186,19 @@ public class UserController extends AbstractController {
                     return userService.saveProfilePicture(picture);
                 }).flatMap(picture -> {
                     URI profilePictureUri = UriComponentsBuilder.fromHttpRequest(request).build().toUri();
-                    user.setProfilePictureUrl(profilePictureUri.toString());
-                    return userService.updateUser(user);
-                }).then();
+                    currentUser.setProfilePictureUrl(profilePictureUri.toString());
+                    return userService.updateUser(currentUser);
+                }).then());
     }
 
-    private void ensureValidUserId(Long id, Authentication authentication) {
-        ensureValidUserId(id, getUser(authentication));
+    private Mono<Void> ensureValidUserId(Long id, Authentication authentication) {
+        return ensureValidUserId(id, getUser(authentication));
     }
 
-    private void ensureValidUserId(Long id, User user) {
-        if (!user.getId().equals(id)) {
-            throw new EntityNotFoundException("User with id " + id + " is not found");
+    private Mono<Void> ensureValidUserId(Long id, User user) {
+        if (!user.isAdmin() && !user.getId().equals(id)) {
+            return Mono.error(new EntityNotFoundException("User with id " + id + " is not found"));
         }
+        return Mono.empty();
     }
 }

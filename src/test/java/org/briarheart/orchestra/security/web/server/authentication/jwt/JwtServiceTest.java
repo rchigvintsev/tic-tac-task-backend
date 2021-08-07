@@ -70,7 +70,7 @@ class JwtServiceTest {
 
     @Test
     void shouldCreateAccessToken() {
-        User user = User.builder().id(1L).email(USER_EMAIL).build();
+        User user = User.builder().id(1L).email(USER_EMAIL).emailConfirmed(true).enabled(true).build();
 
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();
         MockServerWebExchange webExchangeMock = MockServerWebExchange.from(requestMock);
@@ -107,7 +107,7 @@ class JwtServiceTest {
 
     @Test
     void shouldIncludeUserProfilePictureUrlInToken() {
-        final String PROFILE_PICTURE_URL = "http://example.com/picture";
+        final String PROFILE_PICTURE_URL = "https://example.com/picture";
         User user = User.builder().id(1L).profilePictureUrl(PROFILE_PICTURE_URL).build();
 
         MockServerHttpRequest requestMock = MockServerHttpRequest.get("/").build();

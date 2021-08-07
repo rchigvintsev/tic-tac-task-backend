@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -29,8 +29,8 @@ import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,16 +49,6 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @Import({PermitAllSecurityConfig.class, I18nConfig.class})
 class UserControllerTest {
     private static final Locale DEFAULT_LOCALE = Locale.getDefault();
-    private static final String TEST_JPEG = "/9j/4AAQSkZJRgABAQEAeAB4AAD/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAABAAEAAAAAA"
-            + "AD/2wBDAAIBAQIBAQICAgICAgICAwUDAwMDAwYEBAMFBwYHBwcGBwcICQsJCAgKCAcHCg0KCgsMDAwMBwkODw0MDgsMDAz/2wBDAQIC"
-            + "AgMDAwYDAwYMCAcIDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAz/wAARCAAyADIDASIAAhE"
-            + "BAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFD"
-            + "KBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJi"
-            + "pKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEB"
-            + "AQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnL"
-            + "RChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpa"
-            + "anqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDHooor++D/ACjCiiigA"
-            + "ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/9k=";
 
     @Autowired
     private WebTestClient testClient;
@@ -287,14 +277,15 @@ class UserControllerTest {
     }
 
     @Test
-    void shouldReturnProfilePicture() {
+    void shouldReturnProfilePicture() throws IOException {
         User user = User.builder().id(1L).email("alice@mail.com").build();
         Authentication authenticationMock = createAuthentication(user);
 
+        byte[] imageData = new ClassPathResource("test-image.png").getInputStream().readAllBytes();
         ProfilePicture profilePicture = ProfilePicture.builder()
                 .userId(user.getId())
-                .data(Base64.getDecoder().decode(TEST_JPEG))
-                .type(MediaType.IMAGE_JPEG.toString())
+                .data(imageData)
+                .type(MediaType.IMAGE_PNG_VALUE)
                 .build();
         when(userService.getProfilePicture(user.getId())).thenReturn(Mono.just(profilePicture));
 
@@ -303,7 +294,7 @@ class UserControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectHeader().contentType(MediaType.IMAGE_JPEG)
+                .expectHeader().contentType(MediaType.IMAGE_PNG)
                 .expectBody(byte[].class).isEqualTo(profilePicture.getData());
     }
 
@@ -332,9 +323,9 @@ class UserControllerTest {
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
-        multipartBodyBuilder.part("profilePicture", new ByteArrayResource(Base64.getDecoder().decode(TEST_JPEG)))
-                .filename("test.jpg")
-                .contentType(MediaType.IMAGE_JPEG);
+        multipartBodyBuilder.part("profilePicture", new ClassPathResource("test-image.png"))
+                .filename("test-image.png")
+                .contentType(MediaType.IMAGE_PNG);
         MultiValueMap<String, HttpEntity<?>> form = multipartBodyBuilder.build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
@@ -355,9 +346,9 @@ class UserControllerTest {
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         MultipartBodyBuilder multipartBodyBuilder = new MultipartBodyBuilder();
-        multipartBodyBuilder.part("profilePicture", new ByteArrayResource(Base64.getDecoder().decode(TEST_JPEG)))
-                .filename("test.jpg")
-                .contentType(MediaType.IMAGE_JPEG);
+        multipartBodyBuilder.part("profilePicture", new ClassPathResource("test-image.png"))
+                .filename("test-image.png")
+                .contentType(MediaType.IMAGE_PNG);
         MultiValueMap<String, HttpEntity<?>> form = multipartBodyBuilder.build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())

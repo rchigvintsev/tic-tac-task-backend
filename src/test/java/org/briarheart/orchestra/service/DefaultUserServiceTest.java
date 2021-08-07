@@ -120,7 +120,7 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldReturnAllUsers() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(userRepository.findAllOrderByIdAsc(0, null)).thenReturn(Flux.just(user));
         User result = service.getUsers(Pageable.unpaged()).blockFirst();
         assertEquals(user, result);
@@ -128,7 +128,7 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldReturnAllUsersWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         PageRequest pageRequest = PageRequest.of(3, 50);
         when(userRepository.findAllOrderByIdAsc(pageRequest.getOffset(), pageRequest.getPageSize()))
                 .thenReturn(Flux.just(user));
@@ -212,9 +212,9 @@ class DefaultUserServiceTest {
         User user = User.builder()
                 .email("alice@mail.com")
                 .emailConfirmed(true)
+                .enabled(true)
                 .password("secret")
                 .fullName("Alice")
-                .enabled(true)
                 .build();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
         EntityAlreadyExistsException e = assertThrows(EntityAlreadyExistsException.class,
@@ -224,13 +224,7 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldUpdateFullNameOnUserCreateWhenUserWithUnconfirmedEmailAlreadyExists() {
-        User user = User.builder()
-                .email("alice@mail.com")
-                .emailConfirmed(false)
-                .password("secret")
-                .fullName("Alice")
-                .enabled(false)
-                .build();
+        User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
 
         User newUser = new User(user);
@@ -245,13 +239,7 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldUpdatePasswordOnUserCreateWhenUserWithUnconfirmedEmailAlreadyExists() {
-        User user = User.builder()
-                .email("alice@mail.com")
-                .emailConfirmed(false)
-                .password("secret")
-                .fullName("Alice")
-                .enabled(false)
-                .build();
+        User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
 
         User newUser = new User(user);
@@ -266,7 +254,13 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldUpdateUser() {
-        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
@@ -283,7 +277,13 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldNotAllowToChangeEmailFieldOnUserUpdate() {
-        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
@@ -300,7 +300,13 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldNotAllowToChangeEmailConfirmedFieldOnUserUpdate() {
-        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
@@ -316,8 +322,37 @@ class DefaultUserServiceTest {
     }
 
     @Test
+    void shouldNotAllowToChangeEnabledFieldOnUserUpdate() {
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .build();
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        User updatedUser = new User(user);
+        updatedUser.setEnabled(false);
+
+        User expectedResult = new User(user);
+        expectedResult.setVersion(1);
+        expectedResult.setPassword(null);
+
+        User result = service.updateUser(updatedUser).block();
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
     void shouldNotAllowToChangeAdminFieldOnUserUpdate() {
-        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
@@ -334,7 +369,13 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldNotAllowToChangeAuthoritiesFieldOnUserUpdate() {
-        User user = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
@@ -357,7 +398,7 @@ class DefaultUserServiceTest {
 
     @Test
     void shouldThrowExceptionOnUserUpdateWhenUserIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.empty());
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> service.updateUser(user).block());

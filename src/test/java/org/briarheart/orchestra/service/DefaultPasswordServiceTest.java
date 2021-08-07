@@ -74,7 +74,7 @@ class DefaultPasswordServiceTest {
 
     @Test
     void shouldSendPasswordResetLinkToUserOnPasswordReset() {
-        User user = User.builder().email("alice@mail.com").fullName("Alice").build();
+        User user = User.builder().email("alice@mail.com").emailConfirmed(true).enabled(true).fullName("Alice").build();
         when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
 
         service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
@@ -86,7 +86,13 @@ class DefaultPasswordServiceTest {
 
     @Test
     void shouldIncludePasswordResetLinkIntoMessageText() {
-        User user = User.builder().id(1L).email("alice@mail.com").fullName("Alice").build();
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .fullName("Alice")
+                .build();
         when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
 
         service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
@@ -106,7 +112,13 @@ class DefaultPasswordServiceTest {
 
     @Test
     void shouldIncludeLinkExpirationTimeoutIntoMessageText() {
-        User user = User.builder().id(1L).email("alice@mail.com").fullName("Alice").build();
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .fullName("Alice")
+                .build();
         when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
 
         service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
@@ -134,7 +146,13 @@ class DefaultPasswordServiceTest {
 
     @Test
     void shouldThrowExceptionOnPasswordResetWhenMailExceptionIsThrown() {
-        User user = User.builder().id(1L).email("alice@mail.com").fullName("Alice").build();
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .fullName("Alice")
+                .build();
         when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
 
         doThrow(new MailSendException("Something went wrong")).when(javaMailSender).send(any(SimpleMailMessage.class));
@@ -296,7 +314,7 @@ class DefaultPasswordServiceTest {
 
     @Test
     void shouldThrowExceptionOnPasswordChangeWhenPasswordsDoNotMatch() {
-        User user = User.builder().id(1L).password("secret").build();
+        User user = User.builder().id(1L).emailConfirmed(true).enabled(true).password("secret").build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
         assertThrows(InvalidPasswordException.class,
                 () -> service.changePassword(user.getId(), "qwerty", "s3cret").block());

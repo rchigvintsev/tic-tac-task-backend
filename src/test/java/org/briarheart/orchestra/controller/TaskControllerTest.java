@@ -58,7 +58,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnAllUnprocessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
@@ -74,7 +74,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfAllUnprocessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         when(taskService.getUnprocessedTaskCount(user)).thenReturn(Mono.just(1L));
@@ -89,7 +89,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnAllProcessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
@@ -111,7 +111,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfAllProcessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         when(taskService.getProcessedTaskCount(user)).thenReturn(Mono.just(1L));
@@ -126,7 +126,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnProcessedTasksWithoutDeadline() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
@@ -148,7 +148,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithoutDeadline() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         when(taskService.getProcessedTaskCount(null, null, user)).thenReturn(Mono.just(1L));
@@ -163,7 +163,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadline() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
@@ -194,7 +194,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadline() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         String deadlineFrom = "2020-01-01T00:00";
@@ -216,7 +216,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnAllUncompletedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
@@ -232,7 +232,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfAllUncompletedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         when(taskService.getUncompletedTaskCount(eq(user))).thenReturn(Mono.just(1L));
@@ -247,7 +247,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnTaskById() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
@@ -263,7 +263,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNotFoundStatusCodeWhenTaskIsNotFoundById() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Task is not found";
@@ -279,7 +279,7 @@ class TaskControllerTest {
 
     @Test
     void shouldCreateTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskId = 2L;
@@ -309,7 +309,7 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectTaskCreationWhenTitleIsNull() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().build();
@@ -328,7 +328,7 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectTaskCreationWhenTitleIsBlank() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().title(" ").build();
@@ -347,7 +347,7 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectTaskCreationWhenTitleIsTooLong() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().title("L" + "o".repeat(247) + "ng title").build();
@@ -366,7 +366,7 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectTaskCreationWhenDescriptionIsTooLong() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
@@ -388,7 +388,7 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectTaskCreationWhenDeadlineIsInPast() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder()
@@ -410,7 +410,7 @@ class TaskControllerTest {
 
     @Test
     void shouldUpdateTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         when(taskService.updateTask(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
@@ -435,7 +435,7 @@ class TaskControllerTest {
 
     @Test
     void shouldCompleteTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskId = 2L;
@@ -452,7 +452,7 @@ class TaskControllerTest {
 
     @Test
     void shouldDeleteTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskId = 2L;
@@ -469,7 +469,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnTagsForTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskId = 2L;
@@ -487,7 +487,7 @@ class TaskControllerTest {
 
     @Test
     void shouldAssignTagToTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskId = 2L;
@@ -505,7 +505,7 @@ class TaskControllerTest {
 
     @Test
     void shouldRemoveTagFromTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskId = 2L;
@@ -523,7 +523,7 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnCommentsForTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         TaskComment comment = TaskComment.builder()
@@ -549,7 +549,7 @@ class TaskControllerTest {
 
     @Test
     void shouldAddCommentToTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         long taskId = 2L;
@@ -580,7 +580,7 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectCommentAddingWhenCommentTextIsNull() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         TaskComment comment = TaskComment.builder().build();
@@ -599,7 +599,7 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectCommentAddingWhenCommentTextIsBlank() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         TaskComment comment = TaskComment.builder().commentText(" ").build();
@@ -618,7 +618,7 @@ class TaskControllerTest {
 
     @Test
     void shouldRejectCommentAddingWhenCommentTextIsTooLong() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         TaskComment comment = TaskComment.builder().commentText("L" + "o".repeat(9993) + "ng text").build();

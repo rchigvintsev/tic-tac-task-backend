@@ -87,6 +87,8 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
     private Mono<? extends User> createNewUser(OAuth2UserAttributeAccessor attrAccessor) {
         User newUser = User.builder()
                 .email(attrAccessor.getEmail())
+                .emailConfirmed(true)
+                .enabled(true)
                 .fullName(attrAccessor.getFullName())
                 .profilePictureUrl(attrAccessor.getPicture())
                 .build();

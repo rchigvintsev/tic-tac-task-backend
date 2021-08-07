@@ -93,7 +93,6 @@ public class DefaultUserService implements UserService {
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
                 .flatMap(existingUser -> {
                     existingUser.setVersion(existingUser.getVersion() + 1);
-                    existingUser.setEnabled(user.isEnabled());
                     existingUser.setFullName(user.getFullName());
                     existingUser.setProfilePictureUrl(user.getProfilePictureUrl());
                     return userRepository.save(existingUser)

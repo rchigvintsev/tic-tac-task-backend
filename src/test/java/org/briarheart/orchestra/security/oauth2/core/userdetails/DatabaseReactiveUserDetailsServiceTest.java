@@ -37,7 +37,7 @@ class DatabaseReactiveUserDetailsServiceTest {
 
     @Test
     void shouldFindUserByUsername() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
         when(userAuthorityRelationRepository.findByUserId(anyLong())).thenReturn(Flux.empty());
         UserDetails result = service.findByUsername(user.getUsername()).block();
@@ -46,7 +46,7 @@ class DatabaseReactiveUserDetailsServiceTest {
 
     @Test
     void shouldLoadUserAuthoritiesOnUserFind() {
-        User user = User.builder().id(1L).email("alice@mail.com").build();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         GrantedAuthority authority = new SimpleGrantedAuthority("user");
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
