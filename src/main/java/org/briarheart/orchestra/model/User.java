@@ -39,7 +39,7 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean admin = false;
     @Builder.Default
-    private boolean enabled = false;
+    private Boolean enabled = false;
     @Size(max = 255)
     private String fullName;
     @Size(max = 2_000)

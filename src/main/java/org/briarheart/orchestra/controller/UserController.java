@@ -141,6 +141,10 @@ public class UserController extends AbstractController {
     @PutMapping("/{id}")
     public Mono<User> updateUser(@Valid @RequestBody User user, @PathVariable Long id, Authentication authentication) {
         user.setId(id);
+        User currentUser = getUser(authentication);
+        if (currentUser.getId().equals(id)) {
+            user.setEnabled(null);
+        }
         return ensureValidUserId(id, authentication).then(userService.updateUser(user));
     }
 

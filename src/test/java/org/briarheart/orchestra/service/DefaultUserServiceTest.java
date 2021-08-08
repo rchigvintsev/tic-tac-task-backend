@@ -266,6 +266,7 @@ class DefaultUserServiceTest {
 
         User updatedUser = new User(user);
         updatedUser.setFullName("Alice Wonderland");
+        updatedUser.setEnabled(false);
 
         User expectedResult = new User(updatedUser);
         expectedResult.setVersion(1);
@@ -312,29 +313,6 @@ class DefaultUserServiceTest {
 
         User updatedUser = new User(user);
         updatedUser.setEmailConfirmed(false);
-
-        User expectedResult = new User(user);
-        expectedResult.setVersion(1);
-        expectedResult.setPassword(null);
-
-        User result = service.updateUser(updatedUser).block();
-        assertEquals(expectedResult, result);
-    }
-
-    @Test
-    void shouldNotAllowToChangeEnabledFieldOnUserUpdate() {
-        User user = User.builder()
-                .id(1L)
-                .email("alice@mail.com")
-                .emailConfirmed(true)
-                .enabled(true)
-                .password("secret")
-                .build();
-        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
-
-        User updatedUser = new User(user);
-        updatedUser.setEnabled(false);
 
         User expectedResult = new User(user);
         expectedResult.setVersion(1);

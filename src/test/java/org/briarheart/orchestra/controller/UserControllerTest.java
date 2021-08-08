@@ -211,7 +211,13 @@ class UserControllerTest {
 
     @Test
     void shouldChangePassword() {
-        User authenticatedUser = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        User authenticatedUser = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .build();
         Authentication authenticationMock = createAuthentication(authenticatedUser);
 
         long userId = 1L;
@@ -231,7 +237,13 @@ class UserControllerTest {
 
     @Test
     void shouldRejectPasswordChangingWhenCurrentPasswordIsNotValid() {
-        User authenticatedUser = User.builder().id(1L).email("alice@mail.com").password("secret").build();
+        User authenticatedUser = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .build();
         Authentication authenticationMock = createAuthentication(authenticatedUser);
 
         long userId = 1L;
@@ -254,16 +266,47 @@ class UserControllerTest {
 
     @Test
     void shouldUpdateUser() {
-        User authenticatedUser = User.builder().id(1L).email("alice@mail.com").build();
+        User authenticatedUser = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .build();
         Authentication authenticationMock = createAuthentication(authenticatedUser);
 
-        User updatedUser = User.builder()
-                .id(authenticatedUser.getId())
-                .email(authenticatedUser.getEmail())
-                .fullName("Alice Wonderland")
-                .build();
+        User updatedUser = new User(authenticatedUser);
+        updatedUser.setFullName("Alice Wonderland");
 
         User expectedResult = new User(updatedUser);
+        expectedResult.setEnabled(null);
+        expectedResult.setAuthorities(new ArrayList<>());
+
+        testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
+                .put().uri("/v1/users/{userId}", updatedUser.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(updatedUser)
+                .exchange()
+
+                .expectStatus().isOk()
+                .expectBody(User.class).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void shouldNotAllowToChangeUsersOwnEnabledFieldOnUserUpdate() {
+        User authenticatedUser = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .admin(true)
+                .build();
+        Authentication authenticationMock = createAuthentication(authenticatedUser);
+
+        User updatedUser = new User(authenticatedUser);
+        updatedUser.setEnabled(false);
+
+        User expectedResult = new User(updatedUser);
+        expectedResult.setEnabled(null);
         expectedResult.setAuthorities(new ArrayList<>());
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
