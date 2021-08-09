@@ -93,7 +93,6 @@ public class DefaultPasswordService implements PasswordService {
                 .flatMap(token -> findUser(userId))
                 .flatMap(user -> {
                     user.setPassword(encodePassword(newPassword));
-                    user.setVersion(user.getVersion() + 1);
                     return userRepository.save(user)
                             .doOnSuccess(u -> log.debug("Password is reset for user with id {}", u.getId()));
                 })
@@ -110,7 +109,6 @@ public class DefaultPasswordService implements PasswordService {
                     return Mono.just(user);
                 }).flatMap(user -> {
                     user.setPassword(encodePassword(newPassword));
-                    user.setVersion(user.getVersion() + 1);
                     return userRepository.save(user);
                 }).then();
     }

@@ -13,7 +13,6 @@ import org.briarheart.orchestra.web.error.HttpStatusExceptionTypeMapper;
 import org.briarheart.orchestra.web.filter.LocaleContextFilter;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.hibernate.validator.spi.resourceloading.ResourceBundleLocator;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.web.reactive.error.ErrorAttributes;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,8 +36,6 @@ import javax.validation.MessageInterpolator;
 @EnableWebFlux
 @RequiredArgsConstructor
 public class WebConfig implements WebFluxConfigurer {
-    private final ServerProperties serverProperties;
-
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE + 2)
     public LocaleContextFilter localeContextFilter() {
@@ -47,8 +44,7 @@ public class WebConfig implements WebFluxConfigurer {
 
     @Bean
     public ErrorAttributes errorAttributes(HttpStatusExceptionTypeMapper httpStatusExceptionTypeMapper) {
-        boolean includeException = serverProperties.getError().isIncludeException();
-        return new ApiErrorAttributes(includeException, httpStatusExceptionTypeMapper);
+        return new ApiErrorAttributes(httpStatusExceptionTypeMapper);
     }
 
     @Bean

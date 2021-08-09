@@ -120,7 +120,6 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                 .flatMap(user -> {
                     user.setEmailConfirmed(true);
                     user.setEnabled(true);
-                    user.setVersion(user.getVersion() + 1);
                     return userRepository.save(user)
                             .doOnSuccess(u -> log.debug("Email {} is confirmed for user with id {}",
                                     user.getEmail(), user.getId()));

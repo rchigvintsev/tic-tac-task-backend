@@ -1,6 +1,7 @@
 package org.briarheart.orchestra.web.error;
 
 import org.briarheart.orchestra.LocalizedRuntimeException;
+import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.reactive.error.DefaultErrorAttributes;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
@@ -29,23 +30,20 @@ public class ApiErrorAttributes extends DefaultErrorAttributes {
     private final HttpStatusExceptionTypeMapper httpStatusExceptionMapper;
 
     /**
-     * Creates new instance of this class with the given include exception flag and
-     * {@link HttpStatusExceptionTypeMapper}.
+     * Creates new instance of this class with the given {@link HttpStatusExceptionTypeMapper}.
      *
-     * @param includeException              indicates whether exception must be included in error attributes
      * @param httpStatusExceptionTypeMapper exception type to HTTP status mapper (must not be {@link null})
      */
-    public ApiErrorAttributes(boolean includeException, HttpStatusExceptionTypeMapper httpStatusExceptionTypeMapper) {
-        super(includeException);
+    public ApiErrorAttributes(HttpStatusExceptionTypeMapper httpStatusExceptionTypeMapper) {
         Assert.notNull(httpStatusExceptionTypeMapper, "Exception type to HTTP status mapper must not be null");
         this.httpStatusExceptionMapper = httpStatusExceptionTypeMapper;
     }
 
     @Override
-    public Map<String, Object> getErrorAttributes(ServerRequest request, boolean includeStackTrace) {
+    public Map<String, Object> getErrorAttributes(ServerRequest request, ErrorAttributeOptions options) {
         Assert.notNull(request, "Server request must not be null");
 
-        Map<String, Object> errorAttributes = new LinkedHashMap<>(super.getErrorAttributes(request, includeStackTrace));
+        Map<String, Object> errorAttributes = new LinkedHashMap<>(super.getErrorAttributes(request, options));
         Throwable error = getError(request);
         HttpStatus httpStatus = httpStatusExceptionMapper.getHttpStatus(error.getClass());
         if (httpStatus != null) {

@@ -78,3 +78,7 @@ application:
     # seven days
     validity-seconds: 604800
     signing-key: ${SECURITY_ACCESS_TOKEN_SIGNING_KEY}
+
+server.error:
+  include-message: always
+  include-binding-errors: always

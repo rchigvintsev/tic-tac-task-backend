@@ -182,7 +182,6 @@ class DefaultPasswordServiceTest {
 
         User expectedUser = new User(user);
         expectedUser.setPassword(newPassword);
-        expectedUser.setVersion(1L);
         verify(userRepository, times(1)).save(expectedUser);
     }
 
@@ -296,7 +295,6 @@ class DefaultPasswordServiceTest {
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
 
         User updatedUser = new User(user);
-        updatedUser.setVersion(user.getVersion() + 1);
         updatedUser.setPassword("s3cret");
 
         service.changePassword(user.getId(), user.getPassword(), updatedUser.getPassword()).block();

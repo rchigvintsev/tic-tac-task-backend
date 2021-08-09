@@ -269,7 +269,6 @@ class DefaultUserServiceTest {
         updatedUser.setEnabled(false);
 
         User expectedResult = new User(updatedUser);
-        expectedResult.setVersion(1);
         expectedResult.setPassword(null);
 
         User result = service.updateUser(updatedUser).block();
@@ -292,7 +291,6 @@ class DefaultUserServiceTest {
         updatedUser.setEmail("bob@mail.com");
 
         User expectedResult = new User(user);
-        expectedResult.setVersion(1);
         expectedResult.setPassword(null);
 
         User result = service.updateUser(updatedUser).block();
@@ -315,7 +313,6 @@ class DefaultUserServiceTest {
         updatedUser.setEmailConfirmed(false);
 
         User expectedResult = new User(user);
-        expectedResult.setVersion(1);
         expectedResult.setPassword(null);
 
         User result = service.updateUser(updatedUser).block();
@@ -338,7 +335,6 @@ class DefaultUserServiceTest {
         updatedUser.setAdmin(true);
 
         User expectedResult = new User(user);
-        expectedResult.setVersion(1);
         expectedResult.setPassword(null);
 
         User result = service.updateUser(updatedUser).block();
@@ -361,7 +357,6 @@ class DefaultUserServiceTest {
         updatedUser.setAuthorities(List.of(new SimpleGrantedAuthority("ROLE_SUPER_HERO")));
 
         User expectedResult = new User(user);
-        expectedResult.setVersion(1);
         expectedResult.setPassword(null);
 
         User result = service.updateUser(updatedUser).block();

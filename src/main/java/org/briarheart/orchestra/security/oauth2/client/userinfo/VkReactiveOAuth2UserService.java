@@ -7,7 +7,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -16,6 +15,7 @@ import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserSer
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
@@ -88,10 +88,12 @@ public class VkReactiveOAuth2UserService implements ReactiveOAuth2UserService<OA
                         return new DefaultOAuth2User(authorities, attrs, userNameAttributeName);
                     })
                     .onErrorMap(e -> e instanceof IOException, t -> {
-                        String message = "Unable to access the user info endpoint " + userInfoEndpointUri;
-                        return new AuthenticationServiceException(message, t);
+                        String message = "Unable to access the user info endpoint " + userInfoEndpointUri + ": "
+                                + t.getMessage();
+                        OAuth2Error oauth2Error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR, message, null);
+                        return new OAuth2AuthenticationException(oauth2Error, t);
                     })
-                    .onErrorMap(t -> !(t instanceof AuthenticationServiceException), t -> {
+                    .onErrorMap(t -> !(t instanceof OAuth2AuthenticationException), t -> {
                         String message = "An error occurred while reading user info success response: "
                                 + t.getMessage();
                         OAuth2Error oauth2Error = new OAuth2Error(ERROR_CODE_INVALID_USER_INFO_RESPONSE, message, null);

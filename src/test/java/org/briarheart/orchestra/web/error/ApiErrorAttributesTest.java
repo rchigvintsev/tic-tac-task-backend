@@ -3,6 +3,8 @@ package org.briarheart.orchestra.web.error;
 import org.briarheart.orchestra.LocalizedRuntimeException;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.web.error.ErrorAttributeOptions;
+import org.springframework.boot.web.error.ErrorAttributeOptions.Include;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.validation.FieldError;
@@ -26,11 +28,11 @@ class ApiErrorAttributesTest {
         EntityNotFoundException exception = new EntityNotFoundException("Entity is not found");
         ServerRequest request = mockServerRequest();
 
-        ApiErrorAttributes attributes = new ApiErrorAttributes(false,
-                t -> t == EntityNotFoundException.class ? HttpStatus.NOT_FOUND : null);
+        ApiErrorAttributes attributes = new ApiErrorAttributes(t
+                -> t == EntityNotFoundException.class ? HttpStatus.NOT_FOUND : null);
         attributes.storeErrorInformation(exception, request.exchange());
 
-        Map<String, Object> result = attributes.getErrorAttributes(request, false);
+        Map<String, Object> result = attributes.getErrorAttributes(request, ErrorAttributeOptions.defaults());
         assertNotNull(result);
         assertEquals(HttpStatus.NOT_FOUND.value(), result.get("status"));
         assertEquals(HttpStatus.NOT_FOUND.getReasonPhrase(), result.get("error"));
@@ -42,10 +44,10 @@ class ApiErrorAttributesTest {
         LocalizedRuntimeException exception = new LocalizedRuntimeException("Something went wrong", localizedMessage);
         ServerRequest request = mockServerRequest();
 
-        ApiErrorAttributes attributes = new ApiErrorAttributes(false, t -> null);
+        ApiErrorAttributes attributes = new ApiErrorAttributes(t -> null);
         attributes.storeErrorInformation(exception, request.exchange());
 
-        Map<String, Object> result = attributes.getErrorAttributes(request, false);
+        Map<String, Object> result = attributes.getErrorAttributes(request, ErrorAttributeOptions.defaults());
         assertNotNull(result);
         assertEquals(localizedMessage, result.get("localizedMessage"));
     }
@@ -65,10 +67,11 @@ class ApiErrorAttributesTest {
 
         ServerRequest request = mockServerRequest();
 
-        ApiErrorAttributes attributes = new ApiErrorAttributes(false, t -> null);
+        ApiErrorAttributes attributes = new ApiErrorAttributes(t -> null);
         attributes.storeErrorInformation(exception, request.exchange());
 
-        Map<String, Object> result = attributes.getErrorAttributes(request, false);
+        Map<String, Object> result = attributes.getErrorAttributes(request,
+                ErrorAttributeOptions.of(Include.BINDING_ERRORS));
         assertNotNull(result);
         assertNotNull(result.get("fieldErrors"));
     }
@@ -88,10 +91,11 @@ class ApiErrorAttributesTest {
 
         ServerRequest request = mockServerRequest();
 
-        ApiErrorAttributes attributes = new ApiErrorAttributes(false, t -> null);
+        ApiErrorAttributes attributes = new ApiErrorAttributes(t -> null);
         attributes.storeErrorInformation(exception, request.exchange());
 
-        Map<String, Object> result = attributes.getErrorAttributes(request, false);
+        Map<String, Object> result = attributes.getErrorAttributes(request,
+                ErrorAttributeOptions.of(Include.MESSAGE, Include.BINDING_ERRORS));
         assertNotNull(result);
         assertNull(result.get("message"));
     }
@@ -111,25 +115,25 @@ class ApiErrorAttributesTest {
 
         ServerRequest request = mockServerRequest();
 
-        ApiErrorAttributes attributes = new ApiErrorAttributes(false, t -> null);
+        ApiErrorAttributes attributes = new ApiErrorAttributes(t -> null);
         attributes.storeErrorInformation(exception, request.exchange());
 
-        Map<String, Object> result = attributes.getErrorAttributes(request, false);
+        Map<String, Object> result = attributes.getErrorAttributes(request,
+                ErrorAttributeOptions.of(Include.MESSAGE, Include.BINDING_ERRORS));
         assertNotNull(result);
         assertNull(result.get("errors"));
     }
 
     @Test
     void shouldThrowExceptionOnConstructWhenHttpStatusExceptionTypeMapperIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> new ApiErrorAttributes(false, null));
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> new ApiErrorAttributes(null));
         assertEquals("Exception type to HTTP status mapper must not be null", e.getMessage());
     }
 
     @Test
     void shouldThrowExceptionOnErrorAttributesGetWhenServerRequestIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> new ApiErrorAttributes(false, t -> null).getErrorAttributes(null, false));
+                () -> new ApiErrorAttributes(t -> null).getErrorAttributes(null, ErrorAttributeOptions.defaults()));
         assertEquals("Server request must not be null", e.getMessage());
     }
 

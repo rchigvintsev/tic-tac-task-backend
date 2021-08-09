@@ -10,7 +10,6 @@ import org.mockito.Mockito;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistration.ProviderDetails.UserInfoEndpoint;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -177,26 +176,30 @@ class VkReactiveOAuth2UserServiceTest {
 
     @Test
     void shouldThrowExceptionOnUserLoadWhenIOErrorOccurred() {
+        String errorMessage = "Some I/O error occurred";
         when(responseSpecMock.bodyToMono(Mockito.<ParameterizedTypeReference<? super Map<String, Object>>>any()))
-                .thenReturn(Mono.error(new IOException("Some I/O error occurred")));
+                .thenReturn(Mono.error(new IOException(errorMessage)));
         ClientRegistration clientRegistration = TestClientRegistrations.clientRegistration().build();
         OAuth2UserRequest requestMock = new MockOidcUserRequest(clientRegistration, Map.of("id", "1"));
-        AuthenticationServiceException exception = assertThrows(AuthenticationServiceException.class,
+        OAuth2AuthenticationException exception = assertThrows(OAuth2AuthenticationException.class,
                 service.loadUser(requestMock)::block);
         UserInfoEndpoint userInfoEndpoint = clientRegistration.getProviderDetails().getUserInfoEndpoint();
-        assertEquals("Unable to access the user info endpoint " + userInfoEndpoint.getUri(), exception.getMessage());
+        assertEquals("server_error", exception.getError().getErrorCode());
+        assertEquals("Unable to access the user info endpoint " + userInfoEndpoint.getUri() + ": " + errorMessage,
+                exception.getError().getDescription());
     }
 
     @Test
     void shouldThrowExceptionOnUserLoadWhenRuntimeErrorOccurred() {
+        String errorMessage = "Some runtime error occurred";
         when(responseSpecMock.bodyToMono(Mockito.<ParameterizedTypeReference<? super Map<String, Object>>>any()))
-                .thenReturn(Mono.error(new RuntimeException("Some runtime error occurred")));
+                .thenReturn(Mono.error(new RuntimeException(errorMessage)));
         ClientRegistration clientRegistration = TestClientRegistrations.clientRegistration().build();
         OAuth2UserRequest requestMock = new MockOidcUserRequest(clientRegistration, Map.of("id", "1"));
         OAuth2AuthenticationException exception = assertThrows(OAuth2AuthenticationException.class,
                 service.loadUser(requestMock)::block);
         assertEquals("invalid_user_info_response", exception.getError().getErrorCode());
-        assertEquals("An error occurred while reading user info success response: Some runtime error occurred",
+        assertEquals("An error occurred while reading user info success response: " + errorMessage,
                 exception.getError().getDescription());
     }
 
