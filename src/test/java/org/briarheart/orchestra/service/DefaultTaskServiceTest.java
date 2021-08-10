@@ -634,6 +634,7 @@ class DefaultTaskServiceTest {
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
+        when(taskTagRelationRepository.create(anyLong(), anyLong())).thenAnswer(args -> Mono.empty());
 
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> taskService.assignTag(taskId, tag.getId(), user).block());
@@ -648,6 +649,7 @@ class DefaultTaskServiceTest {
 
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(tagRepository.findByIdAndUserId(tagId, user.getId())).thenReturn(Mono.empty());
+        when(taskTagRelationRepository.create(anyLong(), anyLong())).thenAnswer(args -> Mono.empty());
 
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> taskService.assignTag(task.getId(), tagId, user).block());

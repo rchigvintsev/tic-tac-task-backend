@@ -17,6 +17,7 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -68,6 +69,7 @@ public class DefaultPasswordService implements PasswordService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional
     @Override
     public Mono<Void> resetPassword(String email, Locale locale) {
         Assert.hasLength(email, "Email address must not be null or empty");
@@ -76,6 +78,7 @@ public class DefaultPasswordService implements PasswordService {
                 .then();
     }
 
+    @Transactional
     @Override
     public Mono<Void> confirmPasswordReset(Long userId, String tokenValue, String newPassword)
             throws EntityNotFoundException, TokenExpiredException {
@@ -99,6 +102,7 @@ public class DefaultPasswordService implements PasswordService {
                 .then();
     }
 
+    @Transactional
     @Override
     public Mono<Void> changePassword(Long userId, String currentPassword, String newPassword) {
         return findUser(userId)
@@ -154,17 +158,19 @@ public class DefaultPasswordService implements PasswordService {
     }
 
     private Mono<PasswordResetConfirmationToken> createPasswordResetToken(User user) {
-        LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC);
-        LocalDateTime expiresAt = createdAt.plus(passwordResetTokenExpirationTimeout);
-        PasswordResetConfirmationToken token = PasswordResetConfirmationToken.builder()
-                .userId(user.getId())
-                .email(user.getEmail())
-                .tokenValue(UUID.randomUUID().toString())
-                .createdAt(createdAt)
-                .expiresAt(expiresAt)
-                .build();
-        return tokenRepository.save(token)
-                .doOnSuccess(t -> log.debug("Password reset confirmation token with id {} is created", t.getId()));
+        return Mono.defer(() -> {
+            LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC);
+            LocalDateTime expiresAt = createdAt.plus(passwordResetTokenExpirationTimeout);
+            PasswordResetConfirmationToken token = PasswordResetConfirmationToken.builder()
+                    .userId(user.getId())
+                    .email(user.getEmail())
+                    .tokenValue(UUID.randomUUID().toString())
+                    .createdAt(createdAt)
+                    .expiresAt(expiresAt)
+                    .build();
+            return tokenRepository.save(token)
+                    .doOnSuccess(t -> log.debug("Password reset confirmation token with id {} is created", t.getId()));
+        });
     }
 
     private String encodePassword(String rawPassword) {

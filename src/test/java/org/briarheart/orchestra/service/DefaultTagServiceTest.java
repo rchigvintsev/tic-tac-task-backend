@@ -134,7 +134,9 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagUpdateWhenTagIsNotFound() {
+        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
         when(tagRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
+
         Tag tag = Tag.builder().id(2L).userId(1L).name("Test tag").build();
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> tagService.updateTag(tag).block());
@@ -149,9 +151,11 @@ class DefaultTagServiceTest {
         updatedTag.setId(tag.getId());
         updatedTag.setName("Updated test tag");
 
+        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
         when(tagRepository.findByIdAndUserId(tag.getId(), tag.getUserId())).thenReturn(Mono.just(tag));
         when(tagRepository.findByNameAndUserId(updatedTag.getName(), updatedTag.getUserId()))
                 .thenReturn(Mono.just(updatedTag));
+
         EntityAlreadyExistsException e = assertThrows(EntityAlreadyExistsException.class,
                 () -> tagService.updateTag(updatedTag).block());
         assertEquals("Tag with name \"" + updatedTag.getName() + "\" already exists", e.getMessage());

@@ -26,13 +26,15 @@ public class TaskTagRelationCreatorImpl implements TaskTagRelationCreator {
 
     @Override
     public Mono<TaskTagRelation> create(Long taskId, Long tagId) {
-        TaskTagRelation result = jdbcTemplate.execute(SQL_CREATE_TASK_TAG_RELATION,
-                (PreparedStatementCallback<TaskTagRelation>) preparedStatement -> {
-                    preparedStatement.setLong(1, taskId);
-                    preparedStatement.setLong(2, tagId);
-                    preparedStatement.executeUpdate();
-                    return new TaskTagRelation(taskId, tagId);
-                });
-        return Mono.just(Objects.requireNonNull(result));
+        return Mono.fromCallable(() -> {
+            TaskTagRelation result = jdbcTemplate.execute(SQL_CREATE_TASK_TAG_RELATION,
+                    (PreparedStatementCallback<TaskTagRelation>) preparedStatement -> {
+                        preparedStatement.setLong(1, taskId);
+                        preparedStatement.setLong(2, tagId);
+                        preparedStatement.executeUpdate();
+                        return new TaskTagRelation(taskId, tagId);
+                    });
+            return Objects.requireNonNull(result);
+        });
     }
 }

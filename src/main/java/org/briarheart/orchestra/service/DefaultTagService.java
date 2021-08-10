@@ -12,6 +12,7 @@ import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,6 +48,7 @@ public class DefaultTagService implements TagService {
         return findTag(id, user.getId());
     }
 
+    @Transactional
     @Override
     public Mono<Tag> createTag(Tag tag) throws EntityAlreadyExistsException {
         Assert.notNull(tag, "Tag must not be null");
@@ -65,6 +67,7 @@ public class DefaultTagService implements TagService {
                 }));
     }
 
+    @Transactional
     @Override
     public Mono<Tag> updateTag(Tag tag) throws EntityNotFoundException, EntityAlreadyExistsException {
         Assert.notNull(tag, "Tag must not be null");
@@ -79,10 +82,11 @@ public class DefaultTagService implements TagService {
                 }).flatMap(t -> {
                     String message = "Tag with name \"" + tag.getName() + "\" already exists";
                     return Mono.<Tag>error(new EntityAlreadyExistsException(message));
-                }).switchIfEmpty(Mono.defer(() -> tagRepository.save(tag)
-                        .doOnSuccess(t -> log.debug("Tag with id {} is updated", t.getId()))));
+                }).switchIfEmpty(tagRepository.save(tag)
+                        .doOnSuccess(t -> log.debug("Tag with id {} is updated", t.getId())));
     }
 
+    @Transactional
     @Override
     public Mono<Void> deleteTag(Long id, User user) throws EntityNotFoundException {
         return getTag(id, user)
@@ -90,6 +94,7 @@ public class DefaultTagService implements TagService {
                 .doOnSuccess(v -> log.debug("Tag with id {} is deleted", id));
     }
 
+    @Transactional
     @Override
     public Flux<Task> getUncompletedTasks(Long tagId, User user, Pageable pageable) {
         return getTag(tagId, user).flatMapMany(tag -> {

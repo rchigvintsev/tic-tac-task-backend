@@ -11,6 +11,7 @@ import org.briarheart.orchestra.model.User;
 import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -58,6 +59,7 @@ public class DefaultTaskListService implements TaskListService {
         });
     }
 
+    @Transactional
     @Override
     public Mono<TaskList> updateTaskList(TaskList taskList) throws EntityNotFoundException {
         Assert.notNull(taskList, "Task list must not be null");
@@ -69,6 +71,7 @@ public class DefaultTaskListService implements TaskListService {
                 .doOnSuccess(l -> log.debug("Task list with id {} is updated", l.getId()));
     }
 
+    @Transactional
     @Override
     public Mono<Void> completeTaskList(Long id, User user) throws EntityNotFoundException {
         return getTaskList(id, user)
@@ -90,6 +93,7 @@ public class DefaultTaskListService implements TaskListService {
                 });
     }
 
+    @Transactional
     @Override
     public Mono<Void> deleteTaskList(Long id, User user) throws EntityNotFoundException {
         return getTaskList(id, user)
@@ -105,6 +109,7 @@ public class DefaultTaskListService implements TaskListService {
                 });
     }
 
+    @Transactional
     @Override
     public Flux<Task> getTasks(Long taskListId, User user, Pageable pageable) throws EntityNotFoundException {
         return getTaskList(taskListId, user).flatMapMany(taskList -> {
@@ -115,6 +120,7 @@ public class DefaultTaskListService implements TaskListService {
         });
     }
 
+    @Transactional
     @Override
     public Mono<Void> addTask(Long taskListId, Long taskId, User user) throws EntityNotFoundException {
         Assert.notNull(user, "User must not be null");
@@ -130,6 +136,7 @@ public class DefaultTaskListService implements TaskListService {
                 .then();
     }
 
+    @Transactional
     @Override
     public Mono<Void> removeTask(Long taskListId, Long taskId, User user) throws EntityNotFoundException {
         Assert.notNull(user, "User must not be null");

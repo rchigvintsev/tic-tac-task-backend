@@ -14,6 +14,7 @@ import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -67,6 +68,7 @@ public class DefaultUserService implements UserService {
                 .map(this::clearPassword);
     }
 
+    @Transactional
     @Override
     public Mono<User> createUser(User user, Locale locale) throws EntityAlreadyExistsException {
         Assert.notNull(user, "User must not be null");
@@ -79,12 +81,13 @@ public class DefaultUserService implements UserService {
                     u.setPassword(encodePassword(user.getPassword()));
                     return userRepository.save(u);
                 })
-                .switchIfEmpty(Mono.defer(() -> createNewUser(user)
-                        .doOnSuccess(u -> log.debug("User with id {} is created", u.getId()))))
+                .switchIfEmpty(createNewUser(user)
+                        .doOnSuccess(u -> log.debug("User with id {} is created", u.getId())))
                 .map(this::clearPassword)
                 .flatMap(u -> emailConfirmationService.sendEmailConfirmationLink(u, locale).map(token -> u));
     }
 
+    @Transactional
     @Override
     public Mono<User> updateUser(User user) {
         Assert.notNull(user, "User must not be null");
@@ -110,6 +113,7 @@ public class DefaultUserService implements UserService {
                         + userId + " is not found")));
     }
 
+    @Transactional
     @Override
     public Mono<ProfilePicture> saveProfilePicture(ProfilePicture picture) {
         Assert.notNull(picture, "Profile picture must not be null");
@@ -145,12 +149,14 @@ public class DefaultUserService implements UserService {
     }
 
     private Mono<User> createNewUser(User user) {
-        User newUser = new User();
-        newUser.setEmail(user.getEmail());
-        newUser.setPassword(encodePassword(user.getPassword()));
-        newUser.setFullName(user.getFullName());
-        newUser.setProfilePictureUrl(user.getProfilePictureUrl());
-        return userRepository.save(newUser);
+        return Mono.defer(() -> {
+            User newUser = new User();
+            newUser.setEmail(user.getEmail());
+            newUser.setPassword(encodePassword(user.getPassword()));
+            newUser.setFullName(user.getFullName());
+            newUser.setProfilePictureUrl(user.getProfilePictureUrl());
+            return userRepository.save(newUser);
+        });
     }
 
     private String encodePassword(String rawPassword) {

@@ -6,6 +6,7 @@ import org.briarheart.orchestra.data.TaskCommentRepository;
 import org.briarheart.orchestra.model.TaskComment;
 import org.briarheart.orchestra.model.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Mono;
 
@@ -27,6 +28,7 @@ public class DefaultTaskCommentService implements TaskCommentService {
         this.taskCommentRepository = taskCommentRepository;
     }
 
+    @Transactional
     @Override
     public Mono<TaskComment> updateComment(TaskComment comment) {
         Assert.notNull(comment, "Task comment must not be null");

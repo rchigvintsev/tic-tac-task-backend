@@ -37,7 +37,7 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
     /**
      * Creates new instance of this class with the given user loaders and user repository.
      *
-     * @param userLoaders user loaders (must not be {@code null} or empty)
+     * @param userLoaders    user loaders (must not be {@code null} or empty)
      * @param userRepository user repository (must not be {@code null})
      */
     public ReactiveOAuth2UserLoaderManager(List<ReactiveOAuth2UserLoader<R, U>> userLoaders,
@@ -74,7 +74,7 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
                             throw new OAuth2AuthenticationException(oauth2Error);
                         }
                         return userRepository.findByEmail(attrAccessor.getEmail())
-                                .switchIfEmpty(Mono.defer(() -> createNewUser(attrAccessor)));
+                                .switchIfEmpty(createNewUser(attrAccessor));
                     }).map(Tuple2::getT1);
                 }).orElseThrow(() -> {
                     String clientRegId = userRequest.getClientRegistration().getRegistrationId();
@@ -85,13 +85,15 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
     }
 
     private Mono<? extends User> createNewUser(OAuth2UserAttributeAccessor attrAccessor) {
-        User newUser = User.builder()
-                .email(attrAccessor.getEmail())
-                .emailConfirmed(true)
-                .enabled(true)
-                .fullName(attrAccessor.getFullName())
-                .profilePictureUrl(attrAccessor.getPicture())
-                .build();
-        return userRepository.save(newUser).doOnSuccess(u -> log.debug("User with id {} is created", u.getId()));
+        return Mono.defer(() -> {
+            User newUser = User.builder()
+                    .email(attrAccessor.getEmail())
+                    .emailConfirmed(true)
+                    .enabled(true)
+                    .fullName(attrAccessor.getFullName())
+                    .profilePictureUrl(attrAccessor.getPicture())
+                    .build();
+            return userRepository.save(newUser).doOnSuccess(u -> log.debug("User with id {} is created", u.getId()));
+        });
     }
 }

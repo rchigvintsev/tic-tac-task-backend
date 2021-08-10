@@ -82,7 +82,7 @@ public class CustomServerOAuth2AuthorizationCodeAuthenticationTokenConverter
     }
 
     private <T> Mono<T> oauth2AuthorizationException(String errorCode) {
-        return Mono.defer(() -> Mono.error(new OAuth2AuthorizationException(new OAuth2Error(errorCode))));
+        return Mono.error(new OAuth2AuthorizationException(new OAuth2Error(errorCode)));
     }
 
     private Mono<OAuth2AuthorizationCodeAuthenticationToken> authenticationRequest(

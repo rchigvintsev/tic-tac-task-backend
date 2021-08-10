@@ -12,6 +12,7 @@ import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
@@ -59,11 +60,11 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
         this.mailSender = mailSender;
     }
 
+    @Transactional
     @Override
     public Mono<EmailConfirmationToken> sendEmailConfirmationLink(User user, Locale locale)
             throws UnableToSendMessageException {
         Assert.notNull(user, "User must not be null");
-
         return createEmailConfirmationToken(user)
                 .map(token -> {
                     String confirmationLink = UriComponentsBuilder.fromHttpUrl(applicationInfo.getUrl())
@@ -128,16 +129,18 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
     }
 
     private Mono<EmailConfirmationToken> createEmailConfirmationToken(User user) {
-        LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC);
-        LocalDateTime expiresAt = createdAt.plus(emailConfirmationTokenExpirationTimeout);
-        EmailConfirmationToken token = EmailConfirmationToken.builder()
-                .userId(user.getId())
-                .email(user.getEmail())
-                .tokenValue(UUID.randomUUID().toString())
-                .createdAt(createdAt)
-                .expiresAt(expiresAt)
-                .build();
-        return tokenRepository.save(token)
-                .doOnSuccess(t -> log.debug("Email confirmation token with id {} is created", t.getId()));
+        return Mono.defer(() -> {
+            LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC);
+            LocalDateTime expiresAt = createdAt.plus(emailConfirmationTokenExpirationTimeout);
+            EmailConfirmationToken token = EmailConfirmationToken.builder()
+                    .userId(user.getId())
+                    .email(user.getEmail())
+                    .tokenValue(UUID.randomUUID().toString())
+                    .createdAt(createdAt)
+                    .expiresAt(expiresAt)
+                    .build();
+            return tokenRepository.save(token)
+                    .doOnSuccess(t -> log.debug("Email confirmation token with id {} is created", t.getId()));
+        });
     }
 }

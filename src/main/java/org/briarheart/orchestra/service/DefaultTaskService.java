@@ -6,6 +6,7 @@ import org.briarheart.orchestra.model.*;
 import org.briarheart.orchestra.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -147,6 +148,7 @@ public class DefaultTaskService implements TaskService {
         });
     }
 
+    @Transactional
     @Override
     public Mono<Task> updateTask(Task task) throws EntityNotFoundException {
         Assert.notNull(task, "Task must not be null");
@@ -161,6 +163,7 @@ public class DefaultTaskService implements TaskService {
         });
     }
 
+    @Transactional
     @Override
     public Mono<Void> completeTask(Long id, User user) throws EntityNotFoundException {
         return getTask(id, user).flatMap(task -> {
@@ -169,6 +172,7 @@ public class DefaultTaskService implements TaskService {
         }).then();
     }
 
+    @Transactional
     @Override
     public Mono<Void> deleteTask(Long id, User user) throws EntityNotFoundException {
         return getTask(id, user)
@@ -176,6 +180,7 @@ public class DefaultTaskService implements TaskService {
                 .doOnSuccess(v -> log.debug("Task with id {} is deleted", id));
     }
 
+    @Transactional
     @Override
     public Flux<Tag> getTags(Long taskId, User user) throws EntityNotFoundException {
         return getTask(taskId, user).flatMapMany(task -> {
@@ -192,17 +197,18 @@ public class DefaultTaskService implements TaskService {
         });
     }
 
+    @Transactional
     @Override
     public Mono<Void> assignTag(Long taskId, Long tagId, User user) throws EntityNotFoundException {
         return getTask(taskId, user)
                 .flatMap(task -> findTag(tagId, user.getId()))
                 .flatMap(tag -> taskTagRelationRepository.findByTaskIdAndTagId(taskId, tagId))
-                .switchIfEmpty(Mono.defer(()
-                        -> taskTagRelationRepository.create(taskId, tagId).doOnSuccess(relation
-                        -> log.debug("Tag with id {} is assigned to task with id {}", tagId, taskId))))
+                .switchIfEmpty(taskTagRelationRepository.create(taskId, tagId).doOnSuccess(relation
+                        -> log.debug("Tag with id {} is assigned to task with id {}", tagId, taskId)))
                 .then();
     }
 
+    @Transactional
     @Override
     public Mono<Void> removeTag(Long taskId, Long tagId, User user) throws EntityNotFoundException {
         return getTask(taskId, user)
@@ -210,6 +216,7 @@ public class DefaultTaskService implements TaskService {
                 .doOnSuccess(v -> log.debug("Tag with id {} is removed from task with id {}", tagId, taskId));
     }
 
+    @Transactional
     @Override
     public Flux<TaskComment> getComments(Long taskId, User user, Pageable pageable) {
         return getTask(taskId, user).flatMapMany(task -> {
@@ -219,6 +226,7 @@ public class DefaultTaskService implements TaskService {
         });
     }
 
+    @Transactional
     @Override
     public Mono<TaskComment> addComment(TaskComment comment) throws EntityNotFoundException {
         Assert.notNull(comment, "Task comment must not be null");
