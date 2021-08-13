@@ -10,10 +10,11 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.Properties;
+import java.util.logging.Logger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Roman Chigvintsev
@@ -126,6 +127,61 @@ class FlywayDataSourceConfigTest {
             DriverManagerDataSource driverManagerDataSource = flywayDataSource.unwrap(DriverManagerDataSource.class);
             assertEquals("alice", driverManagerDataSource.getUsername());
             assertNull(driverManagerDataSource.getPassword());
+        }
+    }
+
+    @ExtendWith(SpringExtension.class)
+    @ContextConfiguration(classes = FlywayDataSourceConfig.class)
+    @TestPropertySource(properties = {
+            "DATABASE_URL=heffalump://host:1111/test",
+            "DATABASE_DRIVER_CLASS_NAME=org.briarheart.orchestra.config.FlywayDataSourceConfigTest$HeffalumpDriver"
+    })
+    static class DatabaseDriverClassNameExplicitlySetTest {
+        @Autowired
+        @FlywayDataSource
+        private DataSource flywayDataSource;
+
+        @Test
+        void shouldCreateDataSource() {
+            assertNotNull(flywayDataSource);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class HeffalumpDriver implements Driver {
+        @Override
+        public Connection connect(String url, Properties info) {
+            return null;
+        }
+
+        @Override
+        public boolean acceptsURL(String url) {
+            return false;
+        }
+
+        @Override
+        public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
+            return new DriverPropertyInfo[0];
+        }
+
+        @Override
+        public int getMajorVersion() {
+            return 0;
+        }
+
+        @Override
+        public int getMinorVersion() {
+            return 0;
+        }
+
+        @Override
+        public boolean jdbcCompliant() {
+            return false;
+        }
+
+        @Override
+        public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+            throw new SQLFeatureNotSupportedException();
         }
     }
 }

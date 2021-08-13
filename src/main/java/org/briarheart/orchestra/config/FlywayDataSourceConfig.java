@@ -20,11 +20,16 @@ import javax.sql.DataSource;
  *     <li>in the database URL; for example "postgresql://username:password@host:5432/database"</li>
  *     <li>through separate environment variables "DATABASE_USERNAME" and "DATABASE_PASSWORD".</li>
  * </ol>
+ * <p>
+ * Optionally database driver class name can be explicitly set via environment variable "DATABASE_DRIVER_CLASS_NAME".
  *
  * @author Roman Chigvintsev
  */
 @Configuration
 public class FlywayDataSourceConfig {
+    @Value("${DATABASE_DRIVER_CLASS_NAME:}")
+    private String databaseDriverClassName;
+
     @Value("${DATABASE_URL}")
     private String databaseUrl;
 
@@ -38,7 +43,11 @@ public class FlywayDataSourceConfig {
     @FlywayDataSource
     public DataSource flywayDataSource() {
         String[] credentials = getCredentials();
-        return DataSourceBuilder.create()
+        DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
+        if (StringUtils.hasLength(databaseDriverClassName)) {
+            dataSourceBuilder.driverClassName(databaseDriverClassName);
+        }
+        return dataSourceBuilder
                 .url(getDataSourceUrl())
                 .username(credentials[0])
                 .password(credentials[1])
@@ -60,7 +69,7 @@ public class FlywayDataSourceConfig {
 
     private String[] getCredentials() {
         if (StringUtils.hasText(databaseUsername)) {
-            return new String[]{databaseUsername, StringUtils.isEmpty(databasePassword) ? null : databasePassword};
+            return new String[]{databaseUsername, !StringUtils.hasLength(databasePassword) ? null : databasePassword};
         }
         return parseCredentials();
     }
