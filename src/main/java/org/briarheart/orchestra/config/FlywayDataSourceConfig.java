@@ -1,8 +1,8 @@
 package org.briarheart.orchestra.config;
 
+import org.briarheart.orchestra.flyway.FlywayDataSourceBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.flyway.FlywayDataSource;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -12,8 +12,7 @@ import javax.sql.DataSource;
 
 /**
  * Configuration of <a href="https://flywaydb.org/">Flyway</a> {@link DataSource} to enable database schema migration
- * on application startup. It requires presence of "DATABASE_URL" environment variable. Value of this variable should
- * be database URL without "jdbc:" prefix. For example: postgresql://host:5432/database.
+ * on application startup. It requires presence of "DATABASE_URL" environment variable.
  * <p>
  * Credentials to connect to the database can be passed in two ways:
  * <ol>
@@ -43,38 +42,23 @@ public class FlywayDataSourceConfig {
     @FlywayDataSource
     public DataSource flywayDataSource() {
         String[] credentials = getCredentials();
-        DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
-        if (StringUtils.hasLength(databaseDriverClassName)) {
-            dataSourceBuilder.driverClassName(databaseDriverClassName);
-        }
-        return dataSourceBuilder
-                .url(getDataSourceUrl())
+        return FlywayDataSourceBuilder.create()
+                .driverClassName(databaseDriverClassName)
+                .url(databaseUrl)
                 .username(credentials[0])
                 .password(credentials[1])
                 .type(DriverManagerDataSource.class)
                 .build();
     }
 
-    private String getDataSourceUrl() {
-        String url = databaseUrl;
-        int idx = databaseUrl.indexOf("://");
-        if (idx > 0) {
-            int atIdx = databaseUrl.indexOf('@', idx);
-            if (atIdx > 0) {
-                url = databaseUrl.substring(0, idx + 3) + databaseUrl.substring(atIdx + 1);
-            }
-        }
-        return "jdbc:" + url;
-    }
-
     private String[] getCredentials() {
         if (StringUtils.hasText(databaseUsername)) {
             return new String[]{databaseUsername, !StringUtils.hasLength(databasePassword) ? null : databasePassword};
         }
-        return parseCredentials();
+        return parseCredentials(databaseUrl);
     }
 
-    private String[] parseCredentials() {
+    private static String[] parseCredentials(String databaseUrl) {
         int idx = databaseUrl.indexOf("://");
         if (idx > 0) {
             int atIdx = databaseUrl.indexOf('@', idx);
