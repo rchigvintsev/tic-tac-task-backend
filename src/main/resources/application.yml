@@ -1,8 +1,14 @@
 spring:
   r2dbc:
-    url: r2dbc:${DATABASE_URL}
+    url: ${R2DBC_DATABASE_URL}
+    username: ${R2DBC_DATABASE_USERNAME}
+    password: ${R2DBC_DATABASE_PASSWORD}
 
   flyway:
+    url: ${JDBC_DATABASE_URL}
+    user: ${JDBC_DATABASE_USERNAME}
+    password: ${JDBC_DATABASE_PASSWORD}
+
     baseline-on-migrate: true
     baseline-version: 0
 
