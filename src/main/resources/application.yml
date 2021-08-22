@@ -3,6 +3,8 @@ spring:
     url: ${R2DBC_DATABASE_URL}
     username: ${R2DBC_DATABASE_USERNAME}
     password: ${R2DBC_DATABASE_PASSWORD}
+    properties:
+      sslMode: ${R2DBC_DATABASE_SSL_MODE:disable}
 
   flyway:
     url: ${JDBC_DATABASE_URL}
