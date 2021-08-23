@@ -28,8 +28,10 @@ import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2Clien
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientPropertiesRegistrationAdapter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.MessageSourceAccessor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -89,6 +91,8 @@ public class WebSecurityConfig {
 
     @Value("${spring.security.oauth2.client.redirect-uri-template}")
     private String clientRedirectUriTemplate;
+    @Value("${application.security.cors.allowed-origin}")
+    private String corsAllowedOrigin;
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(
@@ -101,7 +105,13 @@ public class WebSecurityConfig {
             AuthenticationWebFilter formLoginAuthenticationWebFilter,
             ServerSecurityContextRepository securityContextRepository
     ) {
-        return http.cors().configurationSource(createCorsConfigurationSource())
+        return http.redirectToHttps().httpsRedirectWhen(exchange -> {
+                    ServerHttpRequest request = exchange.getRequest();
+                    HttpHeaders headers = request.getHeaders();
+                    return headers.getFirst("X-Forwarded-Proto") != null;
+                })
+                .and()
+                    .cors().configurationSource(createCorsConfigurationSource(corsAllowedOrigin))
                 .and()
                     .securityContextRepository(securityContextRepository)
                     .requestCache().disable()
@@ -333,11 +343,10 @@ public class WebSecurityConfig {
         return emailConfirmationService;
     }
 
-    private CorsConfigurationSource createCorsConfigurationSource() {
+    private CorsConfigurationSource createCorsConfigurationSource(String allowedOrigin) {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        // TODO: save client origin somewhere in the application settings
-        config.addAllowedOrigin("http://localhost:4200");
+        config.addAllowedOrigin(allowedOrigin);
         config.addAllowedHeader("*");
         config.setAllowedMethods(List.of(
                 HttpMethod.GET.name(),
