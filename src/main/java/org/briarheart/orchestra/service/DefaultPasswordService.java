@@ -2,6 +2,7 @@ package org.briarheart.orchestra.service;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.briarheart.orchestra.ApplicationEnvironment;
 import org.briarheart.orchestra.config.ApplicationInfoProperties;
 import org.briarheart.orchestra.data.EntityNotFoundException;
 import org.briarheart.orchestra.data.PasswordResetConfirmationTokenRepository;
@@ -121,12 +122,7 @@ public class DefaultPasswordService implements PasswordService {
             throws UnableToSendMessageException {
         return createPasswordResetToken(user)
                 .map(token -> {
-                    String passwordResetLink = UriComponentsBuilder.fromHttpUrl(applicationInfo.getUrl())
-                            .path("/account/password/reset/confirmation")
-                            .queryParam("userId", user.getId())
-                            .queryParam("token", token.getTokenValue())
-                            .build()
-                            .toUriString();
+                    String passwordResetLink = buildPasswordResetLink(user, token);
 
                     String subject = messages.getMessage("user.password-reset.message.subject",
                             new Object[]{applicationInfo.getName()}, locale);
@@ -155,6 +151,15 @@ public class DefaultPasswordService implements PasswordService {
                     }
                     return new UnableToSendMessageException(message, localizedMessage, e);
                 });
+    }
+
+    private String buildPasswordResetLink(User user, PasswordResetConfirmationToken token) {
+        return UriComponentsBuilder.fromHttpUrl(ApplicationEnvironment.getBaseRedirectUri())
+                .path("/account/password/reset/confirmation")
+                .queryParam("userId", user.getId())
+                .queryParam("token", token.getTokenValue())
+                .build()
+                .toUriString();
     }
 
     private Mono<PasswordResetConfirmationToken> createPasswordResetToken(User user) {

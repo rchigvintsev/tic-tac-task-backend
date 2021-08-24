@@ -2,6 +2,7 @@ package org.briarheart.orchestra.service;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.briarheart.orchestra.ApplicationEnvironment;
 import org.briarheart.orchestra.config.ApplicationInfoProperties;
 import org.briarheart.orchestra.data.EmailConfirmationTokenRepository;
 import org.briarheart.orchestra.data.EntityNotFoundException;
@@ -67,12 +68,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
         Assert.notNull(user, "User must not be null");
         return createEmailConfirmationToken(user)
                 .map(token -> {
-                    String confirmationLink = UriComponentsBuilder.fromHttpUrl(applicationInfo.getUrl())
-                            .path("/account/email/confirmation")
-                            .queryParam("userId", user.getId())
-                            .queryParam("token", token.getTokenValue())
-                            .build()
-                            .toUriString();
+                    String confirmationLink = buildEmailConfirmationLink(user, token);
 
                     String subject = messages.getMessage("user.registration.email-confirmation.message.subject",
                             new Object[]{applicationInfo.getName()}, locale);
@@ -126,6 +122,15 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                                     user.getEmail(), user.getId()));
                 })
                 .then();
+    }
+
+    private String buildEmailConfirmationLink(User user, EmailConfirmationToken token) {
+        return UriComponentsBuilder.fromHttpUrl(ApplicationEnvironment.getBaseRedirectUri())
+                .path("/account/email/confirmation")
+                .queryParam("userId", user.getId())
+                .queryParam("token", token.getTokenValue())
+                .build()
+                .toUriString();
     }
 
     private Mono<EmailConfirmationToken> createEmailConfirmationToken(User user) {

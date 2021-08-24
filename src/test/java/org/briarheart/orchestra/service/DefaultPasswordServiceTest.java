@@ -34,8 +34,6 @@ import static org.mockito.Mockito.*;
  * @author Roman Chigvintsev
  */
 class DefaultPasswordServiceTest {
-    private static final String APPLICATION_URL = "https://horns-and-hooves.com";
-
     private DefaultPasswordService service;
     private PasswordResetConfirmationTokenRepository tokenRepository;
     private UserRepository userRepository;
@@ -52,7 +50,6 @@ class DefaultPasswordServiceTest {
 
         ApplicationInfoProperties appInfo = new ApplicationInfoProperties();
         appInfo.setName("Horns and hooves");
-        appInfo.setUrl(APPLICATION_URL);
 
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("messages");
@@ -105,7 +102,7 @@ class DefaultPasswordServiceTest {
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender, times(1)).send(messageCaptor.capture());
         SimpleMailMessage message = messageCaptor.getValue();
-        String confirmationLink = APPLICATION_URL + "/account/password/reset/confirmation?userId=" + user.getId()
+        String confirmationLink = "http://localhost:4200/account/password/reset/confirmation?userId=" + user.getId()
                 + "&token=" + token.getTokenValue();
         assertThat(message.getText(), containsString(confirmationLink));
     }

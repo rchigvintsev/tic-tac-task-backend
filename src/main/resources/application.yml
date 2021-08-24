@@ -42,7 +42,7 @@ spring:
             user-info-uri: https://api.vk.com/method/users.get
             user-name-attribute: id
 
-        redirect-uri-template: 'http://localhost:4200/{[a-z]{2}}/oauth2/authorization/callback'
+        redirect-uri-template: '${SECURITY_BASE_REDIRECT_URI:http://localhost:4200}/{[a-z]{2}}/oauth2/authorization/callback'
 
 
   jackson.visibility:
@@ -79,12 +79,11 @@ info:
   application:
     name: Orchestra
     version: 0.0.1-SNAPSHOT
-    url: http://localhost:4200
 
 application:
   security:
     cors:
-      allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:4200}
+      allowed-origin: ${SECURITY_CORS_ALLOWED_ORIGIN:http://localhost:4200}
     authentication.access-token:
       # seven days
       validity-seconds: 604800

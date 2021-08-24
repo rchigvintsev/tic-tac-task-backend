@@ -31,8 +31,6 @@ import static org.mockito.Mockito.*;
  * @author Roman Chigvintsev
  */
 class DefaultEmailConfirmationServiceTest {
-    private static final String APPLICATION_URL = "https://horns-and-hooves.com";
-
     private DefaultEmailConfirmationService service;
     private EmailConfirmationTokenRepository tokenRepository;
     private UserRepository userRepository;
@@ -49,7 +47,6 @@ class DefaultEmailConfirmationServiceTest {
 
         ApplicationInfoProperties appInfo = new ApplicationInfoProperties();
         appInfo.setName("Horns and hooves");
-        appInfo.setUrl(APPLICATION_URL);
 
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("messages");
@@ -85,7 +82,7 @@ class DefaultEmailConfirmationServiceTest {
         ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(javaMailSender, times(1)).send(messageCaptor.capture());
         SimpleMailMessage message = messageCaptor.getValue();
-        String confirmationLink = APPLICATION_URL + "/account/email/confirmation?userId=" + user.getId()
+        String confirmationLink = "http://localhost:4200/account/email/confirmation?userId=" + user.getId()
                 + "&token=" + token.getTokenValue();
         assertThat(message.getText(), containsString(confirmationLink));
     }

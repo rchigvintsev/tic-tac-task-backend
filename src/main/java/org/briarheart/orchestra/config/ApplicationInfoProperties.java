@@ -15,5 +15,4 @@ import org.springframework.context.annotation.Configuration;
 public class ApplicationInfoProperties {
     private String name;
     private String version;
-    private String url;
 }
