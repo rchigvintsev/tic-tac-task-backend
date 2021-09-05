@@ -35,7 +35,7 @@ class TagControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);
 
-        String url = "http://localhost:{port}/v1/tags/{tagId}/tasks/uncompleted";
+        String url = "http://localhost:{port}/api/v1/tags/{tagId}/tasks/uncompleted";
         ResponseEntity<Task[]> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
                 Task[].class, port, 1);
 

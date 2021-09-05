@@ -51,7 +51,9 @@ import org.springframework.security.oauth2.client.registration.ReactiveClientReg
 import org.springframework.security.oauth2.client.userinfo.DefaultReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserService;
+import org.springframework.security.oauth2.client.web.server.DefaultServerOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
+import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -98,13 +100,20 @@ public class WebSecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(
             ServerHttpSecurity http,
             ServerAuthenticationConverter authenticationConverter,
-            ServerAuthenticationSuccessHandler auth2LoginAuthenticationSuccessHandler,
-            ServerAuthenticationFailureHandler auth2LoginAuthenticationFailureHandler,
+            ServerAuthenticationSuccessHandler oAuth2LoginAuthenticationSuccessHandler,
+            ServerAuthenticationFailureHandler oAuth2LoginAuthenticationFailureHandler,
             ServerLogoutHandler logoutHandler,
             AuthenticationWebFilter accessTokenAuthenticationWebFilter,
             AuthenticationWebFilter formLoginAuthenticationWebFilter,
-            ServerSecurityContextRepository securityContextRepository
+            ServerSecurityContextRepository securityContextRepository,
+            ReactiveClientRegistrationRepository clientRegistrationRepository
     ) {
+        ServerWebExchangeMatcher oauth2LoginMatcher
+                = new PathPatternParserServerWebExchangeMatcher("/api/login/oauth2/code/{registrationId}");
+        ServerWebExchangeMatcher oAuth2AuthPattern
+                = new PathPatternParserServerWebExchangeMatcher("/api/oauth2/authorization/{registrationId}");
+        ServerOAuth2AuthorizationRequestResolver oAuth2RequestResolver
+                = new DefaultServerOAuth2AuthorizationRequestResolver(clientRegistrationRepository, oAuth2AuthPattern);
         return http.redirectToHttps().httpsRedirectWhen(exchange -> {
                     ServerHttpRequest request = exchange.getRequest();
                     HttpHeaders headers = request.getHeaders();
@@ -117,22 +126,28 @@ public class WebSecurityConfig {
                     .requestCache().disable()
                     .csrf().disable()
                     .authorizeExchange()
-                        .pathMatchers(HttpMethod.POST, "/v?/users").access(unauthenticated())
-                        .pathMatchers(HttpMethod.POST, "/v?/users/*/email/confirmation/*").access(unauthenticated())
-                        .pathMatchers(HttpMethod.POST, "/v?/users/password/reset").access(unauthenticated())
-                        .pathMatchers(HttpMethod.POST, "/v?/users/*/password/reset/confirmation/*").access(unauthenticated())
-                        .anyExchange().authenticated()
+                        .pathMatchers(HttpMethod.POST, "/api/v?/users").access(unauthenticated())
+                        .pathMatchers(HttpMethod.POST, "/api/v?/users/*/email/confirmation/*").access(unauthenticated())
+                        .pathMatchers(HttpMethod.POST, "/api/v?/users/password/reset").access(unauthenticated())
+                        .pathMatchers(HttpMethod.POST, "/api/v?/users/*/password/reset/confirmation/*").access(unauthenticated())
+                        .pathMatchers(HttpMethod.POST, "/api/login").access(unauthenticated())
+                        .pathMatchers(HttpMethod.GET, "/api/oauth2/authorization/**").access(unauthenticated())
+                        .pathMatchers("/api/**").authenticated()
+                        .anyExchange().permitAll()
                 .and()
                     .exceptionHandling()
                         .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
                 .and()
                     .oauth2Login()
+                        .authenticationMatcher(oauth2LoginMatcher)
+                        .authorizationRequestResolver(oAuth2RequestResolver)
                         .authenticationConverter(authenticationConverter)
-                        .authenticationSuccessHandler(auth2LoginAuthenticationSuccessHandler)
-                        .authenticationFailureHandler(auth2LoginAuthenticationFailureHandler)
+                        .authenticationSuccessHandler(oAuth2LoginAuthenticationSuccessHandler)
+                        .authenticationFailureHandler(oAuth2LoginAuthenticationFailureHandler)
                         .authorizationRequestRepository(authorizationRequestRepository())
                 .and()
                     .logout()
+                        .logoutUrl("/api/logout")
                         .logoutHandler(logoutHandler)
                         .logoutSuccessHandler(new HttpStatusReturningServerLogoutSuccessHandler(HttpStatus.OK))
                 .and()
@@ -166,7 +181,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ServerAuthenticationSuccessHandler auth2LoginAuthenticationSuccessHandler(
+    public ServerAuthenticationSuccessHandler oAuth2LoginAuthenticationSuccessHandler(
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
             UserRepository userRepository,
             AccessTokenService accessTokenService,
@@ -181,7 +196,7 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public ServerAuthenticationFailureHandler auth2LoginAuthenticationFailureHandler(
+    public ServerAuthenticationFailureHandler oAuth2LoginAuthenticationFailureHandler(
             ServerAuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository,
             ServerRedirectStrategy redirectStrategy
     ) {
@@ -248,7 +263,7 @@ public class WebSecurityConfig {
         ServerAuthenticationConverter authenticationConverter = new ServerFormLoginAuthenticationConverter();
 
         ServerWebExchangeMatcher requiresAuthenticationMatcher
-                = new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST);
+                = new PathPatternParserServerWebExchangeMatcher("/api/login", HttpMethod.POST);
 
         ServerAuthenticationEntryPoint entryPoint = new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED);
         ServerAuthenticationFailureHandler failureHandler

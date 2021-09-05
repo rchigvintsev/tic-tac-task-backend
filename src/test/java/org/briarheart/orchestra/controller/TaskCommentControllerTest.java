@@ -68,7 +68,7 @@ class TaskCommentControllerTest {
 
 
         testClient.mutateWith(mockAuthentication(authentication)).mutateWith(csrf())
-                .put().uri("/v1/task-comments/" + commentId)
+                .put().uri("/api/v1/task-comments/" + commentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(comment)
                 .exchange()
@@ -87,7 +87,7 @@ class TaskCommentControllerTest {
         when(taskCommentService.deleteComment(commentId, user)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(mockAuthentication(authentication)).mutateWith(csrf())
-                .delete().uri("/v1/task-comments/" + commentId)
+                .delete().uri("/api/v1/task-comments/" + commentId)
                 .exchange()
 
                 .expectStatus().isNoContent();

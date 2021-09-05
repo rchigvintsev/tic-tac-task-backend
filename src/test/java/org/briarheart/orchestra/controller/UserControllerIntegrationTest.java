@@ -53,7 +53,7 @@ class UserControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        ResponseEntity<User> response = restTemplate.exchange("http://localhost:{port}/v1/users",
+        ResponseEntity<User> response = restTemplate.exchange("http://localhost:{port}/api/v1/users",
                 HttpMethod.POST, new HttpEntity<>(requestBody, headers), User.class, port);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
@@ -66,7 +66,7 @@ class UserControllerIntegrationTest {
         headers.add(HttpHeaders.COOKIE, "access_token=" + TestAccessTokens.JOHN_DOE);
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        ResponseEntity<String> response = restTemplate.exchange("http://localhost:{port}/v1/users",
+        ResponseEntity<String> response = restTemplate.exchange("http://localhost:{port}/api/v1/users",
                 HttpMethod.POST, new HttpEntity<>(requestBody, headers), String.class, port);
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
@@ -76,7 +76,7 @@ class UserControllerIntegrationTest {
         long userId = TestUsers.JANE_DOE.getId();
         String token = "4b1f7955-a406-4d36-8cbe-d6c61f39e27d";
 
-        String url = "http://localhost:{port}/v1/users/{userId}/email/confirmation/{token}";
+        String url = "http://localhost:{port}/api/v1/users/{userId}/email/confirmation/{token}";
         ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.POST, null, Void.class, port, userId,
                 token);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -92,7 +92,7 @@ class UserControllerIntegrationTest {
         long userId = TestUsers.JOHN_DOE.getId();
         String token = "cf575578-cddf-4773-b1e0-5f37cbb0a8d9";
 
-        String url = "http://localhost:{port}/v1/users/{userId}/password/reset/confirmation/{token}";
+        String url = "http://localhost:{port}/api/v1/users/{userId}/password/reset/confirmation/{token}";
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE);
@@ -105,7 +105,7 @@ class UserControllerIntegrationTest {
     @Test
     void shouldSaveProfilePicture() {
         long userId = TestUsers.JOHN_DOE.getId();
-        String url = "http://localhost:{port}/v1/users/{userId}/profile-picture";
+        String url = "http://localhost:{port}/api/v1/users/{userId}/profile-picture";
 
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);

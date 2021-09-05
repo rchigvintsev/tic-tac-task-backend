@@ -23,7 +23,7 @@ import java.net.URI;
  * @author Roman Chigvintsev
  */
 @RestController
-@RequestMapping("/v1/tags")
+@RequestMapping("/api/v1/tags")
 @RequiredArgsConstructor
 public class TagController extends AbstractController {
     private final TagService tagService;

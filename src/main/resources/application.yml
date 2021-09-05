@@ -21,12 +21,15 @@ spring:
           google:
             client-id: ${SECURITY_OAUTH2_GOOGLE_CLIENT_ID}
             client-secret: ${SECURITY_OAUTH2_GOOGLE_CLIENT_SECRET}
+            redirect-uri: '{baseUrl}/api/{action}/oauth2/code/{registrationId}'
           facebook:
             client-id: ${SECURITY_OAUTH2_FACEBOOK_CLIENT_ID}
             client-secret: ${SECURITY_OAUTH2_FACEBOOK_CLIENT_SECRET}
+            redirect-uri: '{baseUrl}/api/{action}/oauth2/code/{registrationId}'
           github:
             client-id: ${SECURITY_OAUTH2_GITHUB_CLIENT_ID}
             client-secret: ${SECURITY_OAUTH2_GITHUB_CLIENT_SECRET}
+            redirect-uri: '{baseUrl}/api/{action}/oauth2/code/{registrationId}'
           vk:
             client-name: VK
             client-id: ${SECURITY_OAUTH2_VK_CLIENT_ID}
@@ -34,7 +37,7 @@ spring:
             authorization-grant-type: authorization_code
             client-authentication-method: post
             scope: email
-            redirect-uri: '{baseUrl}/{action}/oauth2/code/{registrationId}'
+            redirect-uri: '{baseUrl}/api/{action}/oauth2/code/{registrationId}'
         provider:
           vk:
             authorization-uri: https://oauth.vk.com/authorize

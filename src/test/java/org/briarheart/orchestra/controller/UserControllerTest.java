@@ -91,7 +91,7 @@ class UserControllerTest {
         when(userService.getUserCount()).thenReturn(Mono.just(userCount));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/v1/users/count")
+                .get().uri("/api/v1/users/count")
                 .exchange()
 
                 .expectStatus().isOk()
@@ -103,7 +103,7 @@ class UserControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").admin(false).build();
         Authentication authenticationMock = createAuthentication(user);
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/v1/users/count")
+                .get().uri("/api/v1/users/count")
                 .exchange()
 
                 .expectStatus().isForbidden();
@@ -117,7 +117,7 @@ class UserControllerTest {
         when(userService.getUsers(any())).thenReturn(Flux.just(user));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/v1/users")
+                .get().uri("/api/v1/users")
                 .exchange()
 
                 .expectStatus().isOk()
@@ -129,7 +129,7 @@ class UserControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").admin(false).build();
         Authentication authenticationMock = createAuthentication(user);
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/v1/users")
+                .get().uri("/api/v1/users")
                 .exchange()
 
                 .expectStatus().isForbidden();
@@ -141,7 +141,7 @@ class UserControllerTest {
         when(userService.createUser(any(User.class), eq(Locale.ENGLISH))).thenReturn(Mono.just(user));
 
         testClient.mutateWith(csrf())
-                .post().uri("/v1/users")
+                .post().uri("/api/v1/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Accept-Language", "en")
                 .bodyValue(user)
@@ -158,7 +158,7 @@ class UserControllerTest {
         when(emailConfirmationService.confirmEmail(userId, token)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf())
-                .post().uri("/v1/users/{userId}/email/confirmation/{token}", userId, token)
+                .post().uri("/api/v1/users/{userId}/email/confirmation/{token}", userId, token)
                 .exchange()
 
                 .expectStatus().isOk();
@@ -171,7 +171,7 @@ class UserControllerTest {
         when(passwordService.resetPassword(email, Locale.ENGLISH)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf())
-                .post().uri("/v1/users/password/reset")
+                .post().uri("/api/v1/users/password/reset")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue("email=" + email)
                 .header("Accept-Language", "en")
@@ -184,7 +184,7 @@ class UserControllerTest {
     @Test
     void shouldReturnBadRequestStatusCodeOnPasswordResetWhenEmailFormParameterIsNotProvided() {
         testClient.mutateWith(csrf())
-                .post().uri("/v1/users/password/reset")
+                .post().uri("/api/v1/users/password/reset")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .header("Accept-Language", "en")
                 .exchange()
@@ -200,7 +200,7 @@ class UserControllerTest {
         when(passwordService.confirmPasswordReset(userId, token, newPassword)).thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf())
-                .post().uri("/v1/users/{userId}/password/reset/confirmation/{token}", userId, token)
+                .post().uri("/api/v1/users/{userId}/password/reset/confirmation/{token}", userId, token)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue("password=" + newPassword)
                 .exchange()
@@ -226,7 +226,7 @@ class UserControllerTest {
                 .thenReturn(Mono.just(true).then());
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
-                .post().uri("/v1/users/{id}/password", userId)
+                .post().uri("/api/v1/users/{id}/password", userId)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue("currentPassword=" + authenticatedUser.getPassword() + "&newPassword=" + newPassword)
                 .exchange()
@@ -253,7 +253,7 @@ class UserControllerTest {
                 .thenReturn(Mono.error(new InvalidPasswordException(currentPassword)));
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
-                .post().uri("/v1/users/{id}/password", userId)
+                .post().uri("/api/v1/users/{id}/password", userId)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue("currentPassword=" + currentPassword + "&newPassword=" + newPassword)
                 .exchange()
@@ -282,7 +282,7 @@ class UserControllerTest {
         expectedResult.setAuthorities(new ArrayList<>());
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
-                .put().uri("/v1/users/{userId}", updatedUser.getId())
+                .put().uri("/api/v1/users/{userId}", updatedUser.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(updatedUser)
                 .exchange()
@@ -310,7 +310,7 @@ class UserControllerTest {
         expectedResult.setAuthorities(new ArrayList<>());
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
-                .put().uri("/v1/users/{userId}", updatedUser.getId())
+                .put().uri("/api/v1/users/{userId}", updatedUser.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(updatedUser)
                 .exchange()
@@ -333,7 +333,7 @@ class UserControllerTest {
         when(userService.getProfilePicture(user.getId())).thenReturn(Mono.just(profilePicture));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/v1/users/{userId}/profile-picture", user.getId())
+                .get().uri("/api/v1/users/{userId}/profile-picture", user.getId())
                 .exchange()
 
                 .expectStatus().isOk()
@@ -351,7 +351,7 @@ class UserControllerTest {
                 .thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).get()
-                .uri("/v1/users/{userId}/profile-picture", user.getId()).exchange()
+                .uri("/api/v1/users/{userId}/profile-picture", user.getId()).exchange()
                 .expectStatus().isNotFound()
                 .expectBody()
                 .jsonPath("$.message").isEqualTo(errorMessage);
@@ -372,7 +372,7 @@ class UserControllerTest {
         MultiValueMap<String, HttpEntity<?>> form = multipartBodyBuilder.build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .put().uri("/v1/users/{userId}/profile-picture", user.getId())
+                .put().uri("/api/v1/users/{userId}/profile-picture", user.getId())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .bodyValue(form)
                 .exchange()
@@ -395,12 +395,12 @@ class UserControllerTest {
         MultiValueMap<String, HttpEntity<?>> form = multipartBodyBuilder.build();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
-                .put().uri("/v1/users/{userId}/profile-picture", user.getId())
+                .put().uri("/api/v1/users/{userId}/profile-picture", user.getId())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .bodyValue(form)
                 .exchange();
 
-        assertEquals("/v1/users/" + user.getId() + "/profile-picture", user.getProfilePictureUrl());
+        assertEquals("/api/v1/users/" + user.getId() + "/profile-picture", user.getProfilePictureUrl());
     }
 
     private Authentication createAuthentication(User user) {

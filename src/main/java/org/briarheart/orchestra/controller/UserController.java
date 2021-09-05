@@ -39,7 +39,7 @@ import java.util.Locale;
  * @author Roman Chigvintsev
  */
 @RestController
-@RequestMapping("/v1/users")
+@RequestMapping("/api/v1/users")
 public class UserController extends AbstractController {
     private final UserService userService;
     private final EmailConfirmationService emailConfirmationService;

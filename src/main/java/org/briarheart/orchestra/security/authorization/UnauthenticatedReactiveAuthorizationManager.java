@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
  */
 public class UnauthenticatedReactiveAuthorizationManager<T> implements ReactiveAuthorizationManager<T> {
     private static final AuthorizationDecision POSITIVE_DECISION = new AuthorizationDecision(true);
+    private static final AuthorizationDecision NEGATIVE_DECISION = new AuthorizationDecision(false);
 
     private final AuthenticationTrustResolver authTrustResolver = new AuthenticationTrustResolverImpl();
 
@@ -33,7 +34,7 @@ public class UnauthenticatedReactiveAuthorizationManager<T> implements ReactiveA
     public Mono<AuthorizationDecision> check(Mono<Authentication> authentication, T object) {
         return authentication
                 .filter(this::isNotAnonymous)
-                .map(a -> new AuthorizationDecision(!a.isAuthenticated()))
+                .map(a -> a.isAuthenticated() ? NEGATIVE_DECISION : POSITIVE_DECISION)
                 .defaultIfEmpty(POSITIVE_DECISION);
     }
 
