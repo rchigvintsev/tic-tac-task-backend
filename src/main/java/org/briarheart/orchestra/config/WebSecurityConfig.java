@@ -108,7 +108,7 @@ public class WebSecurityConfig {
             ServerSecurityContextRepository securityContextRepository,
             ReactiveClientRegistrationRepository clientRegistrationRepository
     ) {
-        ServerWebExchangeMatcher oauth2LoginMatcher
+        ServerWebExchangeMatcher oAuth2LoginMatcher
                 = new PathPatternParserServerWebExchangeMatcher("/api/login/oauth2/code/{registrationId}");
         ServerWebExchangeMatcher oAuth2AuthPattern
                 = new PathPatternParserServerWebExchangeMatcher("/api/oauth2/authorization/{registrationId}");
@@ -139,7 +139,7 @@ public class WebSecurityConfig {
                         .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
                 .and()
                     .oauth2Login()
-                        .authenticationMatcher(oauth2LoginMatcher)
+                        .authenticationMatcher(oAuth2LoginMatcher)
                         .authorizationRequestResolver(oAuth2RequestResolver)
                         .authenticationConverter(authenticationConverter)
                         .authenticationSuccessHandler(oAuth2LoginAuthenticationSuccessHandler)
