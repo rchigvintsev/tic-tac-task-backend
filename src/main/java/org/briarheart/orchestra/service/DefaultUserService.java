@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Locale;
 
 /**
@@ -150,11 +152,13 @@ public class DefaultUserService implements UserService {
 
     private Mono<User> createNewUser(User user) {
         return Mono.defer(() -> {
-            User newUser = new User();
-            newUser.setEmail(user.getEmail());
-            newUser.setPassword(encodePassword(user.getPassword()));
-            newUser.setFullName(user.getFullName());
-            newUser.setProfilePictureUrl(user.getProfilePictureUrl());
+            User newUser = User.builder()
+                    .email(user.getEmail())
+                    .password(encodePassword(user.getPassword()))
+                    .fullName(user.getFullName())
+                    .profilePictureUrl(user.getProfilePictureUrl())
+                    .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                    .build();
             return userRepository.save(newUser);
         });
     }

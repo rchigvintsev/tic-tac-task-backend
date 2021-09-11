@@ -1,0 +1,1 @@
+ALTER TABLE users ADD created_at TIMESTAMP NOT NULL DEFAULT now();

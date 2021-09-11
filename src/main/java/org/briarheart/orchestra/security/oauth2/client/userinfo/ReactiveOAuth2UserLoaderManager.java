@@ -15,6 +15,8 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 /**
@@ -92,6 +94,7 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
                     .enabled(true)
                     .fullName(attrAccessor.getFullName())
                     .profilePictureUrl(attrAccessor.getPicture())
+                    .createdAt(LocalDateTime.now(ZoneOffset.UTC))
                     .build();
             return userRepository.save(newUser).doOnSuccess(u -> log.debug("User with id {} is created", u.getId()));
         });

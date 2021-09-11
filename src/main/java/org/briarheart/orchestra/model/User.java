@@ -12,6 +12,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -44,6 +45,7 @@ public class User implements UserDetails {
     private String fullName;
     @Size(max = 2_000)
     private String profilePictureUrl;
+    private LocalDateTime createdAt;
     @Builder.Default
     @Transient
     private Collection<? extends GrantedAuthority> authorities = Collections.emptySet();
@@ -59,6 +61,7 @@ public class User implements UserDetails {
         this.email = user.email;
         this.emailConfirmed = user.emailConfirmed;
         this.version = user.version;
+        this.createdAt = user.createdAt;
         this.password = user.password;
         this.admin = user.admin;
         this.enabled = user.enabled;

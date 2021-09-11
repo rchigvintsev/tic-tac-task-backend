@@ -149,12 +149,9 @@ class DefaultUserServiceTest {
         User newUser = User.builder().email("alice@mail.com").password("secret").fullName("Alice").admin(true).build();
         when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Mono.empty());
 
-        User expectedUser = new User(newUser);
-        expectedUser.setAdmin(false);
-        expectedUser.setPassword(null);
-
         User result = service.createUser(newUser, Locale.ENGLISH).block();
-        assertEquals(expectedUser, result);
+        assertNotNull(result);
+        assertFalse(result.isAdmin());
     }
 
     @Test
@@ -361,6 +358,27 @@ class DefaultUserServiceTest {
 
         User result = service.updateUser(updatedUser).block();
         assertEquals(expectedResult, result);
+    }
+
+    @Test
+    void shouldNotAllowToChangeCreatedAtFieldOnUserUpdate() {
+        User user = User.builder()
+                .id(1L)
+                .email("alice@mail.com")
+                .emailConfirmed(true)
+                .enabled(true)
+                .password("secret")
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minus(1, ChronoUnit.DAYS))
+                .build();
+        when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        User updatedUser = new User(user);
+        updatedUser.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+
+        User result = service.updateUser(updatedUser).block();
+        assertNotNull(result);
+        assertEquals(user.getCreatedAt(), result.getCreatedAt());
     }
 
     @Test
