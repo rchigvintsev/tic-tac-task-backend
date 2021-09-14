@@ -80,6 +80,11 @@ public class TaskController extends AbstractController {
         return taskService.getUncompletedTaskCount(getUser(authentication));
     }
 
+    @GetMapping("/completed")
+    public Flux<Task> getCompletedTasks(Authentication authentication, Pageable pageable) {
+        return taskService.getCompletedTasks(getUser(authentication), pageable);
+    }
+
     @GetMapping("/{id}")
     public Mono<Task> getTask(@PathVariable("id") Long id, Authentication authentication) {
         return taskService.getTask(id, getUser(authentication));

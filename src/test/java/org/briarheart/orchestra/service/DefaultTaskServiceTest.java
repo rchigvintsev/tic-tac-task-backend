@@ -322,6 +322,35 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldReturnAllCompletedTasks() {
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.COMPLETED).build();
+        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtDesc(TaskStatus.COMPLETED, user.getId(), 0, null))
+                .thenReturn(Flux.just(task));
+        Task result = taskService.getCompletedTasks(user, Pageable.unpaged()).blockFirst();
+        assertEquals(task, result);
+    }
+
+    @Test
+    void shouldReturnCompletedTasksWithPagingRestriction() {
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.COMPLETED).build();
+        PageRequest pageRequest = PageRequest.of(3, 50);
+        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtDesc(TaskStatus.COMPLETED, user.getId(),
+                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
+
+        Task result = taskService.getCompletedTasks(user, pageRequest).blockFirst();
+        assertEquals(task, result);
+    }
+
+    @Test
+    void shouldThrowExceptionOnCompletedTasksGetWhenUserIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getCompletedTasks(null, Pageable.unpaged()).blockFirst());
+        assertEquals("User must not be null", e.getMessage());
+    }
+
+    @Test
     void shouldReturnTaskById() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();

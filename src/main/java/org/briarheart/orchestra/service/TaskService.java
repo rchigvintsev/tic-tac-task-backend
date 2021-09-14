@@ -96,6 +96,15 @@ public interface TaskService {
     Flux<Task> getUncompletedTasks(User user, Pageable pageable);
 
     /**
+     * Returns completed tasks belonging to the given user.
+     *
+     * @param user     task author (must not be {@code null})
+     * @param pageable paging restriction
+     * @return completed tasks or empty stream when there is no task meeting the given criteria
+     */
+    Flux<Task> getCompletedTasks(User user, Pageable pageable);
+
+    /**
      * Returns task with the given id and belonging to the given user.
      *
      * @param id   task id

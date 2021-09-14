@@ -246,6 +246,22 @@ class TaskControllerTest {
     }
 
     @Test
+    void shouldReturnAllCompletedTasks() {
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.COMPLETED).build();
+        when(taskService.getCompletedTasks(eq(user), any())).thenReturn(Flux.just(task));
+
+        testClient.mutateWith(mockAuthentication(authenticationMock))
+                .get().uri("/api/v1/tasks/completed")
+                .exchange()
+
+                .expectStatus().isOk()
+                .expectBody(Task[].class).isEqualTo(new Task[]{task});
+    }
+
+    @Test
     void shouldReturnTaskById() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);

@@ -127,6 +127,13 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
+    public Flux<Task> getCompletedTasks(User user, Pageable pageable) {
+        Assert.notNull(user, "User must not be null");
+        return taskRepository.findByStatusAndUserIdOrderByCreatedAtDesc(TaskStatus.COMPLETED, user.getId(),
+                Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+    }
+
+    @Override
     public Mono<Task> getTask(Long id, User user) throws EntityNotFoundException {
         Assert.notNull(user, "User must not be null");
         return findTask(id, user.getId());
