@@ -118,6 +118,12 @@ public class TaskController extends AbstractController {
         return taskService.completeTask(id, getUser(authentication));
     }
 
+    @DeleteMapping("/completed/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> restoreTask(@PathVariable Long id, Authentication authentication) {
+        return taskService.restoreTask(id, getUser(authentication));
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteTask(@PathVariable Long id, Authentication authentication) {

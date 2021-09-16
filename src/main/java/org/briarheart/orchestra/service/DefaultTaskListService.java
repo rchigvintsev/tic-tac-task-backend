@@ -75,10 +75,12 @@ public class DefaultTaskListService implements TaskListService {
     @Override
     public Mono<Void> completeTaskList(Long id, User user) throws EntityNotFoundException {
         return getTaskList(id, user)
+                .filter(taskList -> !taskList.isCompleted())
                 .zipWhen(taskList -> {
                     Flux<Task> taskFlux = taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(id, user.getId(),
                             0, null);
                     return taskFlux.flatMap(task -> {
+                        task.setPreviousStatus(task.getStatus());
                         task.setStatus(TaskStatus.COMPLETED);
                         return taskRepository.save(task)
                                 .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId()));

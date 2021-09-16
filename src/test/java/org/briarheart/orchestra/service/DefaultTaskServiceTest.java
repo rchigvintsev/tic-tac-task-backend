@@ -26,6 +26,7 @@ class DefaultTaskServiceTest {
     private TaskRepository taskRepository;
     private TaskTagRelationRepository taskTagRelationRepository;
     private TagRepository tagRepository;
+    private TaskListRepository taskListRepository;
     private TaskCommentRepository taskCommentRepository;
 
     private DefaultTaskService taskService;
@@ -36,11 +37,12 @@ class DefaultTaskServiceTest {
         taskRepository = mock(TaskRepository.class);
         taskTagRelationRepository = mock(TaskTagRelationRepository.class);
         tagRepository = mock(TagRepository.class);
+        taskListRepository = mock(TaskListRepository.class);
         taskCommentRepository = mock(TaskCommentRepository.class);
 
         currentTime = LocalDateTime.now(ZoneOffset.UTC);
         taskService = new DefaultTaskService(taskRepository, taskTagRelationRepository, tagRepository,
-                taskCommentRepository) {
+                taskListRepository, taskCommentRepository) {
             @Override
             protected LocalDateTime getCurrentTime() {
                 return currentTime;
@@ -566,6 +568,41 @@ class DefaultTaskServiceTest {
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> taskService.completeTask(taskId, user).block());
+        assertEquals("Task with id " + taskId + " is not found", e.getMessage());
+    }
+
+    @Test
+    void shouldRestoreTask() {
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        Task task = Task.builder()
+                .id(2L)
+                .userId(user.getId())
+                .title("Test task")
+                .previousStatus(TaskStatus.PROCESSED)
+                .status(TaskStatus.COMPLETED)
+                .build();
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        taskService.restoreTask(task.getId(), user).block();
+        assertSame(TaskStatus.PROCESSED, task.getStatus());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskRestoreWhenUserIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.restoreTask(1L, null).block());
+        assertEquals("User must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTaskRestoreWhenTaskIsNotFound() {
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        long taskId = 2L;
+
+        when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
+        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
+                () -> taskService.restoreTask(taskId, user).block());
         assertEquals("Task with id " + taskId + " is not found", e.getMessage());
     }
 

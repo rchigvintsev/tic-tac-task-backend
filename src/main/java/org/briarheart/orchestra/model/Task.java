@@ -26,6 +26,7 @@ public class Task {
     private String title;
     @Size(max = 10_000)
     private String description;
+    private TaskStatus previousStatus;
     @Builder.Default
     private TaskStatus status = TaskStatus.UNPROCESSED;
     private LocalDateTime createdAt;
@@ -45,6 +46,7 @@ public class Task {
         this.taskListId = other.taskListId;
         this.title = other.title;
         this.description = other.description;
+        this.previousStatus = other.previousStatus;
         this.status = other.status;
         this.createdAt = other.createdAt;
         this.deadline = other.deadline;

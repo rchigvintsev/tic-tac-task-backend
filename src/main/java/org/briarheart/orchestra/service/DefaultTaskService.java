@@ -28,20 +28,24 @@ public class DefaultTaskService implements TaskService {
     private final TaskRepository taskRepository;
     private final TaskTagRelationRepository taskTagRelationRepository;
     private final TagRepository tagRepository;
+    private final TaskListRepository taskListRepository;
     private final TaskCommentRepository taskCommentRepository;
 
     public DefaultTaskService(TaskRepository taskRepository,
                               TaskTagRelationRepository taskTagRelationRepository,
                               TagRepository tagRepository,
+                              TaskListRepository taskListRepository,
                               TaskCommentRepository taskCommentRepository) {
         Assert.notNull(taskRepository, "Task repository must not be null");
         Assert.notNull(taskTagRelationRepository, "Task-tag relation repository must not be null");
         Assert.notNull(tagRepository, "Tag repository must not be null");
+        Assert.notNull(taskListRepository, "Task list repository must not be null");
         Assert.notNull(taskCommentRepository, "Task comment repository must not be null");
 
         this.taskRepository = taskRepository;
         this.taskTagRelationRepository = taskTagRelationRepository;
         this.tagRepository = tagRepository;
+        this.taskListRepository = taskListRepository;
         this.taskCommentRepository = taskCommentRepository;
     }
 
@@ -162,7 +166,11 @@ public class DefaultTaskService implements TaskService {
         return findTask(task.getId(), task.getUserId()).flatMap(existingTask -> {
             existingTask.setTitle(task.getTitle());
             existingTask.setDescription(task.getDescription());
-            existingTask.setStatus(determineTaskStatus(task));
+            TaskStatus newStatus = determineTaskStatus(task);
+            if (newStatus != existingTask.getStatus()) {
+                existingTask.setPreviousStatus(existingTask.getStatus());
+                existingTask.setStatus(newStatus);
+            }
             existingTask.setDeadline(task.getDeadline());
             existingTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
             return taskRepository.save(existingTask)
@@ -173,10 +181,30 @@ public class DefaultTaskService implements TaskService {
     @Transactional
     @Override
     public Mono<Void> completeTask(Long id, User user) throws EntityNotFoundException {
-        return getTask(id, user).flatMap(task -> {
-            task.setStatus(TaskStatus.COMPLETED);
-            return taskRepository.save(task).doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId()));
-        }).then();
+        return getTask(id, user)
+                .filter(task -> task.getStatus() != TaskStatus.COMPLETED)
+                .flatMap(task -> {
+                    task.setPreviousStatus(task.getStatus());
+                    task.setStatus(TaskStatus.COMPLETED);
+                    return taskRepository.save(task)
+                            .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId()));
+                })
+                .then();
+    }
+
+    @Transactional
+    @Override
+    public Mono<Void> restoreTask(Long id, User user) throws EntityNotFoundException {
+        return getTask(id, user)
+                .filter(task -> task.getStatus() == TaskStatus.COMPLETED)
+                .flatMap(this::restoreTaskList)
+                .flatMap(task -> {
+                    task.setStatus(task.getPreviousStatus());
+                    task.setPreviousStatus(TaskStatus.COMPLETED);
+                    return taskRepository.save(task)
+                            .doOnSuccess(t -> log.debug("Task with id {} is restored", t.getId()));
+                })
+                .then();
     }
 
     @Transactional
@@ -270,5 +298,18 @@ public class DefaultTaskService implements TaskService {
             result = TaskStatus.PROCESSED;
         }
         return result;
+    }
+
+    private Mono<Task> restoreTaskList(Task task) {
+        if (task.getTaskListId() != null) {
+            return taskListRepository.findById(task.getTaskListId())
+                    .filter(TaskList::isCompleted)
+                    .flatMap(taskList -> {
+                        taskList.setCompleted(false);
+                        return taskListRepository.save(taskList);
+                    })
+                    .map(taskList -> task);
+        }
+        return Mono.just(task);
     }
 }

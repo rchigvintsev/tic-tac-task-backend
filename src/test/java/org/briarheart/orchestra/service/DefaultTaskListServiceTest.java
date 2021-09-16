@@ -176,6 +176,7 @@ class DefaultTaskListServiceTest {
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         Task completedTask = new Task(task);
+        completedTask.setPreviousStatus(task.getStatus());
         completedTask.setStatus(TaskStatus.COMPLETED);
 
         taskListService.completeTaskList(taskList.getId(), user).block();
