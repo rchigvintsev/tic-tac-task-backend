@@ -589,6 +589,31 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldRestoreTaskFromTaskList() {
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        TaskList taskList = TaskList.builder()
+                .id(2L)
+                .userId(user.getId())
+                .name("Test task list")
+                .completed(false)
+                .build();
+        Task task = Task.builder()
+                .id(3L)
+                .userId(user.getId())
+                .taskListId(taskList.getId())
+                .title("Test task")
+                .previousStatus(TaskStatus.PROCESSED)
+                .status(TaskStatus.COMPLETED)
+                .build();
+        when(taskListRepository.findById(taskList.getId())).thenReturn(Mono.just(taskList));
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        taskService.restoreTask(task.getId(), user).block();
+        assertSame(TaskStatus.PROCESSED, task.getStatus());
+    }
+
+    @Test
     void shouldThrowExceptionOnTaskRestoreWhenUserIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> taskService.restoreTask(1L, null).block());

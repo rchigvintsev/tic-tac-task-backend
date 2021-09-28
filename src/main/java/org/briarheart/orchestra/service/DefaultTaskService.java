@@ -308,7 +308,7 @@ public class DefaultTaskService implements TaskService {
                         taskList.setCompleted(false);
                         return taskListRepository.save(taskList);
                     })
-                    .map(taskList -> task);
+                    .then(Mono.just(task));
         }
         return Mono.just(task);
     }
