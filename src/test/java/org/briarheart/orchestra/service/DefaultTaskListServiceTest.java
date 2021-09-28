@@ -153,8 +153,8 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
         when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
-        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(taskList.getId(), user.getId(), 0, null))
-                .thenReturn(Flux.empty());
+        when(taskRepository.findByTaskListIdAndUserIdAndStatusNotOrderByCreatedAtAsc(taskList.getId(), user.getId(),
+                TaskStatus.COMPLETED, 0, null)).thenReturn(Flux.empty());
 
         TaskList completedTaskList = new TaskList(taskList);
         completedTaskList.setCompleted(true);
@@ -171,8 +171,8 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
         when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
-        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(taskList.getId(), user.getId(), 0, null))
-                .thenReturn(Flux.just(task));
+        when(taskRepository.findByTaskListIdAndUserIdAndStatusNotOrderByCreatedAtAsc(taskList.getId(), user.getId(),
+                TaskStatus.COMPLETED, 0, null)).thenReturn(Flux.just(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         Task completedTask = new Task(task);
@@ -255,8 +255,8 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(task.getTaskListId(), user.getId())).thenReturn(Mono.just(taskList));
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(task.getTaskListId(), user.getId(),
-                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
+        when(taskRepository.findByTaskListIdAndUserIdAndStatusNotOrderByCreatedAtAsc(task.getTaskListId(), user.getId(),
+                TaskStatus.COMPLETED, pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
         Task result = taskListService.getTasks(taskList.getId(), user, pageRequest).blockFirst();
         assertEquals(task, result);

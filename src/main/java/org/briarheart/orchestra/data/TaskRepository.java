@@ -36,6 +36,14 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long> {
             + "LIMIT :limit OFFSET :offset")
     Flux<Task> findByTaskListIdAndUserIdOrderByCreatedAtAsc(Long taskListId, Long userId, long offset, Integer limit);
 
+    @Query("SELECT * FROM task WHERE task_list_id = :taskListId AND user_id = :userId AND status <> :status "
+            + "ORDER BY created_at ASC LIMIT :limit OFFSET :offset")
+    Flux<Task> findByTaskListIdAndUserIdAndStatusNotOrderByCreatedAtAsc(Long taskListId,
+                                                                        Long userId,
+                                                                        TaskStatus status,
+                                                                        long offset,
+                                                                        Integer limit);
+
     @Query("SELECT * FROM task WHERE deadline IS NULL AND status = :status AND user_id = :userId "
             + "ORDER BY created_at ASC LIMIT :limit OFFSET :offset")
     Flux<Task> findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus status,

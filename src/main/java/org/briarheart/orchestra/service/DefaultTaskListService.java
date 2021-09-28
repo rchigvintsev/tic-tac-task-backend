@@ -77,8 +77,8 @@ public class DefaultTaskListService implements TaskListService {
         return getTaskList(id, user)
                 .filter(taskList -> !taskList.isCompleted())
                 .zipWhen(taskList -> {
-                    Flux<Task> taskFlux = taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(id, user.getId(),
-                            0, null);
+                    Flux<Task> taskFlux = taskRepository.findByTaskListIdAndUserIdAndStatusNotOrderByCreatedAtAsc(id,
+                            user.getId(), TaskStatus.COMPLETED, 0, null);
                     return taskFlux.flatMap(task -> {
                         task.setPreviousStatus(task.getStatus());
                         task.setStatus(TaskStatus.COMPLETED);
@@ -117,8 +117,8 @@ public class DefaultTaskListService implements TaskListService {
         return getTaskList(taskListId, user).flatMapMany(taskList -> {
             long offset = Pageables.getOffset(pageable);
             Integer limit = Pageables.getLimit(pageable);
-            return taskRepository.findByTaskListIdAndUserIdOrderByCreatedAtAsc(taskList.getId(), user.getId(), offset,
-                    limit);
+            return taskRepository.findByTaskListIdAndUserIdAndStatusNotOrderByCreatedAtAsc(taskList.getId(),
+                    user.getId(), TaskStatus.COMPLETED, offset, limit);
         });
     }
 
