@@ -145,9 +145,10 @@ public interface TaskService {
      *
      * @param id task id
      * @param user task author (must not be {@code null})
+     * @return restored task
      * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
-    Mono<Void> restoreTask(Long id, User user) throws EntityNotFoundException;
+    Mono<Task> restoreTask(Long id, User user) throws EntityNotFoundException;
 
     /**
      * Deletes task with the given id and belonging to the given user.

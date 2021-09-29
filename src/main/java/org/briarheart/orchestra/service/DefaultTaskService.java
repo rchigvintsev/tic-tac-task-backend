@@ -194,7 +194,7 @@ public class DefaultTaskService implements TaskService {
 
     @Transactional
     @Override
-    public Mono<Void> restoreTask(Long id, User user) throws EntityNotFoundException {
+    public Mono<Task> restoreTask(Long id, User user) throws EntityNotFoundException {
         return getTask(id, user)
                 .filter(task -> task.getStatus() == TaskStatus.COMPLETED)
                 .flatMap(this::restoreTaskList)
@@ -203,8 +203,7 @@ public class DefaultTaskService implements TaskService {
                     task.setPreviousStatus(TaskStatus.COMPLETED);
                     return taskRepository.save(task)
                             .doOnSuccess(t -> log.debug("Task with id {} is restored", t.getId()));
-                })
-                .then();
+                });
     }
 
     @Transactional

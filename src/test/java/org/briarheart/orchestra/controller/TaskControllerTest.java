@@ -467,6 +467,28 @@ class TaskControllerTest {
     }
 
     @Test
+    void shouldRestoreTask() {
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        Task expectedResult = Task.builder()
+                .id(2L)
+                .userId(user.getId())
+                .title("Restored test task")
+                .status(TaskStatus.PROCESSED)
+                .build();
+
+        when(taskService.restoreTask(expectedResult.getId(), user)).thenReturn(Mono.just(expectedResult));
+
+        testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
+                .delete().uri("/api/v1/tasks/completed/" + expectedResult.getId())
+                .exchange()
+
+                .expectStatus().isOk()
+                .expectBody(Task.class).isEqualTo(expectedResult);
+    }
+
+    @Test
     void shouldDeleteTask() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);

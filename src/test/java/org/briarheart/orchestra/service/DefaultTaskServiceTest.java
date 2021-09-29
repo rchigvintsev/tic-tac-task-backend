@@ -584,8 +584,9 @@ class DefaultTaskServiceTest {
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        taskService.restoreTask(task.getId(), user).block();
-        assertSame(TaskStatus.PROCESSED, task.getStatus());
+        Task result = taskService.restoreTask(task.getId(), user).block();
+        assertNotNull(result);
+        assertSame(TaskStatus.PROCESSED, result.getStatus());
     }
 
     @Test
@@ -609,14 +610,15 @@ class DefaultTaskServiceTest {
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        taskService.restoreTask(task.getId(), user).block();
-        assertSame(TaskStatus.PROCESSED, task.getStatus());
+        Task result = taskService.restoreTask(task.getId(), user).block();
+        assertNotNull(result);
+        assertSame(TaskStatus.PROCESSED, result.getStatus());
     }
 
     @Test
     void shouldThrowExceptionOnTaskRestoreWhenUserIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.restoreTask(1L, null).block());
+                () -> taskService.restoreTask(1L, null));
         assertEquals("User must not be null", e.getMessage());
     }
 
