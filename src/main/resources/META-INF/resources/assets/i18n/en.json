@@ -87,9 +87,11 @@
   "failed_to_load_task": "Failed to load task",
   "failed_to_save_task": "Failed to save task",
   "failed_to_complete_task": "Failed to complete task",
+  "failed_to_restore_task": "Failed to restore task",
   "failed_to_delete_task": "Failed to delete task",
   "task_saved": "Task is saved",
   "task_completed": "Task is completed",
+  "task_restored": "Task restored",
   "task_deleted": "Task is deleted",
   "failed_to_load_tags": "Failed to load tags",
   "failed_to_load_tag": "Failed to load tag",
@@ -129,5 +131,8 @@
   "block_user": "Block user",
   "unblock_user": "Unblock user",
   "user_blocked": "User is blocked",
-  "user_unblocked": "User is unblocked"
+  "user_unblocked": "User is unblocked",
+  "registration_time": "Registration time",
+  "archive": "Archive",
+  "restore": "Restore"
 }

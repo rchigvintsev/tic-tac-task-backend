@@ -1,1 +1,1 @@
-org.briarheart.orchestra.data.database.postgresql.CustomCodecRegistrar
+org.briarheart.tictactask.data.database.postgresql.CustomCodecRegistrar

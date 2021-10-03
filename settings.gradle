@@ -14,4 +14,4 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'orchestra'
+rootProject.name = 'tic-tac-task'

@@ -80,7 +80,7 @@ management:
 
 info:
   application:
-    name: Orchestra
+    name: TicTacTask
     version: 0.0.1-SNAPSHOT
 
 application:

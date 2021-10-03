@@ -88,8 +88,10 @@
   "failed_to_save_task": "Не удаётся сохранить задачу",
   "failed_to_delete_task": "Не удаётся удалить задачу",
   "failed_to_complete_task": "Не удаётся завершить задачу",
+  "failed_to_restore_task": "Не удаётся восстановить задачу",
   "task_saved": "Задача сохранена",
   "task_completed": "Задача завершена",
+  "task_restored": "Задача восстановлена",
   "task_deleted": "Задача удалена",
   "failed_to_load_tags": "Не удаётся загрузить метки",
   "failed_to_load_tag": "Не удаётся загрузить метку",
@@ -129,5 +131,8 @@
   "block_user": "Заблокировать пользователя",
   "unblock_user": "Разблокировать пользователя",
   "user_blocked": "Пользователь заблокирован",
-  "user_unblocked": "Пользователь разблокирован"
+  "user_unblocked": "Пользователь разблокирован",
+  "registration_time": "Время регистрации",
+  "archive": "Архив",
+  "restore": "Восстановить"
 }
