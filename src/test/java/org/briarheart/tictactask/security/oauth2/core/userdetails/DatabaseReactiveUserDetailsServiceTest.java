@@ -1,9 +1,9 @@
 package org.briarheart.tictactask.security.oauth2.core.userdetails;
 
-import org.briarheart.tictactask.data.UserAuthorityRelationRepository;
-import org.briarheart.tictactask.data.UserRepository;
-import org.briarheart.tictactask.model.User;
-import org.briarheart.tictactask.model.UserAuthorityRelation;
+import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.user.UserRepository;
+import org.briarheart.tictactask.user.authority.UserAuthorityRelation;
+import org.briarheart.tictactask.user.authority.UserAuthorityRelationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;

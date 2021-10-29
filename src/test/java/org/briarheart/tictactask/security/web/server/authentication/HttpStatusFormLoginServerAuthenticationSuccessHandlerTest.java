@@ -2,9 +2,9 @@ package org.briarheart.tictactask.security.web.server.authentication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
-import org.briarheart.tictactask.model.User;
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.AccessToken;
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.AccessTokenService;
+import org.briarheart.tictactask.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

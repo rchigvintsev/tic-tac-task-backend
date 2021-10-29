@@ -1,8 +1,8 @@
 package org.briarheart.tictactask.security.oauth2.client.userinfo;
 
-import org.briarheart.tictactask.data.UserRepository;
-import org.briarheart.tictactask.model.User;
 import org.briarheart.tictactask.security.oauth2.core.user.OAuth2UserAttributeAccessor;
+import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;

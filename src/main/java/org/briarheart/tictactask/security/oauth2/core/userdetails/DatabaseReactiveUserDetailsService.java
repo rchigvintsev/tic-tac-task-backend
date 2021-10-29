@@ -1,9 +1,9 @@
 package org.briarheart.tictactask.security.oauth2.core.userdetails;
 
 import lombok.RequiredArgsConstructor;
-import org.briarheart.tictactask.data.UserAuthorityRelationRepository;
-import org.briarheart.tictactask.data.UserRepository;
-import org.briarheart.tictactask.model.UserAuthorityRelation;
+import org.briarheart.tictactask.user.UserRepository;
+import org.briarheart.tictactask.user.authority.UserAuthorityRelation;
+import org.briarheart.tictactask.user.authority.UserAuthorityRelationRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;

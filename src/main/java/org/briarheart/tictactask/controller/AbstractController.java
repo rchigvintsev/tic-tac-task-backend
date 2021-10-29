@@ -1,6 +1,6 @@
 package org.briarheart.tictactask.controller;
 
-import org.briarheart.tictactask.model.User;
+import org.briarheart.tictactask.user.User;
 import org.springframework.security.core.Authentication;
 
 /**

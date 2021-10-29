@@ -1,9 +1,9 @@
 package org.briarheart.tictactask.security.web.server.authentication;
 
 import lombok.RequiredArgsConstructor;
-import org.briarheart.tictactask.model.User;
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.AccessToken;
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.AccessTokenService;
+import org.briarheart.tictactask.user.User;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.core.Authentication;
 import reactor.core.publisher.Mono;

@@ -2,9 +2,9 @@ package org.briarheart.tictactask.security.oauth2.client.userinfo;
 
 import io.jsonwebtoken.lang.Assert;
 import lombok.extern.slf4j.Slf4j;
-import org.briarheart.tictactask.data.UserRepository;
-import org.briarheart.tictactask.model.User;
 import org.briarheart.tictactask.security.oauth2.core.user.OAuth2UserAttributeAccessor;
+import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.user.UserRepository;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;

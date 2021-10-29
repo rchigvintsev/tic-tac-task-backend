@@ -2,11 +2,11 @@ package org.briarheart.tictactask.security.web.server.authentication;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.briarheart.tictactask.data.UserRepository;
-import org.briarheart.tictactask.model.User;
 import org.briarheart.tictactask.security.oauth2.core.user.OAuth2UserAttributeAccessor;
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.AccessToken;
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.AccessTokenService;
+import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.user.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.web.server.ServerAuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;

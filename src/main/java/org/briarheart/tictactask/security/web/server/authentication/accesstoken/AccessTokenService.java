@@ -1,6 +1,6 @@
 package org.briarheart.tictactask.security.web.server.authentication.accesstoken;
 
-import org.briarheart.tictactask.model.User;
+import org.briarheart.tictactask.user.User;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 

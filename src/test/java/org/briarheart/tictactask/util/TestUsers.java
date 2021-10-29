@@ -1,6 +1,6 @@
 package org.briarheart.tictactask.util;
 
-import org.briarheart.tictactask.model.User;
+import org.briarheart.tictactask.user.User;
 
 /**
  * Utility class that provides users for integration tests.

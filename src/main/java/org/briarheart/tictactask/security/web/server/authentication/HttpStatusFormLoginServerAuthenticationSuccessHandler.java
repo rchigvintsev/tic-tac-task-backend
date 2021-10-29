@@ -2,8 +2,8 @@ package org.briarheart.tictactask.security.web.server.authentication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.briarheart.tictactask.model.User;
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.AccessTokenService;
+import org.briarheart.tictactask.user.User;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
