@@ -1,6 +1,7 @@
 package org.briarheart.tictactask.task;
 
 import lombok.*;
+import org.briarheart.tictactask.task.recurrence.TaskRecurrenceStrategy;
 import org.springframework.data.annotation.Id;
 import org.springframework.util.Assert;
 
@@ -33,6 +34,7 @@ public class Task {
     @FutureOrPresent
     private LocalDateTime deadline;
     private boolean deadlineTimeExplicitlySet;
+    private TaskRecurrenceStrategy recurrenceStrategy;
 
     /**
      * Creates copy of the given task.

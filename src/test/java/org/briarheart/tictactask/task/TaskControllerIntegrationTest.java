@@ -43,6 +43,18 @@ class TaskControllerIntegrationTest {
     }
 
     @Test
+    void shouldCreateTask() {
+        HttpHeaders headers = new HttpHeaders();
+        addCookieHeader(headers);
+        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        String body = "{\"title\": \"Do morning exercises\", \"recurrenceStrategy\": {\"type\": \"daily\"}}";
+
+        ResponseEntity<Task> response = restTemplate.exchange("http://localhost:{port}/api/v1/tasks",
+                HttpMethod.POST, new HttpEntity<>(body, headers), Task.class, port);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    }
+
+    @Test
     void shouldAssignTagToTask() {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);

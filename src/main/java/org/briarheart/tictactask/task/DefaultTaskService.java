@@ -163,6 +163,7 @@ public class DefaultTaskService implements TaskService {
             newTask.setCreatedAt(getCurrentTime());
             newTask.setDeadline(task.getDeadline());
             newTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
+            newTask.setRecurrenceStrategy(task.getRecurrenceStrategy());
             return taskRepository.save(newTask).doOnSuccess(t -> log.debug("Task with id {} is created", t.getId()));
         });
     }
@@ -181,6 +182,7 @@ public class DefaultTaskService implements TaskService {
             }
             existingTask.setDeadline(task.getDeadline());
             existingTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
+            existingTask.setRecurrenceStrategy(task.getRecurrenceStrategy());
             return taskRepository.save(existingTask)
                     .doOnSuccess(t -> log.debug("Task with id {} is updated", t.getId()));
         });

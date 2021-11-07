@@ -80,11 +80,11 @@ dependencies {
 }
 
 test {
-    environment 'JDBC_DATABASE_URL', 'jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE'
+    environment 'JDBC_DATABASE_URL', 'jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL'
     environment 'JDBC_DATABASE_USERNAME', 'sa'
     environment 'JDBC_DATABASE_PASSWORD', ''
 
-    environment 'R2DBC_DATABASE_URL', 'r2dbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE'
+    environment 'R2DBC_DATABASE_URL', 'r2dbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL'
     environment 'R2DBC_DATABASE_USERNAME', 'sa'
     environment 'R2DBC_DATABASE_PASSWORD', ''
 
