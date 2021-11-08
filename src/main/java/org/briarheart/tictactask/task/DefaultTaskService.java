@@ -190,16 +190,19 @@ public class DefaultTaskService implements TaskService {
 
     @Transactional
     @Override
-    public Mono<Void> completeTask(Long id, User user) throws EntityNotFoundException {
+    public Mono<Task> completeTask(Long id, User user) throws EntityNotFoundException {
         return getTask(id, user)
                 .filter(task -> task.getStatus() != TaskStatus.COMPLETED)
                 .flatMap(task -> {
-                    task.setPreviousStatus(task.getStatus());
-                    task.setStatus(TaskStatus.COMPLETED);
+                    if (isTaskRecurrenceEnabled(task)) {
+                        task.getRecurrenceStrategy().reschedule(task);
+                    } else {
+                        task.setPreviousStatus(task.getStatus());
+                        task.setStatus(TaskStatus.COMPLETED);
+                    }
                     return taskRepository.save(task)
                             .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId()));
-                })
-                .then();
+                });
     }
 
     @Transactional
@@ -320,5 +323,9 @@ public class DefaultTaskService implements TaskService {
                     .then(Mono.just(task));
         }
         return Mono.just(task);
+    }
+
+    private boolean isTaskRecurrenceEnabled(Task task) {
+        return task.getDeadline() != null && task.getRecurrenceStrategy() != null;
     }
 }

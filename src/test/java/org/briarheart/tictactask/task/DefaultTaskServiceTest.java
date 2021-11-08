@@ -5,6 +5,7 @@ import org.briarheart.tictactask.task.comment.TaskComment;
 import org.briarheart.tictactask.task.comment.TaskCommentRepository;
 import org.briarheart.tictactask.task.list.TaskList;
 import org.briarheart.tictactask.task.list.TaskListRepository;
+import org.briarheart.tictactask.task.recurrence.DailyTaskRecurrenceStrategy;
 import org.briarheart.tictactask.task.tag.Tag;
 import org.briarheart.tictactask.task.tag.TagRepository;
 import org.briarheart.tictactask.task.tag.TaskTagRelation;
@@ -559,6 +560,25 @@ class DefaultTaskServiceTest {
 
         taskService.completeTask(task.getId(), user).block();
         assertSame(TaskStatus.COMPLETED, task.getStatus());
+    }
+
+    @Test
+    void shouldRescheduleTaskOnCompleteWhenTaskRecurrenceIsEnabled() {
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        LocalDateTime taskDeadline = LocalDateTime.now(ZoneOffset.UTC);
+        Task task = Task.builder()
+                .id(2L)
+                .userId(user.getId())
+                .title("Test task")
+                .deadline(taskDeadline)
+                .recurrenceStrategy(new DailyTaskRecurrenceStrategy())
+                .build();
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        taskService.completeTask(task.getId(), user).block();
+        assertSame(TaskStatus.UNPROCESSED, task.getStatus());
+        assertTrue(task.getDeadline().isAfter(taskDeadline));
     }
 
     @Test

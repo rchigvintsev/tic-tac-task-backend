@@ -457,13 +457,14 @@ class TaskControllerTest {
 
         long taskId = 2L;
 
-        when(taskService.completeTask(taskId, user)).thenReturn(Mono.just(true).then());
+        when(taskService.completeTask(taskId, user))
+                .thenReturn(Mono.just(Task.builder().id(taskId).status(TaskStatus.COMPLETED).build()));
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
                 .put().uri("/api/v1/tasks/completed/" + taskId)
                 .exchange()
 
-                .expectStatus().isNoContent();
+                .expectStatus().isOk();
         verify(taskService, times(1)).completeTask(taskId, user);
     }
 
