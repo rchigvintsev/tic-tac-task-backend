@@ -6,6 +6,7 @@
   "name": "Name",
   "description": "Description",
   "deadline": "Deadline",
+  "quick_deadlines": "Quick deadlines",
   "color": "Color",
   "leave_comment": "Leave comment",
   "edit": "Edit",
@@ -134,5 +135,11 @@
   "user_unblocked": "User is unblocked",
   "registration_time": "Registration time",
   "archive": "Archive",
-  "restore": "Restore"
+  "restore": "Restore",
+  "repeat": "Repeat",
+  "never": "Never",
+  "daily": "Daily",
+  "weekly": "Weekly",
+  "monthly": "Monthly",
+  "annually": "Annually"
 }
