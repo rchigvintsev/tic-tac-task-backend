@@ -81,9 +81,4 @@ public class EnumCodec implements Codec<Enum<?>> {
     public Parameter encodeNull() {
         return new Parameter(FORMAT_TEXT, VARCHAR.getObjectId(), Parameter.NULL_VALUE);
     }
-
-    @Override
-    public Class<?> type() {
-        return Enum.class;
-    }
 }
