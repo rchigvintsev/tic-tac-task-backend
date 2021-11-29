@@ -2,6 +2,9 @@ package org.briarheart.tictactask.task;
 
 import org.briarheart.tictactask.config.PermitAllSecurityConfig;
 import org.briarheart.tictactask.data.EntityNotFoundException;
+import org.briarheart.tictactask.task.TaskController.CreateTaskRequest;
+import org.briarheart.tictactask.task.TaskController.TaskResponse;
+import org.briarheart.tictactask.task.TaskController.UpdateTaskRequest;
 import org.briarheart.tictactask.task.comment.TaskComment;
 import org.briarheart.tictactask.task.tag.Tag;
 import org.briarheart.tictactask.user.User;
@@ -70,7 +73,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[]{task});
+                .expectBody(TaskResponse[].class).isEqualTo(new TaskResponse[]{new TaskResponse(task)});
     }
 
     @Test
@@ -107,7 +110,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[]{task});
+                .expectBody(TaskResponse[].class).isEqualTo(new TaskResponse[]{new TaskResponse(task)});
     }
 
     @Test
@@ -144,7 +147,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[]{task});
+                .expectBody(TaskResponse[].class).isEqualTo(new TaskResponse[]{new TaskResponse(task)});
     }
 
     @Test
@@ -190,7 +193,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[]{task});
+                .expectBody(TaskResponse[].class).isEqualTo(new TaskResponse[]{new TaskResponse(task)});
     }
 
     @Test
@@ -228,7 +231,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[]{task});
+                .expectBody(TaskResponse[].class).isEqualTo(new TaskResponse[]{new TaskResponse(task)});
     }
 
     @Test
@@ -259,7 +262,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[]{task});
+                .expectBody(TaskResponse[].class).isEqualTo(new TaskResponse[]{new TaskResponse(task)});
     }
 
     @Test
@@ -275,7 +278,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task.class).isEqualTo(task);
+                .expectBody(TaskResponse.class).isEqualTo(new TaskResponse(task));
     }
 
     @Test
@@ -307,21 +310,21 @@ class TaskControllerTest {
             return Mono.just(t);
         });
 
-        Task task = Task.builder().id(-1L).title("New task").build();
+        CreateTaskRequest createRequest = new CreateTaskRequest();
+        createRequest.setTitle("New task");
 
-        Task expectedResult = new Task(task);
+        TaskResponse expectedResult = new TaskResponse(createRequest.toTask());
         expectedResult.setId(taskId);
-        expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isCreated()
                 .expectHeader().valueEquals("Location", "/api/v1/tasks/" + taskId)
-                .expectBody(Task.class).isEqualTo(expectedResult);
+                .expectBody(TaskResponse.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -329,12 +332,12 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().build();
+        CreateTaskRequest createRequest = new CreateTaskRequest();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -348,12 +351,13 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().title(" ").build();
+        CreateTaskRequest createRequest = new CreateTaskRequest();
+        createRequest.setTitle(" ");
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -367,12 +371,13 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder().title("L" + "o".repeat(247) + "ng title").build();
+        CreateTaskRequest createRequest = new CreateTaskRequest();
+        createRequest.setTitle("L" + "o".repeat(247) + "ng title");
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -386,15 +391,14 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder()
-                .title("Test title")
-                .description("L" + "o".repeat(9986) + "ng description")
-                .build();
+        CreateTaskRequest createRequest = new CreateTaskRequest();
+        createRequest.setTitle("Test title");
+        createRequest.setDescription("L" + "o".repeat(9986) + "ng description");
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -408,15 +412,14 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task task = Task.builder()
-                .title("Test title")
-                .deadline(LocalDateTime.now().minus(3, ChronoUnit.DAYS))
-                .build();
+        CreateTaskRequest createRequest = new CreateTaskRequest();
+        createRequest.setTitle("Test title");
+        createRequest.setDeadline(LocalDateTime.now().minus(3, ChronoUnit.DAYS));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -434,20 +437,20 @@ class TaskControllerTest {
 
         long taskId = 2L;
 
-        Task task = Task.builder().title("Updated test task").build();
+        UpdateTaskRequest updateRequest = new UpdateTaskRequest();
+        updateRequest.setTitle("Updated test task");
 
-        Task expectedResult = new Task(task);
+        TaskResponse expectedResult = new TaskResponse(updateRequest.toTask());
         expectedResult.setId(taskId);
-        expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
                 .put().uri("/api/v1/tasks/" + taskId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(task)
+                .bodyValue(updateRequest)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task.class).isEqualTo(expectedResult);
+                .expectBody(TaskResponse.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -473,21 +476,20 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Task expectedResult = Task.builder()
+        Task restoredTask = Task.builder()
                 .id(2L)
                 .userId(user.getId())
                 .title("Restored test task")
                 .status(TaskStatus.PROCESSED)
                 .build();
-
-        when(taskService.restoreTask(expectedResult.getId(), user)).thenReturn(Mono.just(expectedResult));
+        when(taskService.restoreTask(restoredTask.getId(), user)).thenReturn(Mono.just(restoredTask));
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
-                .delete().uri("/api/v1/tasks/completed/" + expectedResult.getId())
+                .delete().uri("/api/v1/tasks/completed/" + restoredTask.getId())
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task.class).isEqualTo(expectedResult);
+                .expectBody(TaskResponse.class).isEqualTo(new TaskResponse(restoredTask));
     }
 
     @Test

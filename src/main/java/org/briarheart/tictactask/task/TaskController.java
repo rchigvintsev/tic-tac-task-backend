@@ -1,8 +1,11 @@
 package org.briarheart.tictactask.task;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.tictactask.controller.AbstractController;
 import org.briarheart.tictactask.task.comment.TaskComment;
+import org.briarheart.tictactask.task.recurrence.TaskRecurrenceStrategy;
 import org.briarheart.tictactask.task.tag.Tag;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -16,6 +19,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import javax.validation.constraints.FutureOrPresent;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.net.URI;
 import java.time.LocalDateTime;
 
@@ -31,8 +37,8 @@ public class TaskController extends AbstractController {
     private final TaskService taskService;
 
     @GetMapping("/unprocessed")
-    public Flux<Task> getUnprocessedTasks(Authentication authentication, Pageable pageable) {
-        return taskService.getUnprocessedTasks(getUser(authentication), pageable);
+    public Flux<TaskResponse> getUnprocessedTasks(Authentication authentication, Pageable pageable) {
+        return taskService.getUnprocessedTasks(getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @GetMapping("/unprocessed/count")
@@ -41,7 +47,7 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/processed")
-    public Flux<Task> getProcessedTasks(
+    public Flux<TaskResponse> getProcessedTasks(
             @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
             @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
             Authentication authentication,
@@ -50,9 +56,10 @@ public class TaskController extends AbstractController {
     ) {
         MultiValueMap<String, String> queryParams = request.getQueryParams();
         if (!queryParams.containsKey("deadlineFrom") && !queryParams.containsKey("deadlineTo")) {
-            return taskService.getProcessedTasks(getUser(authentication), pageable);
+            return taskService.getProcessedTasks(getUser(authentication), pageable).map(TaskResponse::new);
         }
-        return taskService.getProcessedTasks(deadlineFrom, deadlineTo, getUser(authentication), pageable);
+        return taskService.getProcessedTasks(deadlineFrom, deadlineTo, getUser(authentication), pageable)
+                .map(TaskResponse::new);
     }
 
     @GetMapping("/processed/count")
@@ -70,8 +77,8 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/uncompleted")
-    public Flux<Task> getUncompletedTasks(Authentication authentication, Pageable pageable) {
-        return taskService.getUncompletedTasks(getUser(authentication), pageable);
+    public Flux<TaskResponse> getUncompletedTasks(Authentication authentication, Pageable pageable) {
+        return taskService.getUncompletedTasks(getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @GetMapping("/uncompleted/count")
@@ -80,45 +87,48 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/completed")
-    public Flux<Task> getCompletedTasks(Authentication authentication, Pageable pageable) {
-        return taskService.getCompletedTasks(getUser(authentication), pageable);
+    public Flux<TaskResponse> getCompletedTasks(Authentication authentication, Pageable pageable) {
+        return taskService.getCompletedTasks(getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @GetMapping("/{id}")
-    public Mono<Task> getTask(@PathVariable("id") Long id, Authentication authentication) {
-        return taskService.getTask(id, getUser(authentication));
+    public Mono<TaskResponse> getTask(@PathVariable("id") Long id, Authentication authentication) {
+        return taskService.getTask(id, getUser(authentication)).map(TaskResponse::new);
     }
 
     @PostMapping
-    public Mono<ResponseEntity<Task>> createTask(@Valid @RequestBody Task task,
-                                                 Authentication authentication,
-                                                 ServerHttpRequest request) {
+    public Mono<ResponseEntity<TaskResponse>> createTask(@Valid @RequestBody CreateTaskRequest createRequest,
+                                                         Authentication authentication,
+                                                         ServerHttpRequest request) {
+        Task task = createRequest.toTask();
         task.setUserId(getUser(authentication).getId());
         return taskService.createTask(task).map(createdTask -> {
             URI taskLocation = UriComponentsBuilder.fromHttpRequest(request)
                     .path("/{id}")
                     .buildAndExpand(createdTask.getId())
                     .toUri();
-            return ResponseEntity.created(taskLocation).body(createdTask);
+            return ResponseEntity.created(taskLocation).body(new TaskResponse(createdTask));
         });
     }
 
     @PutMapping("/{id}")
-    public Mono<Task> updateTask(@Valid @RequestBody Task task, @PathVariable Long id, Authentication authentication) {
+    public Mono<TaskResponse> updateTask(@Valid @RequestBody UpdateTaskRequest updateRequest,
+                                         @PathVariable Long id,
+                                         Authentication authentication) {
+        Task task = updateRequest.toTask();
         task.setId(id);
         task.setUserId(getUser(authentication).getId());
-
-        return taskService.updateTask(task);
+        return taskService.updateTask(task).map(TaskResponse::new);
     }
 
     @PutMapping("/completed/{id}")
-    public Mono<Task> completeTask(@PathVariable Long id, Authentication authentication) {
-        return taskService.completeTask(id, getUser(authentication));
+    public Mono<TaskResponse> completeTask(@PathVariable Long id, Authentication authentication) {
+        return taskService.completeTask(id, getUser(authentication)).map(TaskResponse::new);
     }
 
     @DeleteMapping("/completed/{id}")
-    public Mono<Task> restoreTask(@PathVariable Long id, Authentication authentication) {
-        return taskService.restoreTask(id, getUser(authentication));
+    public Mono<TaskResponse> restoreTask(@PathVariable Long id, Authentication authentication) {
+        return taskService.restoreTask(id, getUser(authentication)).map(TaskResponse::new);
     }
 
     @DeleteMapping("/{id}")
@@ -163,5 +173,63 @@ public class TaskController extends AbstractController {
         comment.setUserId(getUser(authentication).getId());
         comment.setTaskId(taskId);
         return taskService.addComment(comment);
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TaskResponse {
+        private Long id;
+        private Long taskListId;
+        private String title;
+        private String description;
+        private TaskStatus status;
+        private LocalDateTime createdAt;
+        private LocalDateTime deadline;
+        private boolean deadlineTimeExplicitlySet;
+        private TaskRecurrenceStrategy recurrenceStrategy;
+
+        public TaskResponse(Task task) {
+            this.id = task.getId();
+            this.taskListId = task.getTaskListId();
+            this.title = task.getTitle();
+            this.description = task.getDescription();
+            this.status = task.getStatus();
+            this.createdAt = task.getCreatedAt();
+            this.deadline = task.getDeadline();
+            this.deadlineTimeExplicitlySet = task.isDeadlineTimeExplicitlySet();
+            this.recurrenceStrategy = task.getRecurrenceStrategy();
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static abstract class CreateOrUpdateTaskRequest {
+        @NotBlank
+        @Size(max = 255)
+        private String title;
+        @Size(max = 10_000)
+        private String description;
+        private TaskStatus status;
+        @FutureOrPresent
+        private LocalDateTime deadline;
+        private boolean deadlineTimeExplicitlySet;
+        private TaskRecurrenceStrategy recurrenceStrategy;
+
+        public Task toTask() {
+            return Task.builder()
+                    .title(title)
+                    .description(description)
+                    .status(status)
+                    .deadline(deadline)
+                    .deadlineTimeExplicitlySet(deadlineTimeExplicitlySet)
+                    .recurrenceStrategy(recurrenceStrategy)
+                    .build();
+        }
+    }
+
+    public static class CreateTaskRequest extends CreateOrUpdateTaskRequest {
+    }
+
+    public static class UpdateTaskRequest extends CreateOrUpdateTaskRequest {
     }
 }

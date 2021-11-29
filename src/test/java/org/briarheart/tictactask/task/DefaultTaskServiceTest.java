@@ -462,6 +462,7 @@ class DefaultTaskServiceTest {
         assertEquals(updatedTask, result);
     }
 
+    // Task should be added to task list using separate service org.briarheart.tictactask.task.list.TaskListService
     @Test
     void shouldNotAllowToChangeTaskListIdFieldOnTaskUpdate() {
         Task task = Task.builder()
@@ -519,7 +520,8 @@ class DefaultTaskServiceTest {
         updatedTask.setStatus(TaskStatus.COMPLETED);
 
         Task result = taskService.updateTask(updatedTask).block();
-        assertEquals(task, result);
+        assertNotNull(result);
+        assertSame(TaskStatus.UNPROCESSED, result.getStatus());
     }
 
     @Test

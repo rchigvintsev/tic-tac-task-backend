@@ -5,9 +5,6 @@ import org.briarheart.tictactask.task.recurrence.TaskRecurrenceStrategy;
 import org.springframework.data.annotation.Id;
 import org.springframework.util.Assert;
 
-import javax.validation.constraints.FutureOrPresent;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 /**
@@ -22,16 +19,12 @@ public class Task {
     private Long id;
     private Long userId;
     private Long taskListId;
-    @NotBlank
-    @Size(max = 255)
     private String title;
-    @Size(max = 10_000)
     private String description;
     private TaskStatus previousStatus;
     @Builder.Default
     private TaskStatus status = TaskStatus.UNPROCESSED;
     private LocalDateTime createdAt;
-    @FutureOrPresent
     private LocalDateTime deadline;
     private boolean deadlineTimeExplicitlySet;
     private TaskRecurrenceStrategy recurrenceStrategy;
@@ -53,5 +46,6 @@ public class Task {
         this.createdAt = other.createdAt;
         this.deadline = other.deadline;
         this.deadlineTimeExplicitlySet = other.deadlineTimeExplicitlySet;
+        this.recurrenceStrategy = other.recurrenceStrategy;
     }
 }

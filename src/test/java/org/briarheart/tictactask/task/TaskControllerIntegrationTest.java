@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.task;
 
+import org.briarheart.tictactask.task.TaskController.TaskResponse;
 import org.briarheart.tictactask.util.TestAccessTokens;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,11 +35,12 @@ class TaskControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);
 
-        ResponseEntity<Task[]> response = restTemplate.exchange("http://localhost:{port}/api/v1/tasks/unprocessed",
-                HttpMethod.GET, new HttpEntity<>(headers), Task[].class, port);
+        String url = "http://localhost:{port}/api/v1/tasks/unprocessed";
+        ResponseEntity<TaskResponse[]> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
+                TaskResponse[].class, port);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        Task[] tasks = response.getBody();
+        TaskResponse[] tasks = response.getBody();
         assertTrue(tasks != null && tasks.length > 0);
     }
 
@@ -49,8 +51,8 @@ class TaskControllerIntegrationTest {
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         String body = "{\"title\": \"Do morning exercises\", \"recurrenceStrategy\": {\"type\": \"daily\"}}";
 
-        ResponseEntity<Task> response = restTemplate.exchange("http://localhost:{port}/api/v1/tasks",
-                HttpMethod.POST, new HttpEntity<>(body, headers), Task.class, port);
+        ResponseEntity<TaskResponse> response = restTemplate.exchange("http://localhost:{port}/api/v1/tasks",
+                HttpMethod.POST, new HttpEntity<>(body, headers), TaskResponse.class, port);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
 
@@ -60,8 +62,9 @@ class TaskControllerIntegrationTest {
         addCookieHeader(headers);
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        ResponseEntity<Void> response = restTemplate.exchange("http://localhost:{port}/api/v1/tasks/{taskId}/tags/{tagId}",
-                HttpMethod.PUT, new HttpEntity<>(headers), Void.class, port, 1, 1);
+        String url = "http://localhost:{port}/api/v1/tasks/{taskId}/tags/{tagId}";
+        ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.PUT, new HttpEntity<>(headers),
+                Void.class, port, 1, 1);
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
     }
 

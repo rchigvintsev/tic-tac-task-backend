@@ -155,15 +155,13 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> createTask(Task task) {
         Assert.notNull(task, "Task must not be null");
         return Mono.defer(() -> {
-            Task newTask = new Task();
-            newTask.setUserId(task.getUserId());
-            newTask.setTitle(task.getTitle());
-            newTask.setDescription(task.getDescription());
+            Task newTask = new Task(task);
+            newTask.setId(null);
+            newTask.setTaskListId(null);
+            newTask.setPreviousStatus(null);
             newTask.setStatus(determineTaskStatus(task));
             newTask.setCreatedAt(getCurrentTime());
-            newTask.setDeadline(task.getDeadline());
             newTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
-            newTask.setRecurrenceStrategy(task.getRecurrenceStrategy());
             return taskRepository.save(newTask).doOnSuccess(t -> log.debug("Task with id {} is created", t.getId()));
         });
     }
@@ -173,17 +171,16 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> updateTask(Task task) throws EntityNotFoundException {
         Assert.notNull(task, "Task must not be null");
         return findTask(task.getId(), task.getUserId()).flatMap(existingTask -> {
-            existingTask.setTitle(task.getTitle());
-            existingTask.setDescription(task.getDescription());
-            TaskStatus newStatus = determineTaskStatus(task);
-            if (newStatus != existingTask.getStatus()) {
-                existingTask.setPreviousStatus(existingTask.getStatus());
-                existingTask.setStatus(newStatus);
+            Task updatedTask = new Task(task);
+            updatedTask.setTaskListId(existingTask.getTaskListId());
+            updatedTask.setPreviousStatus(existingTask.getPreviousStatus());
+            updatedTask.setStatus(determineTaskStatus(task));
+            if (updatedTask.getStatus() != existingTask.getStatus()) {
+                updatedTask.setPreviousStatus(existingTask.getStatus());
             }
-            existingTask.setDeadline(task.getDeadline());
-            existingTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
-            existingTask.setRecurrenceStrategy(task.getRecurrenceStrategy());
-            return taskRepository.save(existingTask)
+            updatedTask.setCreatedAt(existingTask.getCreatedAt());
+            updatedTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
+            return taskRepository.save(updatedTask)
                     .doOnSuccess(t -> log.debug("Task with id {} is updated", t.getId()));
         });
     }
