@@ -6,7 +6,10 @@ import org.briarheart.tictactask.task.TaskController.CreateTaskRequest;
 import org.briarheart.tictactask.task.TaskController.TaskResponse;
 import org.briarheart.tictactask.task.TaskController.UpdateTaskRequest;
 import org.briarheart.tictactask.task.comment.TaskComment;
+import org.briarheart.tictactask.task.comment.TaskCommentController.CreateTaskCommentRequest;
+import org.briarheart.tictactask.task.comment.TaskCommentController.TaskCommentResponse;
 import org.briarheart.tictactask.task.tag.Tag;
+import org.briarheart.tictactask.task.tag.TagController.TagResponse;
 import org.briarheart.tictactask.user.User;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -524,7 +527,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Tag[].class).isEqualTo(new Tag[]{tag});
+                .expectBody(TagResponse[].class).isEqualTo(new TagResponse[]{new TagResponse(tag)});
     }
 
     @Test
@@ -586,7 +589,8 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TaskComment[].class).isEqualTo(new TaskComment[]{comment});
+                .expectBody(TaskCommentResponse[].class)
+                    .isEqualTo(new TaskCommentResponse[]{new TaskCommentResponse(comment)});
     }
 
     @Test
@@ -603,21 +607,21 @@ class TaskControllerTest {
             return Mono.just(c);
         });
 
-        TaskComment comment = TaskComment.builder().commentText("Test comment").build();
+        CreateTaskCommentRequest createRequest = new CreateTaskCommentRequest();
+        createRequest.setCommentText("Test comment");
 
-        TaskComment expectedResult = new TaskComment(comment);
+        TaskCommentResponse expectedResult = new TaskCommentResponse(createRequest.toTaskComment());
         expectedResult.setId(commentId);
-        expectedResult.setUserId(user.getId());
         expectedResult.setTaskId(taskId);
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks/" + taskId + "/comments")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isCreated()
-                .expectBody(TaskComment.class).isEqualTo(expectedResult);
+                .expectBody(TaskCommentResponse.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -625,12 +629,12 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskComment comment = TaskComment.builder().build();
+        CreateTaskCommentRequest createRequest = new CreateTaskCommentRequest();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks/2/comments")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -644,12 +648,13 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskComment comment = TaskComment.builder().commentText(" ").build();
+        CreateTaskCommentRequest createRequest = new CreateTaskCommentRequest();
+        createRequest.setCommentText(" ");
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks/2/comments")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -663,12 +668,13 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskComment comment = TaskComment.builder().commentText("L" + "o".repeat(9993) + "ng text").build();
+        CreateTaskCommentRequest createRequest = new CreateTaskCommentRequest();
+        createRequest.setCommentText("L" + "o".repeat(9993) + "ng text");
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks/2/comments")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()

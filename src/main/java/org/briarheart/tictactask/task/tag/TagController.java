@@ -1,5 +1,7 @@
 package org.briarheart.tictactask.task.tag;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.tictactask.controller.AbstractController;
 import org.briarheart.tictactask.task.Task;
@@ -70,5 +72,19 @@ public class TagController extends AbstractController {
                                           Authentication authentication,
                                           Pageable pageable) {
         return tagService.getUncompletedTasks(tagId, getUser(authentication), pageable);
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TagResponse {
+        private Long id;
+        private String name;
+        private Integer color;
+
+        public TagResponse(Tag tag) {
+            this.id = tag.getId();
+            this.name = tag.getName();
+            this.color = tag.getColor();
+        }
     }
 }

@@ -275,11 +275,10 @@ public class DefaultTaskService implements TaskService {
     public Mono<TaskComment> addComment(TaskComment comment) throws EntityNotFoundException {
         Assert.notNull(comment, "Task comment must not be null");
         return findTask(comment.getTaskId(), comment.getUserId()).flatMap(task -> {
-            TaskComment newComment = new TaskComment();
-            newComment.setTaskId(comment.getTaskId());
-            newComment.setUserId(comment.getUserId());
-            newComment.setCommentText(comment.getCommentText());
+            TaskComment newComment = new TaskComment(comment);
+            newComment.setId(null);
             newComment.setCreatedAt(getCurrentTime());
+            newComment.setUpdatedAt(null);
             return taskCommentRepository.save(newComment).doOnSuccess(c
                     -> log.debug("Comment with id {} is added to task with id {}", c.getId(), c.getTaskId()));
         });

@@ -5,8 +5,10 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.tictactask.controller.AbstractController;
 import org.briarheart.tictactask.task.comment.TaskComment;
+import org.briarheart.tictactask.task.comment.TaskCommentController.CreateTaskCommentRequest;
+import org.briarheart.tictactask.task.comment.TaskCommentController.TaskCommentResponse;
 import org.briarheart.tictactask.task.recurrence.TaskRecurrenceStrategy;
-import org.briarheart.tictactask.task.tag.Tag;
+import org.briarheart.tictactask.task.tag.TagController.TagResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -138,8 +140,8 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/{taskId}/tags")
-    public Flux<Tag> getTags(@PathVariable("taskId") Long taskId, Authentication authentication) {
-        return taskService.getTags(taskId, getUser(authentication));
+    public Flux<TagResponse> getTags(@PathVariable("taskId") Long taskId, Authentication authentication) {
+        return taskService.getTags(taskId, getUser(authentication)).map(TagResponse::new);
     }
 
     @PutMapping("/{taskId}/tags/{tagId}")
@@ -159,20 +161,21 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/{taskId}/comments")
-    public Flux<TaskComment> getComments(@PathVariable("taskId") Long taskId,
-                                         Authentication authentication,
-                                         Pageable pageable) {
-        return taskService.getComments(taskId, getUser(authentication), pageable);
+    public Flux<TaskCommentResponse> getComments(@PathVariable("taskId") Long taskId,
+                                                 Authentication authentication,
+                                                 Pageable pageable) {
+        return taskService.getComments(taskId, getUser(authentication), pageable).map(TaskCommentResponse::new);
     }
 
     @PostMapping("/{taskId}/comments")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<TaskComment> addComment(@PathVariable("taskId") Long taskId,
-                                        @Valid @RequestBody TaskComment comment,
-                                        Authentication authentication) {
+    public Mono<TaskCommentResponse> addComment(@PathVariable("taskId") Long taskId,
+                                                @Valid @RequestBody CreateTaskCommentRequest createRequest,
+                                                Authentication authentication) {
+        TaskComment comment = createRequest.toTaskComment();
         comment.setUserId(getUser(authentication).getId());
         comment.setTaskId(taskId);
-        return taskService.addComment(comment);
+        return taskService.addComment(comment).map(TaskCommentResponse::new);
     }
 
     @Data
