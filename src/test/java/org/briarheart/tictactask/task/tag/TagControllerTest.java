@@ -4,6 +4,10 @@ import org.briarheart.tictactask.config.PermitAllSecurityConfig;
 import org.briarheart.tictactask.data.EntityAlreadyExistsException;
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.task.Task;
+import org.briarheart.tictactask.task.TaskController.TaskResponse;
+import org.briarheart.tictactask.task.tag.TagController.CreateTagRequest;
+import org.briarheart.tictactask.task.tag.TagController.TagResponse;
+import org.briarheart.tictactask.task.tag.TagController.UpdateTagRequest;
 import org.briarheart.tictactask.user.User;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -65,7 +69,7 @@ class TagControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Tag[].class).isEqualTo(new Tag[]{tag});
+                .expectBody(TagResponse[].class).isEqualTo(new TagResponse[]{new TagResponse(tag)});
     }
 
     @Test
@@ -81,7 +85,7 @@ class TagControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Tag.class).isEqualTo(tag);
+                .expectBody(TagResponse.class).isEqualTo(new TagResponse(tag));
     }
 
     @Test
@@ -117,7 +121,7 @@ class TagControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[]{task});
+                .expectBody(TaskResponse[].class).isEqualTo(new TaskResponse[]{new TaskResponse(task)});
     }
 
     @Test
@@ -133,21 +137,21 @@ class TagControllerTest {
             return Mono.just(t);
         });
 
-        Tag tag = Tag.builder().name("New tag").build();
+        CreateTagRequest createRequest = new CreateTagRequest();
+        createRequest.setName("New tag");
 
-        Tag expectedResult = new Tag(tag);
+        TagResponse expectedResult = new TagResponse(createRequest.toTag());
         expectedResult.setId(tagId);
-        expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(tag)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isCreated()
                 .expectHeader().valueEquals("Location", "/api/v1/tags/" + tagId)
-                .expectBody(Tag.class).isEqualTo(expectedResult);
+                .expectBody(TagResponse.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -155,12 +159,12 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Tag tag = Tag.builder().build();
+        CreateTagRequest createRequest = new CreateTagRequest();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(tag)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -174,12 +178,13 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Tag tag = Tag.builder().name(" ").build();
+        CreateTagRequest createRequest = new CreateTagRequest();
+        createRequest.setName(" ");
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(tag)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -193,12 +198,13 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Tag tag = Tag.builder().name("L" + "o".repeat(43) + "ng name").build();
+        CreateTagRequest createRequest = new CreateTagRequest();
+        createRequest.setName("L" + "o".repeat(43) + "ng name");
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(tag)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -216,12 +222,13 @@ class TagControllerTest {
         when(tagService.createTag(any(Tag.class)))
                 .thenReturn(Mono.error(new EntityAlreadyExistsException(errorMessage)));
 
-        Tag tag = Tag.builder().name("New tag").build();
+        CreateTagRequest createRequest = new CreateTagRequest();
+        createRequest.setName("New tag");
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tags")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(tag)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -238,20 +245,20 @@ class TagControllerTest {
 
         long tagId = 2L;
 
-        Tag tag = Tag.builder().name("Updated test tag").build();
+        UpdateTagRequest updateRequest = new UpdateTagRequest();
+        updateRequest.setName("Updated test tag");
 
-        Tag expectedResult = new Tag(tag);
+        TagResponse expectedResult = new TagResponse(updateRequest.toTag());
         expectedResult.setId(tagId);
-        expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .put().uri("/api/v1/tags/" + tagId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(tag)
+                .bodyValue(updateRequest)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Tag.class).isEqualTo(expectedResult);
+                .expectBody(TagResponse.class).isEqualTo(expectedResult);
     }
 
     @Test

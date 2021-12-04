@@ -4,9 +4,6 @@ import io.jsonwebtoken.lang.Assert;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-
 /**
  * @author Roman Chigvintsev
  */
@@ -18,8 +15,6 @@ public class Tag {
     @Id
     private Long id;
     private Long userId;
-    @NotBlank
-    @Size(max = 50)
     private String name;
     private Integer color;
 

@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.tictactask.controller.AbstractController;
-import org.briarheart.tictactask.task.Task;
+import org.briarheart.tictactask.task.TaskController.TaskResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +16,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.net.URI;
 
 /**
@@ -30,35 +32,38 @@ public class TagController extends AbstractController {
     private final TagService tagService;
 
     @GetMapping
-    public Flux<Tag> getTags(Authentication authentication) {
-        return tagService.getTags(getUser(authentication));
+    public Flux<TagResponse> getTags(Authentication authentication) {
+        return tagService.getTags(getUser(authentication)).map(TagResponse::new);
     }
 
     @GetMapping("/{id}")
-    public Mono<Tag> getTag(@PathVariable Long id, Authentication authentication) {
-        return tagService.getTag(id, getUser(authentication));
+    public Mono<TagResponse> getTag(@PathVariable Long id, Authentication authentication) {
+        return tagService.getTag(id, getUser(authentication)).map(TagResponse::new);
     }
 
     @PostMapping
-    public Mono<ResponseEntity<Tag>> createTag(@Valid @RequestBody Tag tag,
-                                               Authentication authentication,
-                                               ServerHttpRequest request) {
+    public Mono<ResponseEntity<TagResponse>> createTag(@Valid @RequestBody CreateTagRequest createRequest,
+                                                       Authentication authentication,
+                                                       ServerHttpRequest request) {
+        Tag tag = createRequest.toTag();
         tag.setUserId(getUser(authentication).getId());
         return tagService.createTag(tag).map(createdTag -> {
             URI tagLocation = UriComponentsBuilder.fromHttpRequest(request)
                     .path("/{id}")
                     .buildAndExpand(createdTag.getId())
                     .toUri();
-            return ResponseEntity.created(tagLocation).body(createdTag);
+            return ResponseEntity.created(tagLocation).body(new TagResponse(tag));
         });
     }
 
     @PutMapping("/{id}")
-    public Mono<Tag> updateTag(@Valid @RequestBody Tag tag, @PathVariable Long id, Authentication authentication) {
+    public Mono<TagResponse> updateTag(@Valid @RequestBody UpdateTagRequest updateRequest,
+                                       @PathVariable Long id,
+                                       Authentication authentication) {
+        Tag tag = updateRequest.toTag();
         tag.setId(id);
         tag.setUserId(getUser(authentication).getId());
-
-        return tagService.updateTag(tag);
+        return tagService.updateTag(tag).map(TagResponse::new);
     }
 
     @DeleteMapping("/{id}")
@@ -68,10 +73,10 @@ public class TagController extends AbstractController {
     }
 
     @GetMapping("/{tagId}/tasks/uncompleted")
-    public Flux<Task> getUncompletedTasks(@PathVariable("tagId") Long tagId,
-                                          Authentication authentication,
-                                          Pageable pageable) {
-        return tagService.getUncompletedTasks(tagId, getUser(authentication), pageable);
+    public Flux<TaskResponse> getUncompletedTasks(@PathVariable("tagId") Long tagId,
+                                                  Authentication authentication,
+                                                  Pageable pageable) {
+        return tagService.getUncompletedTasks(tagId, getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @Data
@@ -86,5 +91,24 @@ public class TagController extends AbstractController {
             this.name = tag.getName();
             this.color = tag.getColor();
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public abstract static class CreateOrUpdateTagRequest {
+        @NotBlank
+        @Size(max = 50)
+        private String name;
+        private Integer color;
+
+        public Tag toTag() {
+            return Tag.builder().name(name).color(color).build();
+        }
+    }
+
+    public static class CreateTagRequest extends CreateOrUpdateTagRequest {
+    }
+
+    public static class UpdateTagRequest extends CreateOrUpdateTagRequest {
     }
 }

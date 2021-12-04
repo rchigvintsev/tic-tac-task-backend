@@ -1,6 +1,6 @@
 package org.briarheart.tictactask.task.tag;
 
-import org.briarheart.tictactask.task.Task;
+import org.briarheart.tictactask.task.TaskController.TaskResponse;
 import org.briarheart.tictactask.util.TestAccessTokens;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,11 +36,11 @@ class TagControllerIntegrationTest {
         addCookieHeader(headers);
 
         String url = "http://localhost:{port}/api/v1/tags/{tagId}/tasks/uncompleted";
-        ResponseEntity<Task[]> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
-                Task[].class, port, 1);
+        ResponseEntity<TaskResponse[]> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
+                TaskResponse[].class, port, 1);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        Task[] tasks = response.getBody();
+        TaskResponse[] tasks = response.getBody();
         assertTrue(tasks != null && tasks.length > 0);
     }
 
