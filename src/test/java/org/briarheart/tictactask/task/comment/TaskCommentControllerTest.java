@@ -1,6 +1,8 @@
 package org.briarheart.tictactask.task.comment;
 
 import org.briarheart.tictactask.config.PermitAllSecurityConfig;
+import org.briarheart.tictactask.task.comment.TaskCommentController.TaskCommentResponse;
+import org.briarheart.tictactask.task.comment.TaskCommentController.UpdateTaskCommentRequest;
 import org.briarheart.tictactask.user.User;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,21 +60,20 @@ class TaskCommentControllerTest {
 
         long commentId = 2L;
 
-        TaskComment comment = TaskComment.builder().commentText("Updated test comment text").build();
+        UpdateTaskCommentRequest updateRequest = new UpdateTaskCommentRequest();
+        updateRequest.setCommentText("Updated test comment text");
 
-        TaskComment expectedResult = new TaskComment(comment);
+        TaskCommentResponse expectedResult = new TaskCommentResponse(updateRequest.toTaskComment());
         expectedResult.setId(commentId);
-        expectedResult.setUserId(user.getId());
-
 
         testClient.mutateWith(mockAuthentication(authentication)).mutateWith(csrf())
                 .put().uri("/api/v1/task-comments/" + commentId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(comment)
+                .bodyValue(updateRequest)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TaskComment.class).isEqualTo(expectedResult);
+                .expectBody(TaskCommentResponse.class).isEqualTo(expectedResult);
     }
 
     @Test

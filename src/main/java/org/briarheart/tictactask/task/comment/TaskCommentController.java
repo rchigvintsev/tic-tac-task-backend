@@ -26,12 +26,13 @@ public class TaskCommentController extends AbstractController {
     private final TaskCommentService taskCommentService;
 
     @PutMapping("/{id}")
-    public Mono<TaskComment> updateComment(@Valid @RequestBody TaskComment comment,
-                                           @PathVariable Long id,
-                                           Authentication authentication) {
+    public Mono<TaskCommentResponse> updateComment(@Valid @RequestBody UpdateTaskCommentRequest updateRequest,
+                                                   @PathVariable Long id,
+                                                   Authentication authentication) {
+        TaskComment comment = updateRequest.toTaskComment();
         comment.setId(id);
         comment.setUserId(getUser(authentication).getId());
-        return taskCommentService.updateComment(comment);
+        return taskCommentService.updateComment(comment).map(TaskCommentResponse::new);
     }
 
     @DeleteMapping("/{id}")
@@ -60,7 +61,7 @@ public class TaskCommentController extends AbstractController {
 
     @Data
     @NoArgsConstructor
-    public static class CreateTaskCommentRequest {
+    public static abstract class CreateOrUpdateTaskCommentRequest {
         @NotBlank
         @Size(max = 10_000)
         private String commentText;
@@ -68,5 +69,11 @@ public class TaskCommentController extends AbstractController {
         public TaskComment toTaskComment() {
             return TaskComment.builder().commentText(commentText).build();
         }
+    }
+
+    public static class CreateTaskCommentRequest extends CreateOrUpdateTaskCommentRequest {
+    }
+
+    public static class UpdateTaskCommentRequest extends CreateOrUpdateTaskCommentRequest {
     }
 }
