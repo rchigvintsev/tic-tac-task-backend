@@ -10,8 +10,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,22 +26,17 @@ import java.util.HashSet;
 public class User implements UserDetails {
     @Id
     private Long id;
-    @NotBlank
-    @Size(max = 255)
     private String email;
     @Builder.Default
     private boolean emailConfirmed = false;
     @Version
     private long version;
-    @Size(max = 50)
     private String password;
     @Builder.Default
     private boolean admin = false;
     @Builder.Default
-    private Boolean enabled = false;
-    @Size(max = 255)
+    private boolean enabled = false;
     private String fullName;
-    @Size(max = 2_000)
     private String profilePictureUrl;
     private LocalDateTime createdAt;
     @Builder.Default

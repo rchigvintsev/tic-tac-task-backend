@@ -3,6 +3,9 @@ package org.briarheart.tictactask.user;
 import org.briarheart.tictactask.config.I18nConfig;
 import org.briarheart.tictactask.config.PermitAllSecurityConfig;
 import org.briarheart.tictactask.data.EntityNotFoundException;
+import org.briarheart.tictactask.user.UserController.CreateUserRequest;
+import org.briarheart.tictactask.user.UserController.UpdateUserRequest;
+import org.briarheart.tictactask.user.UserController.UserResponse;
 import org.briarheart.tictactask.user.email.EmailConfirmationService;
 import org.briarheart.tictactask.user.password.InvalidPasswordException;
 import org.briarheart.tictactask.user.password.PasswordService;
@@ -28,11 +31,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -119,7 +120,7 @@ class UserControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(User[].class).isEqualTo(new User[]{user});
+                .expectBody(UserResponse[].class).isEqualTo(new UserResponse[]{new UserResponse(user)});
     }
 
     @Test
@@ -135,14 +136,19 @@ class UserControllerTest {
 
     @Test
     void shouldCreateUser() {
-        User user = User.builder().email("alice@mail.com").password("secret").fullName("Alice").build();
-        when(userService.createUser(any(User.class), eq(Locale.ENGLISH))).thenReturn(Mono.just(user));
+        when(userService.createUser(any(User.class), eq(Locale.ENGLISH)))
+                .thenAnswer(args -> Mono.just(args.getArgument(0)));
+
+        CreateUserRequest createRequest = new CreateUserRequest();
+        createRequest.setEmail("alice@mail.com");
+        createRequest.setPassword("secret");
+        createRequest.setFullName("Alice");
 
         testClient.mutateWith(csrf())
                 .post().uri("/api/v1/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Accept-Language", "en")
-                .bodyValue(user)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isCreated();
@@ -272,21 +278,21 @@ class UserControllerTest {
                 .build();
         Authentication authenticationMock = createAuthentication(authenticatedUser);
 
-        User updatedUser = new User(authenticatedUser);
-        updatedUser.setFullName("Alice Wonderland");
+        UpdateUserRequest updateRequest = new UpdateUserRequest();
+        updateRequest.setFullName("Alice Wonderland");
 
-        User expectedResult = new User(updatedUser);
-        expectedResult.setEnabled(null);
-        expectedResult.setAuthorities(new ArrayList<>());
+        UserResponse expectedResult = new UserResponse(authenticatedUser);
+        expectedResult.setFullName(updateRequest.getFullName());
 
         testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
-                .put().uri("/api/v1/users/{userId}", updatedUser.getId())
+                .put().uri("/api/v1/users/{userId}", authenticatedUser.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(updatedUser)
+                .bodyValue(updateRequest)
                 .exchange()
 
-                .expectStatus().isOk()
-                .expectBody(User.class).isEqualTo(expectedResult);
+                .expectStatus().isOk();
+
+        verify(userService, times(1)).updateUser(any(User.class));
     }
 
     @Test
@@ -300,21 +306,21 @@ class UserControllerTest {
                 .build();
         Authentication authenticationMock = createAuthentication(authenticatedUser);
 
-        User updatedUser = new User(authenticatedUser);
-        updatedUser.setEnabled(false);
+        UpdateUserRequest updateRequest = new UpdateUserRequest();
+        updateRequest.setEnabled(false);
 
-        User expectedResult = new User(updatedUser);
-        expectedResult.setEnabled(null);
-        expectedResult.setAuthorities(new ArrayList<>());
-
-        testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
-                .put().uri("/api/v1/users/{userId}", updatedUser.getId())
+        UserResponse response = testClient.mutateWith(csrf()).mutateWith(mockAuthentication(authenticationMock))
+                .put().uri("/api/v1/users/{userId}", authenticatedUser.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(updatedUser)
+                .bodyValue(updateRequest)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(User.class).isEqualTo(expectedResult);
+
+                .returnResult(UserResponse.class).getResponseBody().blockFirst();
+
+        assertNotNull(response);
+        assertTrue(response.getEnabled());
     }
 
     @Test

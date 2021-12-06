@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.user;
 
+import lombok.*;
 import org.briarheart.tictactask.controller.AbstractController;
 import org.briarheart.tictactask.controller.RequiredFormParameterMissingException;
 import org.briarheart.tictactask.data.EntityNotFoundException;
@@ -31,8 +32,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.Locale;
 
 /**
@@ -79,18 +83,18 @@ public class UserController extends AbstractController {
     }
 
     @GetMapping
-    public Flux<User> getUsers(Authentication authentication, Pageable pageable) {
+    public Flux<UserResponse> getUsers(Authentication authentication, Pageable pageable) {
         User user = getUser(authentication);
         if (!user.isAdmin()) {
             return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN));
         }
-        return userService.getUsers(pageable);
+        return userService.getUsers(pageable).map(UserResponse::new);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<User> createUser(@Valid @RequestBody User user, Locale locale) {
-        return userService.createUser(user, locale);
+    public Mono<UserResponse> createUser(@Valid @RequestBody CreateUserRequest createRequest, Locale locale) {
+        return userService.createUser(createRequest.toUser(), locale).map(UserResponse::new);
     }
 
     @PostMapping("/{id}/email/confirmation/{token}")
@@ -139,13 +143,16 @@ public class UserController extends AbstractController {
     }
 
     @PutMapping("/{id}")
-    public Mono<User> updateUser(@Valid @RequestBody User user, @PathVariable Long id, Authentication authentication) {
+    public Mono<UserResponse> updateUser(@Valid @RequestBody UpdateUserRequest updateRequest,
+                                         @PathVariable Long id,
+                                         Authentication authentication) {
+        User user = updateRequest.toUser();
         user.setId(id);
         User currentUser = getUser(authentication);
         if (currentUser.getId().equals(id)) {
-            user.setEnabled(null);
+            user.setEnabled(currentUser.isEnabled());
         }
-        return ensureValidUserId(id, authentication).then(userService.updateUser(user));
+        return ensureValidUserId(id, authentication).then(userService.updateUser(user)).map(UserResponse::new);
     }
 
     @GetMapping(path = "/{id}/profile-picture")
@@ -204,5 +211,77 @@ public class UserController extends AbstractController {
             return Mono.error(new EntityNotFoundException("User with id " + id + " is not found"));
         }
         return Mono.empty();
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UserResponse {
+        private Long id;
+        private String email;
+        private String password;
+        private boolean admin;
+        private Boolean enabled;
+        private String fullName;
+        private String profilePictureUrl;
+        private LocalDateTime createdAt;
+
+        public UserResponse(User user) {
+            this.id = user.getId();
+            this.email = user.getEmail();
+            this.password = user.getPassword();
+            this.admin = user.isAdmin();
+            this.enabled = user.isEnabled();
+            this.fullName = user.getFullName();
+            this.profilePictureUrl = user.getProfilePictureUrl();
+            this.createdAt = user.getCreatedAt();
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static abstract class CreateOrUpdateUserRequest {
+        @Size(max = 255)
+        private String fullName;
+
+        public User toUser() {
+            return User.builder().fullName(fullName).build();
+        }
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class CreateUserRequest extends CreateOrUpdateUserRequest {
+        @NotBlank
+        @Size(max = 255)
+        private String email;
+        @Size(max = 50)
+        private String password;
+
+        @Override
+        public User toUser() {
+            User user = super.toUser();
+            user.setEmail(email);
+            user.setPassword(password);
+            return user;
+        }
+    }
+
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
+    public static class UpdateUserRequest extends CreateOrUpdateUserRequest {
+        private Boolean enabled;
+
+        @Override
+        public User toUser() {
+            User user = super.toUser();
+            if (enabled != null) {
+                user.setEnabled(enabled);
+            }
+            return user;
+        }
     }
 }

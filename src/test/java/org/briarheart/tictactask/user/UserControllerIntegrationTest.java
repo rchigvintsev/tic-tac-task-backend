@@ -1,6 +1,7 @@
 package org.briarheart.tictactask.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.briarheart.tictactask.user.UserController.CreateUserRequest;
 import org.briarheart.tictactask.util.TestAccessTokens;
 import org.briarheart.tictactask.util.TestUsers;
 import org.junit.jupiter.api.Test;
@@ -45,8 +46,11 @@ class UserControllerIntegrationTest {
 
     @Test
     void shouldCreateUser() throws Exception {
-        User newUser = User.builder().email("alice@mail.com").fullName("Alice").password("secret").build();
-        String requestBody = objectMapper.writeValueAsString(newUser);
+        CreateUserRequest createRequest = new CreateUserRequest();
+        createRequest.setEmail("alice@mail.com");
+        createRequest.setFullName("Alice");
+        createRequest.setPassword("secret");
+        String requestBody = objectMapper.writeValueAsString(createRequest);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
@@ -58,7 +62,11 @@ class UserControllerIntegrationTest {
 
     @Test
     void shouldDenyAccessToUserCreationServiceWhenCurrentUserIsAuthenticated() throws Exception {
-        String requestBody = objectMapper.writeValueAsString(TestUsers.JOHN_DOE);
+        CreateUserRequest createRequest = new CreateUserRequest();
+        createRequest.setEmail(TestUsers.JANE_DOE.getEmail());
+        createRequest.setFullName(TestUsers.JOHN_DOE.getFullName());
+        createRequest.setPassword(TestUsers.JOHN_DOE.getPassword());
+        String requestBody = objectMapper.writeValueAsString(createRequest);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.COOKIE, "access_token=" + TestAccessTokens.JOHN_DOE);

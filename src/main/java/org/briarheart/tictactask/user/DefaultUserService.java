@@ -97,12 +97,16 @@ public class DefaultUserService implements UserService {
         return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("User with id " + userId + " is not found")))
                 .flatMap(existingUser -> {
-                    if (user.getEnabled() != null) {
-                        existingUser.setEnabled(user.getEnabled());
-                    }
-                    existingUser.setFullName(user.getFullName());
-                    existingUser.setProfilePictureUrl(user.getProfilePictureUrl());
-                    return userRepository.save(existingUser)
+                    User updatedUser = new User(user);
+                    updatedUser.setEmail(existingUser.getEmail());
+                    updatedUser.setEmailConfirmed(existingUser.isEmailConfirmed());
+                    updatedUser.setVersion(existingUser.getVersion());
+                    updatedUser.setCreatedAt(existingUser.getCreatedAt());
+                    updatedUser.setPassword(existingUser.getPassword());
+                    updatedUser.setAdmin(existingUser.isAdmin());
+                    updatedUser.setProfilePictureUrl(existingUser.getProfilePictureUrl());
+                    updatedUser.setAuthorities(existingUser.getAuthorities());
+                    return userRepository.save(updatedUser)
                             .map(this::clearPassword)
                             .doOnSuccess(u -> log.debug("User with id {} is updated", u.getId()));
                 });
@@ -152,13 +156,13 @@ public class DefaultUserService implements UserService {
 
     private Mono<User> createNewUser(User user) {
         return Mono.defer(() -> {
-            User newUser = User.builder()
-                    .email(user.getEmail())
-                    .password(encodePassword(user.getPassword()))
-                    .fullName(user.getFullName())
-                    .profilePictureUrl(user.getProfilePictureUrl())
-                    .createdAt(LocalDateTime.now(ZoneOffset.UTC))
-                    .build();
+            User newUser = new User(user);
+            newUser.setId(null);
+            newUser.setEmailConfirmed(false);
+            newUser.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+            newUser.setPassword(encodePassword(user.getPassword()));
+            newUser.setAdmin(false);
+            newUser.setProfilePictureUrl(null);
             return userRepository.save(newUser);
         });
     }
