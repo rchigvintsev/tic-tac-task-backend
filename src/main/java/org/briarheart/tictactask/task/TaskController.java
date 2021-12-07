@@ -205,7 +205,6 @@ public class TaskController extends AbstractController {
     }
 
     @Data
-    @NoArgsConstructor
     public static abstract class CreateOrUpdateTaskRequest {
         @NotBlank
         @Size(max = 255)

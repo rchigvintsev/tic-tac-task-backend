@@ -238,7 +238,6 @@ public class UserController extends AbstractController {
     }
 
     @Data
-    @NoArgsConstructor
     public static abstract class CreateOrUpdateUserRequest {
         @Size(max = 255)
         private String fullName;

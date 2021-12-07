@@ -49,9 +49,9 @@ public class DefaultTaskListService implements TaskListService {
     public Mono<TaskList> createTaskList(TaskList taskList) {
         Assert.notNull(taskList, "Task list must not be null");
         return Mono.defer(() -> {
-            TaskList newTaskList = new TaskList();
-            newTaskList.setUserId(taskList.getUserId());
-            newTaskList.setName(taskList.getName());
+            TaskList newTaskList = new TaskList(taskList);
+            newTaskList.setId(null);
+            newTaskList.setCompleted(false);
             return taskListRepository.save(newTaskList)
                     .doOnSuccess(l -> log.debug("Task list with id {} is created", l.getId()));
         });
@@ -63,8 +63,9 @@ public class DefaultTaskListService implements TaskListService {
         Assert.notNull(taskList, "Task list must not be null");
         return findTaskList(taskList.getId(), taskList.getUserId())
                 .flatMap(existingTaskList -> {
-                    existingTaskList.setName(taskList.getName());
-                    return taskListRepository.save(existingTaskList);
+                    TaskList updatedTaskList = new TaskList(taskList);
+                    updatedTaskList.setCompleted(existingTaskList.isCompleted());
+                    return taskListRepository.save(updatedTaskList);
                 })
                 .doOnSuccess(l -> log.debug("Task list with id {} is updated", l.getId()));
     }

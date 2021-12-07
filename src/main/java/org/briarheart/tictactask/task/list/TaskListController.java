@@ -1,8 +1,10 @@
 package org.briarheart.tictactask.task.list;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.briarheart.tictactask.controller.AbstractController;
-import org.briarheart.tictactask.task.Task;
+import org.briarheart.tictactask.task.TaskController.TaskResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.net.URI;
 
 /**
@@ -28,36 +32,38 @@ public class TaskListController extends AbstractController {
     private final TaskListService taskListService;
 
     @GetMapping("/uncompleted")
-    public Flux<TaskList> getUncompletedTaskLists(Authentication authentication) {
-        return taskListService.getUncompletedTaskLists(getUser(authentication));
+    public Flux<TaskListResponse> getUncompletedTaskLists(Authentication authentication) {
+        return taskListService.getUncompletedTaskLists(getUser(authentication)).map(TaskListResponse::new);
     }
 
     @GetMapping("/{id}")
-    public Mono<TaskList> getTaskList(@PathVariable("id") Long id, Authentication authentication) {
-        return taskListService.getTaskList(id, getUser(authentication));
+    public Mono<TaskListResponse> getTaskList(@PathVariable("id") Long id, Authentication authentication) {
+        return taskListService.getTaskList(id, getUser(authentication)).map(TaskListResponse::new);
     }
 
     @PostMapping
-    public Mono<ResponseEntity<TaskList>> createTaskList(@Valid @RequestBody TaskList taskList,
-                                                         Authentication authentication,
-                                                         ServerHttpRequest request) {
+    public Mono<ResponseEntity<TaskListResponse>> createTaskList(@Valid @RequestBody CreateTaskListRequest createRequest,
+                                                                 Authentication authentication,
+                                                                 ServerHttpRequest request) {
+        TaskList taskList = createRequest.toTaskList();
         taskList.setUserId(getUser(authentication).getId());
         return taskListService.createTaskList(taskList).map(createdTaskList -> {
             URI taskListLocation = UriComponentsBuilder.fromHttpRequest(request)
                     .path("/{id}")
                     .buildAndExpand(createdTaskList.getId())
                     .toUri();
-            return ResponseEntity.created(taskListLocation).body(createdTaskList);
+            return ResponseEntity.created(taskListLocation).body(new TaskListResponse(createdTaskList));
         });
     }
 
     @PutMapping("/{id}")
-    public Mono<TaskList> updateTaskList(@Valid @RequestBody TaskList taskList,
-                                         @PathVariable Long id,
-                                         Authentication authentication) {
+    public Mono<TaskListResponse> updateTaskList(@Valid @RequestBody UpdateTaskListRequest updateRequest,
+                                                 @PathVariable Long id,
+                                                 Authentication authentication) {
+        TaskList taskList = updateRequest.toTaskList();
         taskList.setId(id);
         taskList.setUserId(getUser(authentication).getId());
-        return taskListService.updateTaskList(taskList);
+        return taskListService.updateTaskList(taskList).map(TaskListResponse::new);
     }
 
     @PutMapping("/completed/{id}")
@@ -73,10 +79,10 @@ public class TaskListController extends AbstractController {
     }
 
     @GetMapping("/{taskListId}/tasks")
-    public Flux<Task> getTasks(@PathVariable Long taskListId,
-                               Authentication authentication,
-                               Pageable pageable) {
-        return taskListService.getTasks(taskListId, getUser(authentication), pageable);
+    public Flux<TaskResponse> getTasks(@PathVariable Long taskListId,
+                                       Authentication authentication,
+                                       Pageable pageable) {
+        return taskListService.getTasks(taskListId, getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @PutMapping("/{taskListId}/tasks/{taskId}")
@@ -91,5 +97,37 @@ public class TaskListController extends AbstractController {
                                  @PathVariable Long taskId,
                                  Authentication authentication) {
         return taskListService.removeTask(taskListId, taskId, getUser(authentication));
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TaskListResponse {
+        private Long id;
+        private String name;
+        private boolean completed;
+
+        public TaskListResponse(TaskList taskList) {
+            this.id = taskList.getId();
+            this.name = taskList.getName();
+            this.completed = taskList.isCompleted();
+        }
+    }
+
+    @Data
+    public static abstract class CreateOrUpdateTaskListRequest {
+        @NotBlank
+        @Size(max = 255)
+        private String name;
+        private boolean completed;
+
+        public TaskList toTaskList() {
+            return TaskList.builder().name(name).completed(completed).build();
+        }
+    }
+
+    public static class CreateTaskListRequest extends CreateOrUpdateTaskListRequest {
+    }
+
+    public static class UpdateTaskListRequest extends CreateOrUpdateTaskListRequest {
     }
 }

@@ -60,7 +60,6 @@ public class TaskCommentController extends AbstractController {
     }
 
     @Data
-    @NoArgsConstructor
     public static abstract class CreateOrUpdateTaskCommentRequest {
         @NotBlank
         @Size(max = 10_000)

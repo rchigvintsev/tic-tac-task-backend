@@ -3,9 +3,6 @@ package org.briarheart.tictactask.task.list;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-
 /**
  * @author Roman Chigvintsev
  */
@@ -17,8 +14,6 @@ public class TaskList {
     @Id
     private Long id;
     private Long userId;
-    @NotBlank
-    @Size(max = 255)
     private String name;
     @Builder.Default
     private boolean completed = false;

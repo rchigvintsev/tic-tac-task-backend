@@ -94,7 +94,6 @@ public class TagController extends AbstractController {
     }
 
     @Data
-    @NoArgsConstructor
     public abstract static class CreateOrUpdateTagRequest {
         @NotBlank
         @Size(max = 50)

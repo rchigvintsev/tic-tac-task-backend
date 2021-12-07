@@ -3,6 +3,10 @@ package org.briarheart.tictactask.task.list;
 import org.briarheart.tictactask.config.PermitAllSecurityConfig;
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.task.Task;
+import org.briarheart.tictactask.task.TaskController.TaskResponse;
+import org.briarheart.tictactask.task.list.TaskListController.CreateTaskListRequest;
+import org.briarheart.tictactask.task.list.TaskListController.TaskListResponse;
+import org.briarheart.tictactask.task.list.TaskListController.UpdateTaskListRequest;
 import org.briarheart.tictactask.user.User;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -66,7 +70,7 @@ class TaskListControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TaskList[].class).isEqualTo(new TaskList[] {taskList});
+                .expectBody(TaskListResponse[].class).isEqualTo(new TaskListResponse[] {new TaskListResponse(taskList)});
     }
 
     @Test
@@ -82,7 +86,7 @@ class TaskListControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TaskList.class).isEqualTo(taskList);
+                .expectBody(TaskListResponse.class).isEqualTo(new TaskListResponse(taskList));
     }
 
     @Test
@@ -115,21 +119,21 @@ class TaskListControllerTest {
             return Mono.just(l);
         });
 
-        TaskList newTaskList = TaskList.builder().name("New task list").build();
+        CreateTaskListRequest createRequest = new CreateTaskListRequest();
+        createRequest.setName("New task list");
 
-        TaskList expectedResult = new TaskList(newTaskList);
+        TaskListResponse expectedResult = new TaskListResponse(createRequest.toTaskList());
         expectedResult.setId(taskListId);
-        expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/task-lists")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(newTaskList)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isCreated()
                 .expectHeader().valueEquals("Location", "/api/v1/task-lists/" + taskListId)
-                .expectBody(TaskList.class).isEqualTo(expectedResult);
+                .expectBody(TaskListResponse.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -137,12 +141,12 @@ class TaskListControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskList newTaskList = TaskList.builder().build();
+        CreateTaskListRequest createRequest = new CreateTaskListRequest();
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/task-lists")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(newTaskList)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -156,12 +160,13 @@ class TaskListControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        TaskList taskList = TaskList.builder().name(" ").build();
+        CreateTaskListRequest createRequest = new CreateTaskListRequest();
+        createRequest.setName(" ");
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/task-lists")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(taskList)
+                .bodyValue(createRequest)
                 .exchange()
 
                 .expectStatus().isBadRequest()
@@ -179,20 +184,20 @@ class TaskListControllerTest {
 
         long taskListId = 2L;
 
-        TaskList taskList = TaskList.builder().name("Updated test task list").build();
+        UpdateTaskListRequest updateRequest = new UpdateTaskListRequest();
+        updateRequest.setName("Updated test task list");
 
-        TaskList expectedResult = new TaskList(taskList);
+        TaskListResponse expectedResult = new TaskListResponse(updateRequest.toTaskList());
         expectedResult.setId(taskListId);
-        expectedResult.setUserId(user.getId());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .put().uri("/api/v1/task-lists/" + taskListId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(taskList)
+                .bodyValue(updateRequest)
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TaskList.class).isEqualTo(expectedResult);
+                .expectBody(TaskListResponse.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -239,7 +244,7 @@ class TaskListControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(Task[].class).isEqualTo(new Task[]{task});
+                .expectBody(TaskResponse[].class).isEqualTo(new TaskResponse[]{new TaskResponse(task)});
     }
 
     @Test
