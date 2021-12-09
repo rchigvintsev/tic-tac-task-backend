@@ -1,6 +1,7 @@
 package org.briarheart.tictactask.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.briarheart.tictactask.config.TestJavaMailSenderConfiguration;
 import org.briarheart.tictactask.user.UserController.CreateUserRequest;
 import org.briarheart.tictactask.util.TestAccessTokens;
 import org.briarheart.tictactask.util.TestUsers;
@@ -10,19 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.*;
 import org.springframework.http.client.MultipartBodyBuilder;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.MultiValueMap;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Roman Chigvintsev
@@ -30,7 +28,7 @@ import static org.mockito.Mockito.mock;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = "security.disabled=false")
-@Import(UserControllerIntegrationTest.TestJavaMailSenderConfiguration.class)
+@Import(TestJavaMailSenderConfiguration.class)
 @ActiveProfiles("test")
 class UserControllerIntegrationTest {
     @Autowired
@@ -130,12 +128,5 @@ class UserControllerIntegrationTest {
 
     private void addCookieHeader(HttpHeaders headers) {
         headers.add(HttpHeaders.COOKIE, "access_token=" + TestAccessTokens.JOHN_DOE);
-    }
-
-    public static class TestJavaMailSenderConfiguration {
-        @Bean
-        public JavaMailSender javaMailSender() {
-            return mock(JavaMailSender.class);
-        }
     }
 }

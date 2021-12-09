@@ -2,6 +2,7 @@ package org.briarheart.tictactask.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.briarheart.tictactask.email.EmailService;
 import org.briarheart.tictactask.security.oauth2.client.endpoint.ReactiveAccessTokenTypeWebClientFilter;
 import org.briarheart.tictactask.security.oauth2.client.userinfo.*;
 import org.briarheart.tictactask.security.oauth2.client.web.server.CookieOAuth2ServerAuthorizationRequestRepository;
@@ -32,7 +33,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
@@ -336,10 +336,10 @@ public class WebSecurityConfig {
                                            UserRepository userRepository,
                                            ApplicationInfoProperties applicationInfo,
                                            MessageSourceAccessor messages,
-                                           JavaMailSender mailSender,
+                                           EmailService emailService,
                                            PasswordEncoder passwordEncoder) {
         DefaultPasswordService passwordService = new DefaultPasswordService(tokenRepository, userRepository,
-                applicationInfo, messages, mailSender, passwordEncoder);
+                applicationInfo, messages, emailService, passwordEncoder);
         Duration tokenExpirationTimeout = securityProperties.getPasswordReset().getTokenExpirationTimeout();
         passwordService.setPasswordResetTokenExpirationTimeout(tokenExpirationTimeout);
         return passwordService;
@@ -350,9 +350,9 @@ public class WebSecurityConfig {
                                                              UserRepository userRepository,
                                                              ApplicationInfoProperties applicationInfo,
                                                              MessageSourceAccessor messages,
-                                                             JavaMailSender mailSender) {
+                                                             EmailService emailService) {
         DefaultEmailConfirmationService emailConfirmationService = new DefaultEmailConfirmationService(tokenRepository,
-                userRepository, applicationInfo, messages, mailSender);
+                userRepository, applicationInfo, messages, emailService);
         Duration tokenExpirationTimeout = securityProperties.getEmailConfirmation().getTokenExpirationTimeout();
         emailConfirmationService.setEmailConfirmationTokenExpirationTimeout(tokenExpirationTimeout);
         return emailConfirmationService;

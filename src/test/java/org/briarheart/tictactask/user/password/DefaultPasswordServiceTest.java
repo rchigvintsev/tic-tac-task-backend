@@ -2,6 +2,7 @@ package org.briarheart.tictactask.user.password;
 
 import org.briarheart.tictactask.config.ApplicationInfoProperties;
 import org.briarheart.tictactask.data.EntityNotFoundException;
+import org.briarheart.tictactask.email.EmailService;
 import org.briarheart.tictactask.user.TokenExpiredException;
 import org.briarheart.tictactask.user.UnableToSendMessageException;
 import org.briarheart.tictactask.user.User;
@@ -12,9 +13,8 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.MailSendException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -23,7 +23,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,17 +32,19 @@ import static org.mockito.Mockito.*;
 /**
  * @author Roman Chigvintsev
  */
+@ActiveProfiles("test")
 class DefaultPasswordServiceTest {
     private DefaultPasswordService service;
     private PasswordResetConfirmationTokenRepository tokenRepository;
     private UserRepository userRepository;
-    private JavaMailSender javaMailSender;
+    private EmailService emailService;
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
         tokenRepository = mock(PasswordResetConfirmationTokenRepository.class);
-        when(tokenRepository.save(any(PasswordResetConfirmationToken.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(tokenRepository.save(any(PasswordResetConfirmationToken.class)))
+                .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         userRepository = mock(UserRepository.class);
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
@@ -55,7 +56,7 @@ class DefaultPasswordServiceTest {
         messageSource.setBasename("messages");
         MessageSourceAccessor messages = new MessageSourceAccessor(messageSource);
 
-        javaMailSender = mock(JavaMailSender.class);
+        emailService = mock(EmailService.class);
 
         passwordEncoder = mock(PasswordEncoder.class);
         when(passwordEncoder.encode(anyString())).thenAnswer(args -> args.getArgument(0));
@@ -65,7 +66,7 @@ class DefaultPasswordServiceTest {
             return rawPassword.equals(encodedPassword);
         });
 
-        service = new DefaultPasswordService(tokenRepository, userRepository, appInfo, messages, javaMailSender,
+        service = new DefaultPasswordService(tokenRepository, userRepository, appInfo, messages, emailService,
                 passwordEncoder);
     }
 
@@ -75,10 +76,7 @@ class DefaultPasswordServiceTest {
         when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
 
         service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
-        ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(javaMailSender, times(1)).send(messageCaptor.capture());
-        SimpleMailMessage message = messageCaptor.getValue();
-        assertThat(message.getTo(), arrayContaining(user.getEmail()));
+        verify(emailService, times(1)).sendEmail(eq(user.getEmail()), anyString(), anyString());
     }
 
     @Test
@@ -99,12 +97,12 @@ class DefaultPasswordServiceTest {
         verify(tokenRepository, times(1)).save(tokenCaptor.capture());
         PasswordResetConfirmationToken token = tokenCaptor.getValue();
 
-        ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(javaMailSender, times(1)).send(messageCaptor.capture());
-        SimpleMailMessage message = messageCaptor.getValue();
+        ArgumentCaptor<String> emailTextCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService, times(1)).sendEmail(eq(user.getEmail()), anyString(), emailTextCaptor.capture());
+        String emailText = emailTextCaptor.getValue();
         String confirmationLink = "http://localhost:4200/account/password/reset/confirmation?userId=" + user.getId()
                 + "&token=" + token.getTokenValue();
-        assertThat(message.getText(), containsString(confirmationLink));
+        assertThat(emailText, containsString(confirmationLink));
     }
 
     @Test
@@ -120,10 +118,10 @@ class DefaultPasswordServiceTest {
 
         service.resetPassword(user.getEmail(), Locale.ENGLISH).block();
 
-        ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(javaMailSender, times(1)).send(messageCaptor.capture());
-        SimpleMailMessage message = messageCaptor.getValue();
-        assertThat(message.getText(), containsString("1 day"));
+        ArgumentCaptor<String> emailTextCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService, times(1)).sendEmail(eq(user.getEmail()), anyString(), emailTextCaptor.capture());
+        String emailText = emailTextCaptor.getValue();
+        assertThat(emailText, containsString("1 day"));
     }
 
     @Test
@@ -152,7 +150,8 @@ class DefaultPasswordServiceTest {
                 .build();
         when(userRepository.findByEmailAndEnabled(user.getEmail(), true)).thenReturn(Mono.just(user));
 
-        doThrow(new MailSendException("Something went wrong")).when(javaMailSender).send(any(SimpleMailMessage.class));
+        doThrow(new MailSendException("Something went wrong")).when(emailService).sendEmail(eq(user.getEmail()),
+                anyString(), anyString());
         assertThrows(UnableToSendMessageException.class,
                 () -> service.resetPassword("alice@mail.com", Locale.ENGLISH).block());
     }

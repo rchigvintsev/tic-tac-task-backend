@@ -1,4 +1,4 @@
-package org.briarheart.tictactask.service;
+package org.briarheart.tictactask.user;
 
 /**
  * Exception indicating that uploaded file is too large.

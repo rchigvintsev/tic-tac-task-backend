@@ -2,7 +2,6 @@ package org.briarheart.tictactask.user;
 
 import org.briarheart.tictactask.data.EntityAlreadyExistsException;
 import org.briarheart.tictactask.data.EntityNotFoundException;
-import org.briarheart.tictactask.service.FileTooLargeException;
 import org.briarheart.tictactask.user.email.EmailConfirmationService;
 import org.briarheart.tictactask.user.email.EmailConfirmationToken;
 import org.briarheart.tictactask.user.profilepicture.ProfilePicture;

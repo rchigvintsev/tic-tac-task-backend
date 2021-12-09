@@ -24,6 +24,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.MultiValueMap;
@@ -46,6 +47,7 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @ExtendWith(SpringExtension.class)
 @WebFluxTest(UserController.class)
 @Import({PermitAllSecurityConfig.class, I18nConfig.class})
+@ActiveProfiles("test")
 class UserControllerTest {
     private static final Locale DEFAULT_LOCALE = Locale.getDefault();
 

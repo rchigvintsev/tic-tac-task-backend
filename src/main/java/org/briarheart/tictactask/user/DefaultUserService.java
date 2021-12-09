@@ -5,7 +5,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.briarheart.tictactask.data.EntityAlreadyExistsException;
 import org.briarheart.tictactask.data.EntityNotFoundException;
-import org.briarheart.tictactask.service.FileTooLargeException;
 import org.briarheart.tictactask.user.email.EmailConfirmationService;
 import org.briarheart.tictactask.user.profilepicture.ProfilePicture;
 import org.briarheart.tictactask.user.profilepicture.ProfilePictureRepository;

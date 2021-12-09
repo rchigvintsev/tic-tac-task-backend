@@ -5,14 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.briarheart.tictactask.ApplicationEnvironment;
 import org.briarheart.tictactask.config.ApplicationInfoProperties;
 import org.briarheart.tictactask.data.EntityNotFoundException;
+import org.briarheart.tictactask.email.EmailService;
 import org.briarheart.tictactask.user.TokenExpiredException;
 import org.briarheart.tictactask.user.UnableToSendMessageException;
 import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.user.UserRepository;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -38,7 +37,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
     private final UserRepository userRepository;
     private final ApplicationInfoProperties applicationInfo;
     private final MessageSourceAccessor messages;
-    private final JavaMailSender mailSender;
+    private final EmailService emailService;
 
     @Setter
     private Duration emailConfirmationTokenExpirationTimeout = DEFAULT_TOKEN_EXPIRATION_TIMEOUT;
@@ -47,18 +46,18 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                                            UserRepository userRepository,
                                            ApplicationInfoProperties applicationInfo,
                                            MessageSourceAccessor messages,
-                                           JavaMailSender mailSender) {
+                                           EmailService emailService) {
         Assert.notNull(tokenRepository, "Token repository must not be null");
         Assert.notNull(userRepository, "User repository must not be null");
         Assert.notNull(applicationInfo, "Application info properties must not be null");
         Assert.notNull(messages, "Message source accessor must not be null");
-        Assert.notNull(mailSender, "Mail sender must not be null");
+        Assert.notNull(emailService, "Email service must not be null");
 
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
         this.applicationInfo = applicationInfo;
         this.messages = messages;
-        this.mailSender = mailSender;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -75,11 +74,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                     String text = messages.getMessage("user.registration.email-confirmation.message.text",
                             new Object[]{user.getFullName(), applicationInfo.getName(), confirmationLink}, locale);
 
-                    SimpleMailMessage message = new SimpleMailMessage();
-                    message.setTo(user.getEmail());
-                    message.setSubject(subject);
-                    message.setText(text);
-                    mailSender.send(message);
+                    emailService.sendEmail(user.getEmail(), subject, text);
                     log.debug("Email confirmation link is sent to email {}", user.getEmail());
                     return token;
                 })

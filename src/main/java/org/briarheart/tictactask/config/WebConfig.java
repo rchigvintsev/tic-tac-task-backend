@@ -7,7 +7,7 @@ import org.briarheart.tictactask.controller.format.LocalDateTimeFormatter;
 import org.briarheart.tictactask.data.EntityAlreadyExistsException;
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.model.validation.NoFallbackResourceBundleLocator;
-import org.briarheart.tictactask.service.FileTooLargeException;
+import org.briarheart.tictactask.user.FileTooLargeException;
 import org.briarheart.tictactask.web.error.ApiErrorAttributes;
 import org.briarheart.tictactask.web.error.HttpStatusExceptionTypeMapper;
 import org.briarheart.tictactask.web.filter.LocaleContextFilter;

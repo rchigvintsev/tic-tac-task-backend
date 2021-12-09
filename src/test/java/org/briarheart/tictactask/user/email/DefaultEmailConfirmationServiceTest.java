@@ -2,6 +2,7 @@ package org.briarheart.tictactask.user.email;
 
 import org.briarheart.tictactask.config.ApplicationInfoProperties;
 import org.briarheart.tictactask.data.EntityNotFoundException;
+import org.briarheart.tictactask.email.EmailService;
 import org.briarheart.tictactask.user.TokenExpiredException;
 import org.briarheart.tictactask.user.UnableToSendMessageException;
 import org.briarheart.tictactask.user.User;
@@ -12,8 +13,6 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.MailSendException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -22,7 +21,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -34,7 +32,7 @@ class DefaultEmailConfirmationServiceTest {
     private DefaultEmailConfirmationService service;
     private EmailConfirmationTokenRepository tokenRepository;
     private UserRepository userRepository;
-    private JavaMailSender javaMailSender;
+    private EmailService emailService;
 
     @BeforeEach
     void setUp() {
@@ -52,19 +50,15 @@ class DefaultEmailConfirmationServiceTest {
         messageSource.setBasename("messages");
         MessageSourceAccessor messages = new MessageSourceAccessor(messageSource);
 
-        javaMailSender = mock(JavaMailSender.class);
-        service = new DefaultEmailConfirmationService(tokenRepository, userRepository, appInfo, messages,
-                javaMailSender);
+        emailService = mock(EmailService.class);
+        service = new DefaultEmailConfirmationService(tokenRepository, userRepository, appInfo, messages, emailService);
     }
 
     @Test
     void shouldSendEmailConfirmationLinkToUser() {
         User user = User.builder().email("alice@mail.com").emailConfirmed(true).enabled(true).fullName("Alice").build();
         service.sendEmailConfirmationLink(user, Locale.ENGLISH).block();
-        ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(javaMailSender, times(1)).send(messageCaptor.capture());
-        SimpleMailMessage message = messageCaptor.getValue();
-        assertThat(message.getTo(), arrayContaining(user.getEmail()));
+        verify(emailService, times(1)).sendEmail(eq(user.getEmail()), anyString(), anyString());
     }
 
     @Test
@@ -79,12 +73,12 @@ class DefaultEmailConfirmationServiceTest {
         EmailConfirmationToken token = service.sendEmailConfirmationLink(user, Locale.ENGLISH).block();
         assertNotNull(token);
 
-        ArgumentCaptor<SimpleMailMessage> messageCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(javaMailSender, times(1)).send(messageCaptor.capture());
-        SimpleMailMessage message = messageCaptor.getValue();
+        ArgumentCaptor<String> emailTextCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService, times(1)).sendEmail(eq(user.getEmail()), anyString(), emailTextCaptor.capture());
+        String emailText = emailTextCaptor.getValue();
         String confirmationLink = "http://localhost:4200/account/email/confirmation?userId=" + user.getId()
                 + "&token=" + token.getTokenValue();
-        assertThat(message.getText(), containsString(confirmationLink));
+        assertThat(emailText, containsString(confirmationLink));
     }
 
     @Test
@@ -97,7 +91,8 @@ class DefaultEmailConfirmationServiceTest {
     @Test
     void shouldThrowExceptionOnEmailConfirmationLinkSendWhenMailExceptionIsThrown() {
         User user = User.builder().email("alice@mail.com").emailConfirmed(true).enabled(true).fullName("Alice").build();
-        doThrow(new MailSendException("Something went wrong")).when(javaMailSender).send(any(SimpleMailMessage.class));
+        doThrow(new MailSendException("Something went wrong")).when(emailService)
+                .sendEmail(eq(user.getEmail()), anyString(), anyString());
         assertThrows(UnableToSendMessageException.class,
                 () -> service.sendEmailConfirmationLink(user, Locale.ENGLISH).block());
     }
