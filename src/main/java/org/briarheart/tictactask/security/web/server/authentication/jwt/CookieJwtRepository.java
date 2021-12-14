@@ -24,7 +24,14 @@ import java.time.Duration;
 public class CookieJwtRepository implements ServerAccessTokenRepository {
     private static final String DEFAULT_ACCESS_TOKEN_COOKIE_NAME = "access_token";
 
+    private final String applicationDomain;
+
     private String accessTokenCookieName = DEFAULT_ACCESS_TOKEN_COOKIE_NAME;
+
+    public CookieJwtRepository(String applicationDomain) {
+        Assert.hasLength(applicationDomain, "Application domain name must not be null or empty");
+        this.applicationDomain = applicationDomain;
+    }
 
     @Override
     public Mono<Jwt> loadAccessToken(ServerWebExchange exchange) {
@@ -48,6 +55,7 @@ public class CookieJwtRepository implements ServerAccessTokenRepository {
             ServerHttpResponse response = exchange.getResponse();
             Duration maxAge = Duration.between(accessToken.getIssuedAt(), accessToken.getExpiration());
             ResponseCookie accessTokenCookie = ResponseCookie.from(accessTokenCookieName, accessToken.getTokenValue())
+                    .domain("." + applicationDomain)
                     .path("/")
                     .httpOnly(true)
                     .maxAge(maxAge)
@@ -62,6 +70,7 @@ public class CookieJwtRepository implements ServerAccessTokenRepository {
         return loadAccessToken(exchange).map(token -> {
             ServerHttpResponse response = exchange.getResponse();
             ResponseCookie accessTokenCookie = ResponseCookie.from(accessTokenCookieName, "")
+                    .domain("." + applicationDomain)
                     .path("/")
                     .httpOnly(true)
                     .maxAge(0)

@@ -3,7 +3,7 @@ package org.briarheart.tictactask.user.email;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.briarheart.tictactask.ApplicationEnvironment;
-import org.briarheart.tictactask.config.ApplicationInfoProperties;
+import org.briarheart.tictactask.config.ApplicationProperties;
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.email.EmailService;
 import org.briarheart.tictactask.user.TokenExpiredException;
@@ -35,7 +35,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
 
     private final EmailConfirmationTokenRepository tokenRepository;
     private final UserRepository userRepository;
-    private final ApplicationInfoProperties applicationInfo;
+    private final ApplicationProperties applicationProperties;
     private final MessageSourceAccessor messages;
     private final EmailService emailService;
 
@@ -44,18 +44,18 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
 
     public DefaultEmailConfirmationService(EmailConfirmationTokenRepository tokenRepository,
                                            UserRepository userRepository,
-                                           ApplicationInfoProperties applicationInfo,
+                                           ApplicationProperties applicationProperties,
                                            MessageSourceAccessor messages,
                                            EmailService emailService) {
         Assert.notNull(tokenRepository, "Token repository must not be null");
         Assert.notNull(userRepository, "User repository must not be null");
-        Assert.notNull(applicationInfo, "Application info properties must not be null");
+        Assert.notNull(applicationProperties, "Application properties must not be null");
         Assert.notNull(messages, "Message source accessor must not be null");
         Assert.notNull(emailService, "Email service must not be null");
 
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
-        this.applicationInfo = applicationInfo;
+        this.applicationProperties = applicationProperties;
         this.messages = messages;
         this.emailService = emailService;
     }
@@ -70,9 +70,9 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
                     String confirmationLink = buildEmailConfirmationLink(user, token);
 
                     String subject = messages.getMessage("user.registration.email-confirmation.message.subject",
-                            new Object[]{applicationInfo.getName()}, locale);
+                            new Object[]{applicationProperties.getName()}, locale);
                     String text = messages.getMessage("user.registration.email-confirmation.message.text",
-                            new Object[]{user.getFullName(), applicationInfo.getName(), confirmationLink}, locale);
+                            new Object[]{user.getFullName(), applicationProperties.getName(), confirmationLink}, locale);
 
                     emailService.sendEmail(user.getEmail(), subject, text);
                     log.debug("Email confirmation link is sent to email {}", user.getEmail());

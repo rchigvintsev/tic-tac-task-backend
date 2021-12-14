@@ -64,18 +64,9 @@ management:
       exposure:
         include: info,health,metrics
 
-info:
-  application:
-    name: TicTacTask
-    version: 0.0.1-SNAPSHOT
-
 application:
-  security:
-    cors:
-      allowed-origin: http://localhost:4200
-    authentication.access-token:
-      # seven days
-      validity-seconds: 604800
+  name: TicTacTask
+  version: 0.0.1-SNAPSHOT
 
 server.error:
   include-message: always

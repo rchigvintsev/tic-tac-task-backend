@@ -3,7 +3,7 @@ package org.briarheart.tictactask.user.password;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.briarheart.tictactask.ApplicationEnvironment;
-import org.briarheart.tictactask.config.ApplicationInfoProperties;
+import org.briarheart.tictactask.config.ApplicationProperties;
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.email.EmailService;
 import org.briarheart.tictactask.user.TokenExpiredException;
@@ -40,7 +40,7 @@ public class DefaultPasswordService implements PasswordService {
 
     private final PasswordResetConfirmationTokenRepository tokenRepository;
     private final UserRepository userRepository;
-    private final ApplicationInfoProperties applicationInfo;
+    private final ApplicationProperties applicationProperties;
     private final MessageSourceAccessor messages;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
@@ -50,20 +50,20 @@ public class DefaultPasswordService implements PasswordService {
 
     public DefaultPasswordService(PasswordResetConfirmationTokenRepository tokenRepository,
                                   UserRepository userRepository,
-                                  ApplicationInfoProperties applicationInfo,
+                                  ApplicationProperties applicationProperties,
                                   MessageSourceAccessor messages,
                                   EmailService emailService,
                                   PasswordEncoder passwordEncoder) {
         Assert.notNull(tokenRepository, "Token repository must not be null");
         Assert.notNull(userRepository, "User repository must not be null");
-        Assert.notNull(applicationInfo, "Application info properties must not be null");
+        Assert.notNull(applicationProperties, "Application info properties must not be null");
         Assert.notNull(messages, "Message source accessor must not be null");
         Assert.notNull(emailService, "Email service must not be null");
         Assert.notNull(passwordEncoder, "Password encoder must not be null");
 
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
-        this.applicationInfo = applicationInfo;
+        this.applicationProperties = applicationProperties;
         this.messages = messages;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
@@ -124,7 +124,7 @@ public class DefaultPasswordService implements PasswordService {
                     String passwordResetLink = buildPasswordResetLink(user, token);
 
                     String subject = messages.getMessage("user.password-reset.message.subject",
-                            new Object[]{applicationInfo.getName()}, locale);
+                            new Object[]{applicationProperties.getName()}, locale);
 
                     String linkExpiresAfter = formatPasswordResetTokenExpirationTimeout(locale);
                     String text = messages.getMessage("user.password-reset.message.text",

@@ -2,6 +2,9 @@ package org.briarheart.tictactask.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.briarheart.tictactask.config.ApplicationProperties.Security.Authentication.AccessToken;
+import org.briarheart.tictactask.config.ApplicationProperties.Security.EmailConfirmation;
+import org.briarheart.tictactask.config.ApplicationProperties.Security.PasswordReset;
 import org.briarheart.tictactask.email.EmailService;
 import org.briarheart.tictactask.security.oauth2.client.endpoint.ReactiveAccessTokenTypeWebClientFilter;
 import org.briarheart.tictactask.security.oauth2.client.userinfo.*;
@@ -89,12 +92,10 @@ import static org.springframework.security.crypto.factory.PasswordEncoderFactori
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfig {
-    private final ApplicationSecurityProperties securityProperties;
+    private final ApplicationProperties applicationProperties;
 
     @Value("${spring.security.oauth2.client.redirect-uri-template}")
     private String clientRedirectUriTemplate;
-    @Value("${application.security.cors.allowed-origin}")
-    private String corsAllowedOrigin;
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(
@@ -114,6 +115,7 @@ public class WebSecurityConfig {
                 = new PathPatternParserServerWebExchangeMatcher("/api/oauth2/authorization/{registrationId}");
         ServerOAuth2AuthorizationRequestResolver oAuth2RequestResolver
                 = new DefaultServerOAuth2AuthorizationRequestResolver(clientRegistrationRepository, oAuth2AuthPattern);
+        String corsAllowedOrigin = applicationProperties.getSecurity().getCors().getAllowedOrigin();
         return http.redirectToHttps().httpsRedirectWhen(exchange -> {
                     ServerHttpRequest request = exchange.getRequest();
                     HttpHeaders headers = request.getHeaders();
@@ -289,10 +291,9 @@ public class WebSecurityConfig {
 
     @Bean
     public AccessTokenService accessTokenService(ServerAccessTokenRepository accessTokenRepository) {
-        String signingKey = securityProperties.getAuthentication().getAccessToken().getSigningKey();
-        long accessTokenValidity = securityProperties.getAuthentication().getAccessToken().getValiditySeconds();
-        JwtService tokenService = new JwtService(accessTokenRepository, signingKey);
-        tokenService.setAccessTokenValiditySeconds(accessTokenValidity);
+        AccessToken accessTokenProps = applicationProperties.getSecurity().getAuthentication().getAccessToken();
+        JwtService tokenService = new JwtService(accessTokenRepository, accessTokenProps.getSigningKey());
+        tokenService.setAccessTokenValiditySeconds(accessTokenProps.getValiditySeconds());
         return tokenService;
     }
 
@@ -306,7 +307,7 @@ public class WebSecurityConfig {
 
     @Bean
     public ServerAccessTokenRepository accessTokenRepository() {
-        return new CookieJwtRepository();
+        return new CookieJwtRepository(applicationProperties.getDomain());
     }
 
     @Bean
@@ -334,26 +335,25 @@ public class WebSecurityConfig {
     @Bean
     public PasswordService passwordService(PasswordResetConfirmationTokenRepository tokenRepository,
                                            UserRepository userRepository,
-                                           ApplicationInfoProperties applicationInfo,
                                            MessageSourceAccessor messages,
                                            EmailService emailService,
                                            PasswordEncoder passwordEncoder) {
         DefaultPasswordService passwordService = new DefaultPasswordService(tokenRepository, userRepository,
-                applicationInfo, messages, emailService, passwordEncoder);
-        Duration tokenExpirationTimeout = securityProperties.getPasswordReset().getTokenExpirationTimeout();
-        passwordService.setPasswordResetTokenExpirationTimeout(tokenExpirationTimeout);
+                applicationProperties, messages, emailService, passwordEncoder);
+        PasswordReset passwordResetProps = applicationProperties.getSecurity().getPasswordReset();
+        passwordService.setPasswordResetTokenExpirationTimeout(passwordResetProps.getTokenExpirationTimeout());
         return passwordService;
     }
 
     @Bean
     public EmailConfirmationService emailConfirmationService(EmailConfirmationTokenRepository tokenRepository,
                                                              UserRepository userRepository,
-                                                             ApplicationInfoProperties applicationInfo,
                                                              MessageSourceAccessor messages,
                                                              EmailService emailService) {
         DefaultEmailConfirmationService emailConfirmationService = new DefaultEmailConfirmationService(tokenRepository,
-                userRepository, applicationInfo, messages, emailService);
-        Duration tokenExpirationTimeout = securityProperties.getEmailConfirmation().getTokenExpirationTimeout();
+                userRepository, applicationProperties, messages, emailService);
+        EmailConfirmation emailConfirmationProps = applicationProperties.getSecurity().getEmailConfirmation();
+        Duration tokenExpirationTimeout = emailConfirmationProps.getTokenExpirationTimeout();
         emailConfirmationService.setEmailConfirmationTokenExpirationTimeout(tokenExpirationTimeout);
         return emailConfirmationService;
     }

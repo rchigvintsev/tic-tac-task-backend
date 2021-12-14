@@ -1,6 +1,6 @@
 package org.briarheart.tictactask.user.email;
 
-import org.briarheart.tictactask.config.ApplicationInfoProperties;
+import org.briarheart.tictactask.config.ApplicationProperties;
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.email.EmailService;
 import org.briarheart.tictactask.user.TokenExpiredException;
@@ -43,15 +43,15 @@ class DefaultEmailConfirmationServiceTest {
         userRepository = mock(UserRepository.class);
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        ApplicationInfoProperties appInfo = new ApplicationInfoProperties();
-        appInfo.setName("Horns and hooves");
+        ApplicationProperties appProps = new ApplicationProperties();
+        appProps.setName("Horns and hooves");
 
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("messages");
         MessageSourceAccessor messages = new MessageSourceAccessor(messageSource);
 
         emailService = mock(EmailService.class);
-        service = new DefaultEmailConfirmationService(tokenRepository, userRepository, appInfo, messages, emailService);
+        service = new DefaultEmailConfirmationService(tokenRepository, userRepository, appProps, messages, emailService);
     }
 
     @Test

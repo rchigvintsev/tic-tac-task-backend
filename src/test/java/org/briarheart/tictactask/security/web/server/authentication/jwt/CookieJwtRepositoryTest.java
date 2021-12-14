@@ -23,7 +23,7 @@ class CookieJwtRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        repository = new CookieJwtRepository();
+        repository = new CookieJwtRepository("awesome.app");
         repository.setAccessTokenCookieName(ACCESS_TOKEN_COOKIE_NAME);
     }
 

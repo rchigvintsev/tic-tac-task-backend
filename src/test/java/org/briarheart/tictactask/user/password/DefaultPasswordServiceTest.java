@@ -1,6 +1,6 @@
 package org.briarheart.tictactask.user.password;
 
-import org.briarheart.tictactask.config.ApplicationInfoProperties;
+import org.briarheart.tictactask.config.ApplicationProperties;
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.email.EmailService;
 import org.briarheart.tictactask.user.TokenExpiredException;
@@ -49,8 +49,8 @@ class DefaultPasswordServiceTest {
         userRepository = mock(UserRepository.class);
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
 
-        ApplicationInfoProperties appInfo = new ApplicationInfoProperties();
-        appInfo.setName("Horns and hooves");
+        ApplicationProperties appProps = new ApplicationProperties();
+        appProps.setName("Horns and hooves");
 
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("messages");
@@ -66,7 +66,7 @@ class DefaultPasswordServiceTest {
             return rawPassword.equals(encodedPassword);
         });
 
-        service = new DefaultPasswordService(tokenRepository, userRepository, appInfo, messages, emailService,
+        service = new DefaultPasswordService(tokenRepository, userRepository, appProps, messages, emailService,
                 passwordEncoder);
     }
 
