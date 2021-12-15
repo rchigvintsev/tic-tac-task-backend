@@ -79,7 +79,7 @@ class DefaultTagServiceTest {
     void shouldCreateTag() {
         long tagId = 2L;
         when(tagRepository.save(any())).thenAnswer(args -> {
-            Tag t = args.getArgument(0);
+            Tag t = new Tag(args.getArgument(0));
             t.setId(tagId);
             return Mono.just(t);
         });
@@ -115,7 +115,7 @@ class DefaultTagServiceTest {
 
         when(tagRepository.findByIdAndUserId(tag.getId(), tag.getUserId())).thenReturn(Mono.just(tag));
         when(tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())).thenReturn(Mono.empty());
-        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new Tag(args.getArgument(0))));
 
         Tag updatedTag = new Tag(tag);
         updatedTag.setColor(16777215);
@@ -132,7 +132,7 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagUpdateWhenTagIsNotFound() {
-        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new Tag(args.getArgument(0))));
         when(tagRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
 
         Tag tag = Tag.builder().id(2L).userId(1L).name("Test tag").build();
@@ -149,7 +149,7 @@ class DefaultTagServiceTest {
         updatedTag.setId(tag.getId());
         updatedTag.setName("Updated test tag");
 
-        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new Tag(args.getArgument(0))));
         when(tagRepository.findByIdAndUserId(tag.getId(), tag.getUserId())).thenReturn(Mono.just(tag));
         when(tagRepository.findByNameAndUserId(updatedTag.getName(), updatedTag.getUserId()))
                 .thenReturn(Mono.just(updatedTag));

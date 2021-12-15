@@ -33,7 +33,7 @@ class ReactiveOAuth2UserLoaderManagerTest {
     void setUp() {
         userLoader = mock(ReactiveOAuth2UserLoader.class);
         userRepository = mock(UserRepository.class);
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
         loaderManager = new ReactiveOAuth2UserLoaderManager<>(List.of(userLoader), userRepository);
     }
 

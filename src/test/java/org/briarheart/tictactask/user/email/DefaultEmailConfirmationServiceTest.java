@@ -41,7 +41,7 @@ class DefaultEmailConfirmationServiceTest {
                 .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         userRepository = mock(UserRepository.class);
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         ApplicationProperties appProps = new ApplicationProperties();
         appProps.setName("Horns and hooves");

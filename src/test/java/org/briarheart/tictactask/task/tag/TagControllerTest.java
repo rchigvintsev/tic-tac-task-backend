@@ -134,7 +134,7 @@ class TagControllerTest {
         long tagId = 2L;
 
         when(tagService.createTag(any(Tag.class))).thenAnswer(args -> {
-            Tag t = args.getArgument(0);
+            Tag t = new Tag(args.getArgument(0));
             t.setId(tagId);
             return Mono.just(t);
         });
@@ -243,7 +243,7 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(tagService.updateTag(any(Tag.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(tagService.updateTag(any(Tag.class))).thenAnswer(args -> Mono.just(new Tag(args.getArgument(0))));
 
         long tagId = 2L;
 

@@ -77,7 +77,7 @@ class DefaultTaskListServiceTest {
     void shouldCreateTaskList() {
         long taskListId = 2L;
         when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> {
-            TaskList l = args.getArgument(0);
+            TaskList l = new TaskList(args.getArgument(0));
             l.setId(taskListId);
             return Mono.just(l);
         });
@@ -92,7 +92,8 @@ class DefaultTaskListServiceTest {
 
     @Test
     void shouldNotAllowToMarkTaskListCompletedOnTaskListCreate() {
-        when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskListRepository.save(any(TaskList.class)))
+                .thenAnswer(args -> Mono.just(new TaskList(args.getArgument(0))));
 
         TaskList taskList = TaskList.builder().userId(1L).name("New task list").completed(true).build();
         TaskList expectedResult = new TaskList(taskList);
@@ -114,7 +115,8 @@ class DefaultTaskListServiceTest {
         TaskList taskList = TaskList.builder().id(2L).userId(1L).name("Test task list").build();
         when(taskListRepository.findByIdAndUserId(taskList.getId(), taskList.getUserId()))
                 .thenReturn(Mono.just(taskList));
-        when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskListRepository.save(any(TaskList.class)))
+                .thenAnswer(args -> Mono.just(new TaskList(args.getArgument(0))));
 
         TaskList updatedTaskList = new TaskList(taskList);
         updatedTaskList.setName("Updated test task list");
@@ -128,7 +130,8 @@ class DefaultTaskListServiceTest {
         TaskList taskList = TaskList.builder().id(2L).userId(1L).name("Test task list").build();
         when(taskListRepository.findByIdAndUserId(taskList.getId(), taskList.getUserId()))
                 .thenReturn(Mono.just(taskList));
-        when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskListRepository.save(any(TaskList.class)))
+                .thenAnswer(args -> Mono.just(new TaskList(args.getArgument(0))));
 
         TaskList updatedTaskList = new TaskList(taskList);
         updatedTaskList.setCompleted(true);
@@ -150,7 +153,8 @@ class DefaultTaskListServiceTest {
         TaskList taskList = TaskList.builder().id(2L).userId(user.getId()).name("Test task list").build();
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
-        when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskListRepository.save(any(TaskList.class)))
+                .thenAnswer(args -> Mono.just(new TaskList(args.getArgument(0))));
         when(taskRepository.findByTaskListIdAndUserIdAndStatusNotOrderByCreatedAtAsc(taskList.getId(), user.getId(),
                 TaskStatus.COMPLETED, 0, null)).thenReturn(Flux.empty());
 
@@ -168,10 +172,11 @@ class DefaultTaskListServiceTest {
         Task task = Task.builder().id(3L).userId(user.getId()).taskListId(taskList.getId()).title("Test task").build();
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
-        when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskListRepository.save(any(TaskList.class)))
+                .thenAnswer(args -> Mono.just(new TaskList(args.getArgument(0))));
         when(taskRepository.findByTaskListIdAndUserIdAndStatusNotOrderByCreatedAtAsc(taskList.getId(), user.getId(),
                 TaskStatus.COMPLETED, 0, null)).thenReturn(Flux.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task completedTask = new Task(task);
         completedTask.setPreviousStatus(task.getStatus());
@@ -285,7 +290,7 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         taskListService.addTask(taskList.getId(), task.getId(), user).block();
 
@@ -337,7 +342,7 @@ class DefaultTaskListServiceTest {
 
         when(taskListRepository.findByIdAndUserId(taskList.getId(), user.getId())).thenReturn(Mono.just(taskList));
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         taskListService.removeTask(taskList.getId(), task.getId(), user).block();
 

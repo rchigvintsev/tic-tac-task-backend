@@ -116,7 +116,7 @@ class TaskListControllerTest {
 
         long taskListId = 2L;
         when(taskListService.createTaskList(any(TaskList.class))).thenAnswer(args -> {
-            TaskList l = args.getArgument(0);
+            TaskList l = new TaskList(args.getArgument(0));
             l.setId(taskListId);
             return Mono.just(l);
         });
@@ -182,7 +182,8 @@ class TaskListControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(taskListService.updateTaskList(any(TaskList.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskListService.updateTaskList(any(TaskList.class)))
+                .thenAnswer(args -> Mono.just(new TaskList(args.getArgument(0))));
 
         long taskListId = 2L;
 

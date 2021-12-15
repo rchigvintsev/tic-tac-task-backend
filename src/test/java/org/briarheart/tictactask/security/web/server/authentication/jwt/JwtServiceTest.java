@@ -62,7 +62,7 @@ class JwtServiceTest {
     void setUp() {
         ServerAccessTokenRepository accessTokenRepositoryMock = mock(ServerAccessTokenRepository.class);
         when(accessTokenRepositoryMock.saveAccessToken(any(), any()))
-                .thenAnswer(args -> Mono.just(args.getArgument(0, AccessToken.class)));
+                .thenAnswer(args -> Mono.just(args.getArgument(0)));
 
         service = new JwtService(accessTokenRepositoryMock, accessTokenSigningKey);
         service.setAccessTokenValiditySeconds(Long.MAX_VALUE / 1001);

@@ -44,10 +44,10 @@ class DefaultPasswordServiceTest {
     void setUp() {
         tokenRepository = mock(PasswordResetConfirmationTokenRepository.class);
         when(tokenRepository.save(any(PasswordResetConfirmationToken.class)))
-                .thenAnswer(args -> Mono.just(args.getArgument(0)));
+                .thenAnswer(args -> Mono.just(new PasswordResetConfirmationToken(args.getArgument(0))));
 
         userRepository = mock(UserRepository.class);
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         ApplicationProperties appProps = new ApplicationProperties();
         appProps.setName("Horns and hooves");

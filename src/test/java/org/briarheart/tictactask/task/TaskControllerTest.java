@@ -310,7 +310,7 @@ class TaskControllerTest {
         long taskId = 2L;
 
         when(taskService.createTask(any(Task.class))).thenAnswer(args -> {
-            Task t = args.getArgument(0);
+            Task t = new Task(args.getArgument(0));
             t.setId(taskId);
             return Mono.just(t);
         });
@@ -438,7 +438,7 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(taskService.updateTask(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskService.updateTask(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         long taskId = 2L;
 
@@ -604,7 +604,7 @@ class TaskControllerTest {
         long commentId = 3L;
 
         when(taskService.addComment(any(TaskComment.class))).thenAnswer(args -> {
-            TaskComment c = args.getArgument(0);
+            TaskComment c = new TaskComment(args.getArgument(0));
             c.setId(commentId);
             return Mono.just(c);
         });

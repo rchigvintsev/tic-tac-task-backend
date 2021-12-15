@@ -52,7 +52,7 @@ public class TagController extends AbstractController {
                     .path("/{id}")
                     .buildAndExpand(createdTag.getId())
                     .toUri();
-            return ResponseEntity.created(tagLocation).body(new TagResponse(tag));
+            return ResponseEntity.created(tagLocation).body(new TagResponse(createdTag));
         });
     }
 

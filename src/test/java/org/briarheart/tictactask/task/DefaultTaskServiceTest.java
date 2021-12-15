@@ -392,7 +392,7 @@ class DefaultTaskServiceTest {
     void shouldCreateTask() {
         long taskId = 2L;
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> {
-            Task t = args.getArgument(0);
+            Task t = new Task(args.getArgument(0));
             t.setId(taskId);
             return Mono.just(t);
         });
@@ -409,7 +409,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldNotAllowToSetTaskListIdFieldOnTaskCreate() {
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task task = Task.builder().userId(1L).taskListId(2L).status(TaskStatus.PROCESSED).title("New task").build();
 
@@ -423,7 +423,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldSetTaskStatusToUnprocessedOnTaskCreateWhenStatusIsNotProvided() {
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task task = Task.builder().userId(1L).title("New task").build();
 
@@ -453,7 +453,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.PROCESSED)
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task updatedTask = new Task(task);
         updatedTask.setTitle("Updated test task");
@@ -474,7 +474,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.PROCESSED)
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task updatedTask = new Task(task);
         updatedTask.setTaskListId(4L);
@@ -494,7 +494,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.PROCESSED)
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task updatedTask = new Task(task);
         updatedTask.setCreatedAt(currentTime.minus(1, ChronoUnit.HOURS));
@@ -514,7 +514,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.PROCESSED)
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task updatedTask = new Task(task);
         updatedTask.setStatus(TaskStatus.COMPLETED);
@@ -528,7 +528,7 @@ class DefaultTaskServiceTest {
     void shouldMarkTaskAsProcessedOnTaskUpdateWhenDeadlineDateIsNotNull() {
         Task task = Task.builder().id(1L).userId(2L).title("Test task").status(TaskStatus.UNPROCESSED).build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task updatedTask = new Task(task);
         updatedTask.setDeadline(currentTime.plus(3, ChronoUnit.DAYS));
@@ -558,7 +558,7 @@ class DefaultTaskServiceTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         taskService.completeTask(task.getId(), user).block();
         assertSame(TaskStatus.COMPLETED, task.getStatus());
@@ -576,7 +576,7 @@ class DefaultTaskServiceTest {
                 .recurrenceStrategy(new DailyTaskRecurrenceStrategy())
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         taskService.completeTask(task.getId(), user).block();
         assertSame(TaskStatus.UNPROCESSED, task.getStatus());
@@ -612,7 +612,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.COMPLETED)
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task result = taskService.restoreTask(task.getId(), user).block();
         assertNotNull(result);
@@ -638,7 +638,7 @@ class DefaultTaskServiceTest {
                 .build();
         when(taskListRepository.findById(taskList.getId())).thenReturn(Mono.just(taskList));
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task result = taskService.restoreTask(task.getId(), user).block();
         assertNotNull(result);
@@ -874,7 +874,7 @@ class DefaultTaskServiceTest {
         long commentId = 3L;
 
         when(taskCommentRepository.save(any())).thenAnswer(args -> {
-            TaskComment comment = args.getArgument(0);
+            TaskComment comment = new TaskComment(args.getArgument(0));
             comment.setId(commentId);
             return Mono.just(comment);
         });
@@ -898,7 +898,7 @@ class DefaultTaskServiceTest {
         Task task = Task.builder().id(2L).userId(1L).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), task.getUserId())).thenReturn(Mono.just(task));
 
-        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(new TaskComment(args.getArgument(0))));
 
         TaskComment newComment = TaskComment.builder()
                 .commentText("New comment")

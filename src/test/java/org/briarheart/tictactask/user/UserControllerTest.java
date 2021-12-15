@@ -73,7 +73,7 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        when(userService.updateUser(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userService.updateUser(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
     }
 
     @Test
@@ -139,7 +139,7 @@ class UserControllerTest {
     @Test
     void shouldCreateUser() {
         when(userService.createUser(any(User.class), eq(Locale.ENGLISH)))
-                .thenAnswer(args -> Mono.just(args.getArgument(0)));
+                .thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         CreateUserRequest createRequest = new CreateUserRequest();
         createRequest.setEmail("alice@mail.com");

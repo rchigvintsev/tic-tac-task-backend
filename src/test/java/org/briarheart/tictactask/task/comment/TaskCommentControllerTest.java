@@ -58,7 +58,7 @@ class TaskCommentControllerTest {
         Authentication authentication = createAuthentication(user);
 
         when(taskCommentService.updateComment(any(TaskComment.class)))
-                .thenAnswer(args -> Mono.just(args.getArgument(0)));
+                .thenAnswer(args -> Mono.just(new TaskComment(args.getArgument(0))));
 
         long commentId = 2L;
 

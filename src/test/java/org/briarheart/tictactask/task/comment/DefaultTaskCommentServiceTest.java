@@ -49,7 +49,7 @@ class DefaultTaskCommentServiceTest {
 
         when(taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId()))
                 .thenReturn(Mono.just(comment));
-        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(new TaskComment(args.getArgument(0))));
 
         TaskComment updatedComment = new TaskComment(comment);
         updatedComment.setCommentText("Updated test comment");
@@ -76,7 +76,7 @@ class DefaultTaskCommentServiceTest {
 
         when(taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId()))
                 .thenReturn(Mono.just(comment));
-        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(new TaskComment(args.getArgument(0))));
 
         TaskComment updatedComment = new TaskComment(comment);
         updatedComment.setCreatedAt(currentTime.minus(1, ChronoUnit.HOURS));
@@ -100,7 +100,7 @@ class DefaultTaskCommentServiceTest {
 
         when(taskCommentRepository.findByIdAndUserId(comment.getId(), comment.getUserId()))
                 .thenReturn(Mono.just(comment));
-        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(taskCommentRepository.save(any())).thenAnswer(args -> Mono.just(new TaskComment(args.getArgument(0))));
 
         TaskComment updatedComment = new TaskComment(comment);
         updatedComment.setTaskId(4L);

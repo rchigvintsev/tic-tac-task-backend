@@ -258,7 +258,7 @@ class DefaultUserServiceTest {
                 .password("secret")
                 .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         User updatedUser = new User(user);
         updatedUser.setFullName("Alice Wonderland");
@@ -278,7 +278,7 @@ class DefaultUserServiceTest {
                 .password("secret")
                 .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         User updatedUser = new User(user);
         updatedUser.setEmail("bob@mail.com");
@@ -300,7 +300,7 @@ class DefaultUserServiceTest {
                 .password("secret")
                 .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         User updatedUser = new User(user);
         updatedUser.setEmailConfirmed(false);
@@ -322,7 +322,7 @@ class DefaultUserServiceTest {
                 .password("secret")
                 .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         User updatedUser = new User(user);
         updatedUser.setAdmin(true);
@@ -344,7 +344,7 @@ class DefaultUserServiceTest {
                 .password("secret")
                 .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         User updatedUser = new User(user);
         updatedUser.setAuthorities(List.of(new SimpleGrantedAuthority("ROLE_SUPER_HERO")));
@@ -367,7 +367,7 @@ class DefaultUserServiceTest {
                 .createdAt(LocalDateTime.now(ZoneOffset.UTC).minus(1, ChronoUnit.DAYS))
                 .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
-        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(args.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         User updatedUser = new User(user);
         updatedUser.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
