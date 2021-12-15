@@ -4,9 +4,11 @@ import org.briarheart.tictactask.security.web.server.authentication.accesstoken.
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.ServerAccessTokenRepository;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseCookie.ResponseCookieBuilder;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.util.Assert;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -29,7 +31,6 @@ public class CookieJwtRepository implements ServerAccessTokenRepository {
     private String accessTokenCookieName = DEFAULT_ACCESS_TOKEN_COOKIE_NAME;
 
     public CookieJwtRepository(String applicationDomain) {
-        Assert.hasLength(applicationDomain, "Application domain name must not be null or empty");
         this.applicationDomain = applicationDomain;
     }
 
@@ -54,9 +55,12 @@ public class CookieJwtRepository implements ServerAccessTokenRepository {
         return Mono.fromCallable(() -> {
             ServerHttpResponse response = exchange.getResponse();
             Duration maxAge = Duration.between(accessToken.getIssuedAt(), accessToken.getExpiration());
-            ResponseCookie accessTokenCookie = ResponseCookie.from(accessTokenCookieName, accessToken.getTokenValue())
-                    .domain("." + applicationDomain)
-                    .path("/")
+            ResponseCookieBuilder accessTokenCookieBuilder = ResponseCookie.from(accessTokenCookieName,
+                    accessToken.getTokenValue());
+            if (StringUtils.hasLength(applicationDomain)) {
+                accessTokenCookieBuilder.domain("." + applicationDomain);
+            }
+            ResponseCookie accessTokenCookie = accessTokenCookieBuilder.path("/")
                     .httpOnly(true)
                     .maxAge(maxAge)
                     .build();
@@ -69,9 +73,11 @@ public class CookieJwtRepository implements ServerAccessTokenRepository {
     public Mono<Jwt> removeAccessToken(ServerWebExchange exchange) {
         return loadAccessToken(exchange).map(token -> {
             ServerHttpResponse response = exchange.getResponse();
-            ResponseCookie accessTokenCookie = ResponseCookie.from(accessTokenCookieName, "")
-                    .domain("." + applicationDomain)
-                    .path("/")
+            ResponseCookieBuilder accessTokenCookieBuilder = ResponseCookie.from(accessTokenCookieName, "");
+            if (StringUtils.hasLength(applicationDomain)) {
+                accessTokenCookieBuilder.domain("." + applicationDomain);
+            }
+            ResponseCookie accessTokenCookie = accessTokenCookieBuilder.path("/")
                     .httpOnly(true)
                     .maxAge(0)
                     .build();
