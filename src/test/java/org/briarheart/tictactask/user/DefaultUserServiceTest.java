@@ -262,10 +262,12 @@ class DefaultUserServiceTest {
 
         User updatedUser = new User(user);
         updatedUser.setFullName("Alice Wonderland");
+        updatedUser.setProfilePictureUrl("https://avatar.jpg");
 
         User result = service.updateUser(updatedUser).block();
         assertNotNull(result);
         assertEquals(updatedUser.getFullName(), result.getFullName());
+        assertEquals(updatedUser.getProfilePictureUrl(), result.getProfilePictureUrl());
     }
 
     @Test
