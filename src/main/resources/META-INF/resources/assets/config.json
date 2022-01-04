@@ -1,4 +1,4 @@
 {
   "apiBaseUrl": "/api",
-  "selfBaseUrl": "https://tictactask.site"
+  "domain": "tictactask.site"
 }

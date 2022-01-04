@@ -30,6 +30,7 @@
   "sign_in_prompt": "Please sign in",
   "sign_up_prompt": "Please sign up",
   "password_reset": "Password reset",
+  "password_change": "Password change",
   "sign_in": "Sign in",
   "sign_up": "Sign up",
   "submit": "Submit",
@@ -141,5 +142,7 @@
   "daily": "Daily",
   "weekly": "Weekly",
   "monthly": "Monthly",
-  "annually": "Annually"
+  "annually": "Annually",
+  "cookie-notice": "We use cookies to ensure that we give you the best experience on our website and to analyse its usage. You can find more information on cookies and how we use them in our privacy policy. By continuing to use this website, you consent to the use of these cookies. <a href=\"assets/privacy-policy/privacy-policy-en.pdf\" target=\"_blank\" class=\"privacy-policy-link\">Read more</a>",
+  "accept": "Accept"
 }
