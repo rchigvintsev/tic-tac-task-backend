@@ -1,5 +1,7 @@
 # TicTacTask (backend)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=rchigvintsev_tic-tac-task-backend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=rchigvintsev_tic-tac-task-backend)
+
 This is a pet project that was created in order to learn reactive programming using 
 [Project Reactor](https://projectreactor.io) and WebFlux. It is a simple web application that allows to create task
 lists according to David Allen's [GTD system](https://en.wikipedia.org/wiki/Getting_Things_Done).
