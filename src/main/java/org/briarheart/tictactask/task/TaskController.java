@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.task;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
+@Tag(name = "Tasks", description = "Allows to manage tasks, add/remove task tags, add/remove task comments")
 public class TaskController extends AbstractController {
     private final TaskService taskService;
 

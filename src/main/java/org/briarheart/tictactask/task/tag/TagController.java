@@ -28,6 +28,10 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/v1/tags")
 @RequiredArgsConstructor
+@io.swagger.v3.oas.annotations.tags.Tag(
+        name = "Tags",
+        description = "Allows to manage task tags, get tasks by tag"
+)
 public class TagController extends AbstractController {
     private final TagService tagService;
 

@@ -45,6 +45,7 @@ import javax.validation.MessageInterpolator;
 import java.time.Duration;
 import java.util.Arrays;
 
+import static org.briarheart.tictactask.util.RequestPredicates.pathContains;
 import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 
 /**
@@ -90,7 +91,9 @@ public class WebConfig implements WebFluxConfigurer {
         if (welcomePage != null && "/**".equals(webFluxProperties.getStaticPathPattern())) {
             RequestPredicate requestPredicate = GET("/**")
                     .and(pathExtension(ext -> !StringUtils.hasLength(ext) || ext.equalsIgnoreCase("html")))
-                    .and(accept(MediaType.TEXT_HTML));
+                    .and(accept(MediaType.TEXT_HTML))
+                    // Otherwise, Swagger UI will be inaccessible
+                    .and(pathContains("swagger-ui").negate());
             RouterFunction<ServerResponse> routerFunction = RouterFunctions.route(requestPredicate,
                     request -> ServerResponse.ok().contentType(MediaType.TEXT_HTML).bodyValue(welcomePage));
             RouterFunctionMapping routerFunctionMapping = new RouterFunctionMapping(routerFunction);

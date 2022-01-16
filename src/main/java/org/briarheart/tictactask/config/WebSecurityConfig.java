@@ -92,6 +92,8 @@ import static org.springframework.security.crypto.factory.PasswordEncoderFactori
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfig {
+    private static final String[] AUTHENTICATION_REQUIRING_PATHS = {"/api/**"};
+
     private final ApplicationProperties applicationProperties;
 
     @Value("${spring.security.oauth2.client.redirect-uri-template}")
@@ -134,7 +136,7 @@ public class WebSecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/v?/users/*/password/reset/confirmation/*").access(unauthenticated())
                         .pathMatchers(HttpMethod.POST, "/api/login").access(unauthenticated())
                         .pathMatchers(HttpMethod.GET, "/api/oauth2/authorization/**").access(unauthenticated())
-                        .pathMatchers("/api/**").authenticated()
+                        .pathMatchers(AUTHENTICATION_REQUIRING_PATHS).authenticated()
                         .anyExchange().permitAll()
                 .and()
                     .exceptionHandling()

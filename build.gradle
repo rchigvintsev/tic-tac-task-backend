@@ -26,6 +26,7 @@ ext {
     flywayVersion = '8.0.5'
     bouncycastleVersion = '1.69'
     jodaTimeVersion = '2.10.13'
+    springdocOpenapiVersion = '1.6.4'
 }
 
 group = 'org.briarheart'
@@ -53,6 +54,7 @@ dependencies {
     implementation "com.google.guava:guava:$guavaVersion"
     implementation "io.jsonwebtoken:jjwt-api:$jjwtVersion"
     implementation "joda-time:joda-time:$jodaTimeVersion"
+    implementation "org.springdoc:springdoc-openapi-webflux-ui:$springdocOpenapiVersion"
 
     runtimeOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.postgresql:postgresql'

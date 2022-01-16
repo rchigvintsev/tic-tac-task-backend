@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.task.list;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,11 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/v1/task-lists")
 @RequiredArgsConstructor
+@Tag(
+        name = "Task lists",
+        description = "Allows to manage task lists, include task in list, exclude task from list, " +
+                "get tasks included in list"
+)
 public class TaskListController extends AbstractController {
     private final TaskListService taskListService;
 

@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.task.comment;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/v1/task-comments")
 @RequiredArgsConstructor
+@Tag(name = "Task comments", description = "Allows to update/delete task comments")
 public class TaskCommentController extends AbstractController {
     private final TaskCommentService taskCommentService;
 

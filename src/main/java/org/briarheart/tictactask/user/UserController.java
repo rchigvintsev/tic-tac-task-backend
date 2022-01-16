@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.user;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.*;
 import org.briarheart.tictactask.controller.AbstractController;
 import org.briarheart.tictactask.controller.RequiredFormParameterMissingException;
@@ -44,6 +45,10 @@ import java.util.Locale;
  */
 @RestController
 @RequestMapping("/api/v1/users")
+@Tag(
+        name = "Users",
+        description = "Allows to manage users as well as change user profile picture and password"
+)
 public class UserController extends AbstractController {
     private final UserService userService;
     private final EmailConfirmationService emailConfirmationService;
