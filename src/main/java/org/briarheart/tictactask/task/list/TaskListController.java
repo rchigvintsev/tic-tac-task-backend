@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.task.list;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,16 +39,22 @@ public class TaskListController extends AbstractController {
     private final TaskListService taskListService;
 
     @GetMapping("/uncompleted")
+    @Operation(
+            summary = "Get uncompleted task lists",
+            description = "Returns uncompleted task lists created by current user"
+    )
     public Flux<TaskListResponse> getUncompletedTaskLists(Authentication authentication) {
         return taskListService.getUncompletedTaskLists(getUser(authentication)).map(TaskListResponse::new);
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get task list by id", description = "Returns task list by id")
     public Mono<TaskListResponse> getTaskList(@PathVariable("id") Long id, Authentication authentication) {
         return taskListService.getTaskList(id, getUser(authentication)).map(TaskListResponse::new);
     }
 
     @PostMapping
+    @Operation(summary = "Create task list", description = "Allows to create task list")
     public Mono<ResponseEntity<TaskListResponse>> createTaskList(@Valid @RequestBody CreateTaskListRequest createRequest,
                                                                  Authentication authentication,
                                                                  ServerHttpRequest request) {
@@ -63,6 +70,7 @@ public class TaskListController extends AbstractController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update task list", description = "Allows to update task list")
     public Mono<TaskListResponse> updateTaskList(@Valid @RequestBody UpdateTaskListRequest updateRequest,
                                                  @PathVariable Long id,
                                                  Authentication authentication) {
@@ -74,17 +82,26 @@ public class TaskListController extends AbstractController {
 
     @PutMapping("/completed/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Complete task list",
+            description = "Allows to complete task list along with all tasks included in it"
+    )
     public Mono<Void> completeTaskList(@PathVariable Long id, Authentication authentication) {
         return taskListService.completeTaskList(id, getUser(authentication));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Delete task list",
+            description = "Allows to completely delete task list along with all tasks included in it"
+    )
     public Mono<Void> deleteTaskList(@PathVariable Long id, Authentication authentication) {
         return taskListService.deleteTaskList(id, getUser(authentication));
     }
 
     @GetMapping("/{taskListId}/tasks")
+    @Operation(summary = "Get tasks from task list", description = "Returns tasks included in task list")
     public Flux<TaskResponse> getTasks(@PathVariable Long taskListId,
                                        Authentication authentication,
                                        Pageable pageable) {
@@ -93,12 +110,14 @@ public class TaskListController extends AbstractController {
 
     @PutMapping("/{taskListId}/tasks/{taskId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Add task to task list", description = "Allows to add task to task list")
     public Mono<Void> addTask(@PathVariable Long taskListId, @PathVariable Long taskId, Authentication authentication) {
         return taskListService.addTask(taskListId, taskId, getUser(authentication));
     }
 
     @DeleteMapping("/{taskListId}/tasks/{taskId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remove task from task list", description = "Allows to remove task from task list")
     public Mono<Void> removeTask(@PathVariable Long taskListId,
                                  @PathVariable Long taskId,
                                  Authentication authentication) {

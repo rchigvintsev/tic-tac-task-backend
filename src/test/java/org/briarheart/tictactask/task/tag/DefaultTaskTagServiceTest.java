@@ -19,25 +19,25 @@ import static org.mockito.Mockito.*;
 /**
  * @author Roman Chigvintsev
  */
-class DefaultTagServiceTest {
+class DefaultTaskTagServiceTest {
     private TagRepository tagRepository;
     private TaskRepository taskRepository;
-    private DefaultTagService tagService;
+    private DefaultTaskTagService tagService;
 
     @BeforeEach
     void setUp() {
         tagRepository = mock(TagRepository.class);
         taskRepository = mock(TaskRepository.class);
-        tagService = new DefaultTagService(tagRepository, taskRepository);
+        tagService = new DefaultTaskTagService(tagRepository, taskRepository);
     }
 
     @Test
     void shouldReturnAllTags() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         when(tagRepository.findByUserId(user.getId())).thenReturn(Flux.just(tag));
 
-        Tag result = tagService.getTags(user).blockFirst();
+        TaskTag result = tagService.getTags(user).blockFirst();
         assertEquals(tag, result);
     }
 
@@ -51,10 +51,10 @@ class DefaultTagServiceTest {
     @Test
     void shouldReturnTagById() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
 
-        Tag result = tagService.getTag(tag.getId(), user).block();
+        TaskTag result = tagService.getTag(tag.getId(), user).block();
         assertEquals(tag, result);
     }
 
@@ -79,18 +79,18 @@ class DefaultTagServiceTest {
     void shouldCreateTag() {
         long tagId = 2L;
         when(tagRepository.save(any())).thenAnswer(args -> {
-            Tag t = new Tag(args.getArgument(0));
+            TaskTag t = new TaskTag(args.getArgument(0));
             t.setId(tagId);
             return Mono.just(t);
         });
 
-        Tag tag = Tag.builder().userId(1L).name("New tag").build();
+        TaskTag tag = TaskTag.builder().userId(1L).name("New tag").build();
         when(tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())).thenReturn(Mono.empty());
 
-        Tag expectedResult = new Tag(tag);
+        TaskTag expectedResult = new TaskTag(tag);
         expectedResult.setId(tagId);
 
-        Tag result = tagService.createTag(tag).block();
+        TaskTag result = tagService.createTag(tag).block();
         assertEquals(expectedResult, result);
     }
 
@@ -102,7 +102,7 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagCreateWhenTagAlreadyExists() {
-        Tag tag = Tag.builder().name("New tag").userId(1L).build();
+        TaskTag tag = TaskTag.builder().name("New tag").userId(1L).build();
         when(tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())).thenReturn(Mono.just(tag));
         EntityAlreadyExistsException e = assertThrows(EntityAlreadyExistsException.class,
                 () -> tagService.createTag(tag).block());
@@ -111,16 +111,16 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldUpdateTag() {
-        Tag tag = Tag.builder().id(1L).userId(2L).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(1L).userId(2L).name("Test tag").build();
 
         when(tagRepository.findByIdAndUserId(tag.getId(), tag.getUserId())).thenReturn(Mono.just(tag));
         when(tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())).thenReturn(Mono.empty());
-        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new Tag(args.getArgument(0))));
+        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new TaskTag(args.getArgument(0))));
 
-        Tag updatedTag = new Tag(tag);
+        TaskTag updatedTag = new TaskTag(tag);
         updatedTag.setColor(16777215);
 
-        Tag result = tagService.updateTag(updatedTag).block();
+        TaskTag result = tagService.updateTag(updatedTag).block();
         assertEquals(updatedTag, result);
     }
 
@@ -132,10 +132,10 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagUpdateWhenTagIsNotFound() {
-        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new Tag(args.getArgument(0))));
+        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new TaskTag(args.getArgument(0))));
         when(tagRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
 
-        Tag tag = Tag.builder().id(2L).userId(1L).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(2L).userId(1L).name("Test tag").build();
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> tagService.updateTag(tag).block());
         assertEquals("Tag with id " + tag.getId() + " is not found", e.getMessage());
@@ -143,13 +143,13 @@ class DefaultTagServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagUpdateWhenTagAlreadyExists() {
-        Tag tag = Tag.builder().id(1L).userId(2L).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(1L).userId(2L).name("Test tag").build();
 
-        Tag updatedTag = new Tag(tag);
+        TaskTag updatedTag = new TaskTag(tag);
         updatedTag.setId(tag.getId());
         updatedTag.setName("Updated test tag");
 
-        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new Tag(args.getArgument(0))));
+        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new TaskTag(args.getArgument(0))));
         when(tagRepository.findByIdAndUserId(tag.getId(), tag.getUserId())).thenReturn(Mono.just(tag));
         when(tagRepository.findByNameAndUserId(updatedTag.getName(), updatedTag.getUserId()))
                 .thenReturn(Mono.just(updatedTag));
@@ -162,7 +162,7 @@ class DefaultTagServiceTest {
     @Test
     void shouldDeleteTag() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
 
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
         when(tagRepository.delete(tag)).thenReturn(Mono.just(true).then());
@@ -193,7 +193,7 @@ class DefaultTagServiceTest {
     @Test
     void shouldReturnAllUncompletedTasksForTag() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         Task task = Task.builder().id(3L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
 
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));

@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.task.comment;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,6 +29,7 @@ public class TaskCommentController extends AbstractController {
     private final TaskCommentService taskCommentService;
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update task comment", description = "Allows to update task comment")
     public Mono<TaskCommentResponse> updateComment(@Valid @RequestBody UpdateTaskCommentRequest updateRequest,
                                                    @PathVariable Long id,
                                                    Authentication authentication) {
@@ -39,6 +41,7 @@ public class TaskCommentController extends AbstractController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete task comment", description = "Allows to completely delete task comment")
     public Mono<Void> deleteComment(@PathVariable Long id, Authentication authentication) {
         return taskCommentService.deleteComment(id, getUser(authentication));
     }

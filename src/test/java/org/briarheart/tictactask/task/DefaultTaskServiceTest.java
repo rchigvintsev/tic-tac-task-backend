@@ -6,8 +6,8 @@ import org.briarheart.tictactask.task.comment.TaskCommentRepository;
 import org.briarheart.tictactask.task.list.TaskList;
 import org.briarheart.tictactask.task.list.TaskListRepository;
 import org.briarheart.tictactask.task.recurrence.DailyTaskRecurrenceStrategy;
-import org.briarheart.tictactask.task.tag.Tag;
 import org.briarheart.tictactask.task.tag.TagRepository;
+import org.briarheart.tictactask.task.tag.TaskTag;
 import org.briarheart.tictactask.task.tag.TaskTagRelation;
 import org.briarheart.tictactask.task.tag.TaskTagRelationRepository;
 import org.briarheart.tictactask.user.User;
@@ -697,14 +697,14 @@ class DefaultTaskServiceTest {
     void shouldReturnAllTagsForTask() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
-        Tag tag = Tag.builder().id(3L).userId(user.getId()).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(3L).userId(user.getId()).name("Test tag").build();
 
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskTagRelationRepository.findByTaskId(task.getId()))
                 .thenReturn(Flux.just(new TaskTagRelation(task.getId(), tag.getId())));
         when(tagRepository.findByIdIn(Set.of(tag.getId()))).thenReturn(Flux.just(tag));
 
-        Tag result = taskService.getTags(task.getId(), user).blockFirst();
+        TaskTag result = taskService.getTags(task.getId(), user).blockFirst();
         assertEquals(tag, result);
     }
 
@@ -730,7 +730,7 @@ class DefaultTaskServiceTest {
     void shouldAssignTagToTask() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
-        Tag tag = Tag.builder().id(3L).userId(user.getId()).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(3L).userId(user.getId()).name("Test tag").build();
 
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
@@ -752,7 +752,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldThrowExceptionOnTagAssignWhenTaskIsNotFound() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         long taskId = 3L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
@@ -783,7 +783,7 @@ class DefaultTaskServiceTest {
     void shouldRemoveTagFromTask() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
-        Tag tag = Tag.builder().id(3L).name("Test tag").userId(user.getId()).build();
+        TaskTag tag = TaskTag.builder().id(3L).name("Test tag").userId(user.getId()).build();
 
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskTagRelationRepository.deleteByTaskIdAndTagId(task.getId(), tag.getId()))

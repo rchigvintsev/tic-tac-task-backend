@@ -16,17 +16,17 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Default implementation of {@link TagService}.
+ * Default implementation of {@link TaskTagService}.
  *
  * @author Roman Chigvintsev
  */
 @Service
 @Slf4j
-public class DefaultTagService implements TagService {
+public class DefaultTaskTagService implements TaskTagService {
     private final TagRepository tagRepository;
     private final TaskRepository taskRepository;
 
-    public DefaultTagService(TagRepository tagRepository, TaskRepository taskRepository) {
+    public DefaultTaskTagService(TagRepository tagRepository, TaskRepository taskRepository) {
         Assert.notNull(tagRepository, "Tag repository must not be null");
         Assert.notNull(taskRepository, "Task repository must not be null");
 
@@ -35,28 +35,28 @@ public class DefaultTagService implements TagService {
     }
 
     @Override
-    public Flux<Tag> getTags(User user) {
+    public Flux<TaskTag> getTags(User user) {
         Assert.notNull(user, "User must not be null");
         return tagRepository.findByUserId(user.getId());
     }
 
     @Override
-    public Mono<Tag> getTag(Long id, User user) throws EntityNotFoundException {
+    public Mono<TaskTag> getTag(Long id, User user) throws EntityNotFoundException {
         Assert.notNull(user, "User must not be null");
         return findTag(id, user.getId());
     }
 
     @Transactional
     @Override
-    public Mono<Tag> createTag(Tag tag) throws EntityAlreadyExistsException {
+    public Mono<TaskTag> createTag(TaskTag tag) throws EntityAlreadyExistsException {
         Assert.notNull(tag, "Tag must not be null");
         return tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())
                 .flatMap(t -> {
                     String message = "Tag with name \"" + tag.getName() + "\" already exists";
-                    return Mono.<Tag>error(new EntityAlreadyExistsException(message));
+                    return Mono.<TaskTag>error(new EntityAlreadyExistsException(message));
                 })
                 .switchIfEmpty(Mono.defer(() -> {
-                    Tag newTag = new Tag(tag);
+                    TaskTag newTag = new TaskTag(tag);
                     newTag.setId(null);
                     return tagRepository.save(newTag)
                             .doOnSuccess(t -> log.debug("Tag with id {} is created", t.getId()));
@@ -65,7 +65,7 @@ public class DefaultTagService implements TagService {
 
     @Transactional
     @Override
-    public Mono<Tag> updateTag(Tag tag) throws EntityNotFoundException, EntityAlreadyExistsException {
+    public Mono<TaskTag> updateTag(TaskTag tag) throws EntityNotFoundException, EntityAlreadyExistsException {
         Assert.notNull(tag, "Tag must not be null");
         return findTag(tag.getId(), tag.getUserId())
                 .flatMap(t -> {
@@ -77,7 +77,7 @@ public class DefaultTagService implements TagService {
                     return Mono.empty();
                 }).flatMap(t -> {
                     String message = "Tag with name \"" + tag.getName() + "\" already exists";
-                    return Mono.<Tag>error(new EntityAlreadyExistsException(message));
+                    return Mono.<TaskTag>error(new EntityAlreadyExistsException(message));
                 }).switchIfEmpty(tagRepository.save(tag)
                         .doOnSuccess(t -> log.debug("Tag with id {} is updated", t.getId())));
     }
@@ -100,7 +100,7 @@ public class DefaultTagService implements TagService {
         });
     }
 
-    private Mono<Tag> findTag(Long tagId, Long userId) throws EntityNotFoundException {
+    private Mono<TaskTag> findTag(Long tagId, Long userId) throws EntityNotFoundException {
         return tagRepository.findByIdAndUserId(tagId, userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + tagId + " is not found")));
     }

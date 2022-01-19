@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.task;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +10,7 @@ import org.briarheart.tictactask.task.comment.TaskComment;
 import org.briarheart.tictactask.task.comment.TaskCommentController.CreateTaskCommentRequest;
 import org.briarheart.tictactask.task.comment.TaskCommentController.TaskCommentResponse;
 import org.briarheart.tictactask.task.recurrence.TaskRecurrenceStrategy;
-import org.briarheart.tictactask.task.tag.TagController.TagResponse;
+import org.briarheart.tictactask.task.tag.TaskTagController.TaskTagResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,16 +42,22 @@ public class TaskController extends AbstractController {
     private final TaskService taskService;
 
     @GetMapping("/unprocessed")
+    @Operation(summary = "Get unprocessed tasks", description = "Returns unprocessed tasks created by current user")
     public Flux<TaskResponse> getUnprocessedTasks(Authentication authentication, Pageable pageable) {
         return taskService.getUnprocessedTasks(getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @GetMapping("/unprocessed/count")
+    @Operation(
+            summary = "Get number of unprocessed tasks",
+            description = "Returns number of unprocessed tasks created by current user"
+    )
     public Mono<Long> getUnprocessedTaskCount(Authentication authentication) {
         return taskService.getUnprocessedTaskCount(getUser(authentication));
     }
 
     @GetMapping("/processed")
+    @Operation(summary = "Get processed tasks", description = "Returns processed tasks created by current user")
     public Flux<TaskResponse> getProcessedTasks(
             @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
             @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
@@ -67,6 +74,10 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/processed/count")
+    @Operation(
+            summary = "Get number of processed tasks",
+            description = "Returns number of processed tasks created by current user"
+    )
     public Mono<Long> getProcessedTaskCount(
             @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
             @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
@@ -81,26 +92,34 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/uncompleted")
+    @Operation(summary = "Get uncompleted tasks", description = "Returns uncompleted tasks created by current user")
     public Flux<TaskResponse> getUncompletedTasks(Authentication authentication, Pageable pageable) {
         return taskService.getUncompletedTasks(getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @GetMapping("/uncompleted/count")
+    @Operation(
+            summary = "Get number of uncompleted tasks",
+            description = "Returns number of uncompleted tasks created by current user"
+    )
     public Mono<Long> getUncompletedTaskCount(Authentication authentication) {
         return taskService.getUncompletedTaskCount(getUser(authentication));
     }
 
     @GetMapping("/completed")
+    @Operation(summary = "Get completed tasks", description = "Returns completed tasks created by current user")
     public Flux<TaskResponse> getCompletedTasks(Authentication authentication, Pageable pageable) {
         return taskService.getCompletedTasks(getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get task by id", description = "Returns task by id")
     public Mono<TaskResponse> getTask(@PathVariable("id") Long id, Authentication authentication) {
         return taskService.getTask(id, getUser(authentication)).map(TaskResponse::new);
     }
 
     @PostMapping
+    @Operation(summary = "Create new task", description = "Allows to create new task")
     public Mono<ResponseEntity<TaskResponse>> createTask(@Valid @RequestBody CreateTaskRequest createRequest,
                                                          Authentication authentication,
                                                          ServerHttpRequest request) {
@@ -116,6 +135,7 @@ public class TaskController extends AbstractController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update task", description = "Allows to update task")
     public Mono<TaskResponse> updateTask(@Valid @RequestBody UpdateTaskRequest updateRequest,
                                          @PathVariable Long id,
                                          Authentication authentication) {
@@ -126,28 +146,33 @@ public class TaskController extends AbstractController {
     }
 
     @PutMapping("/completed/{id}")
+    @Operation(summary = "Complete task", description = "Allows to complete task")
     public Mono<TaskResponse> completeTask(@PathVariable Long id, Authentication authentication) {
         return taskService.completeTask(id, getUser(authentication)).map(TaskResponse::new);
     }
 
     @DeleteMapping("/completed/{id}")
+    @Operation(summary = "Restore task", description = "Allows to restore previously completed task")
     public Mono<TaskResponse> restoreTask(@PathVariable Long id, Authentication authentication) {
         return taskService.restoreTask(id, getUser(authentication)).map(TaskResponse::new);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete task", description = "Allows to completely delete task")
     public Mono<Void> deleteTask(@PathVariable Long id, Authentication authentication) {
         return taskService.deleteTask(id, getUser(authentication));
     }
 
     @GetMapping("/{taskId}/tags")
-    public Flux<TagResponse> getTags(@PathVariable("taskId") Long taskId, Authentication authentication) {
-        return taskService.getTags(taskId, getUser(authentication)).map(TagResponse::new);
+    @Operation(summary = "Get task tags", description = "Returns tags assigned to task")
+    public Flux<TaskTagResponse> getTags(@PathVariable("taskId") Long taskId, Authentication authentication) {
+        return taskService.getTags(taskId, getUser(authentication)).map(TaskTagResponse::new);
     }
 
     @PutMapping("/{taskId}/tags/{tagId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Assign tag to task", description = "Allows to assign tag to task")
     public Mono<Void> assignTag(@PathVariable("taskId") Long taskId,
                                 @PathVariable("tagId") Long tagId,
                                 Authentication authentication) {
@@ -156,6 +181,7 @@ public class TaskController extends AbstractController {
 
     @DeleteMapping("/{taskId}/tags/{tagId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remove tag", description = "Allows to remove tag previously assigned to task")
     public Mono<Void> removeTag(@PathVariable("taskId") Long taskId,
                                 @PathVariable("tagId") Long tagId,
                                 Authentication authentication) {
@@ -163,6 +189,7 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/{taskId}/comments")
+    @Operation(summary = "Get task comments", description = "Returns task comments")
     public Flux<TaskCommentResponse> getComments(@PathVariable("taskId") Long taskId,
                                                  Authentication authentication,
                                                  Pageable pageable) {
@@ -171,6 +198,7 @@ public class TaskController extends AbstractController {
 
     @PostMapping("/{taskId}/comments")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Add task comment", description = "Allows to add task comment")
     public Mono<TaskCommentResponse> addComment(@PathVariable("taskId") Long taskId,
                                                 @Valid @RequestBody CreateTaskCommentRequest createRequest,
                                                 Authentication authentication) {

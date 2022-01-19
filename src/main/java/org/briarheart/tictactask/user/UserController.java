@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.user;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.*;
 import org.briarheart.tictactask.controller.AbstractController;
@@ -79,6 +80,7 @@ public class UserController extends AbstractController {
     }
 
     @GetMapping("/count")
+    @Operation(summary = "Get total number of users", description = "Returns total number of registered users")
     public Mono<Long> getUserCount(Authentication authentication) {
         User user = getUser(authentication);
         if (!user.isAdmin()) {
@@ -88,6 +90,7 @@ public class UserController extends AbstractController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all users", description = "Returns all registered users")
     public Flux<UserResponse> getUsers(Authentication authentication, Pageable pageable) {
         User user = getUser(authentication);
         if (!user.isAdmin()) {
@@ -98,17 +101,20 @@ public class UserController extends AbstractController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Register new user", description = "Allows to register new user")
     public Mono<UserResponse> createUser(@Valid @RequestBody CreateUserRequest createRequest, Locale locale) {
         return userService.createUser(createRequest.toUser(), locale).map(UserResponse::new);
     }
 
     @PostMapping("/{id}/email/confirmation/{token}")
+    @Operation(summary = "Confirm user email", description = "Completes user registration by confirming user email")
     public Mono<Void> confirmEmail(@PathVariable Long id, @PathVariable String token) {
         return emailConfirmationService.confirmEmail(id, token);
     }
 
     @PostMapping("/password/reset")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Reset user password", description = "Sends password reset link to user email")
     public Mono<Void> resetPassword(ServerWebExchange exchange, Locale locale) {
         return exchange.getFormData().flatMap(formData -> {
             String email = formData.getFirst("email");
@@ -122,6 +128,10 @@ public class UserController extends AbstractController {
 
     @PostMapping("/{id}/password/reset/confirmation/{token}")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Confirm password reset",
+            description = "Allows to set new value for user password if valid password reset token is provided"
+    )
     public Mono<Void> confirmPasswordReset(@PathVariable Long id,
                                            @PathVariable String token,
                                            ServerWebExchange exchange) {
@@ -132,6 +142,7 @@ public class UserController extends AbstractController {
     }
 
     @PostMapping("/{id}/password")
+    @Operation(summary = "Change user password", description = "Allows to change user password")
     public Mono<Void> changePassword(@PathVariable Long id,
                                      ServerWebExchange exchange,
                                      Authentication authentication) {
@@ -148,6 +159,7 @@ public class UserController extends AbstractController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update user", description = "Allows to change some user attributes")
     public Mono<UserResponse> updateUser(@Valid @RequestBody UpdateUserRequest updateRequest,
                                          @PathVariable Long id,
                                          Authentication authentication) {
@@ -161,6 +173,7 @@ public class UserController extends AbstractController {
     }
 
     @GetMapping(path = "/{id}/profile-picture")
+    @Operation(summary = "Get user profile picture", description = "Returns user profile picture")
     public Mono<ResponseEntity<Resource>> getProfilePicture(
             @PathVariable("id") Long id,
             Authentication authentication
@@ -176,6 +189,7 @@ public class UserController extends AbstractController {
 
     @PutMapping("/{id}/profile-picture")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Save user profile picture", description = "Allows to set custom user profile picture")
     public Mono<Void> saveProfilePicture(
             @PathVariable Long id,
             @RequestPart("profilePicture") Mono<FilePart> profilePicture,

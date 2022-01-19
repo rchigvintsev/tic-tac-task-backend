@@ -9,19 +9,19 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Service for tag managing.
+ * Service for task tag managing.
  *
  * @author Roman Chigvintsev
- * @see Tag
+ * @see TaskTag
  */
-public interface TagService {
+public interface TaskTagService {
     /**
      * Returns all tags belonging to the given user.
      *
      * @param user author of tags (must not be {@code null})
      * @return found tags or empty stream when there is no tag meeting the given criteria
      */
-    Flux<Tag> getTags(User user);
+    Flux<TaskTag> getTags(User user);
 
     /**
      * Returns tag with the given id and belonging to the given user.
@@ -31,7 +31,7 @@ public interface TagService {
      * @return requested tag
      * @throws EntityNotFoundException if tag is not found by id or does not belong to the given user
      */
-    Mono<Tag> getTag(Long id, User user) throws EntityNotFoundException;
+    Mono<TaskTag> getTag(Long id, User user) throws EntityNotFoundException;
 
     /**
      * Creates new tag.
@@ -40,7 +40,7 @@ public interface TagService {
      * @return created tag
      * @throws EntityAlreadyExistsException if tag with the given name already exists
      */
-    Mono<Tag> createTag(Tag tag) throws EntityAlreadyExistsException;
+    Mono<TaskTag> createTag(TaskTag tag) throws EntityAlreadyExistsException;
 
     /**
      * Updates tag.
@@ -50,7 +50,7 @@ public interface TagService {
      * @throws EntityNotFoundException      if tag is not found
      * @throws EntityAlreadyExistsException if tag with updated name already exists
      */
-    Mono<Tag> updateTag(Tag tag) throws EntityNotFoundException, EntityAlreadyExistsException;
+    Mono<TaskTag> updateTag(TaskTag tag) throws EntityNotFoundException, EntityAlreadyExistsException;
 
     /**
      * Deletes tag with the given id and belonging to the given user.

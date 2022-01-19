@@ -8,8 +8,8 @@ import org.briarheart.tictactask.task.TaskController.UpdateTaskRequest;
 import org.briarheart.tictactask.task.comment.TaskComment;
 import org.briarheart.tictactask.task.comment.TaskCommentController.CreateTaskCommentRequest;
 import org.briarheart.tictactask.task.comment.TaskCommentController.TaskCommentResponse;
-import org.briarheart.tictactask.task.tag.Tag;
-import org.briarheart.tictactask.task.tag.TagController.TagResponse;
+import org.briarheart.tictactask.task.tag.TaskTag;
+import org.briarheart.tictactask.task.tag.TaskTagController.TaskTagResponse;
 import org.briarheart.tictactask.user.User;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -521,7 +521,7 @@ class TaskControllerTest {
 
         long taskId = 2L;
 
-        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
+        TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         Mockito.when(taskService.getTags(taskId, user)).thenReturn(Flux.just(tag));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
@@ -529,7 +529,7 @@ class TaskControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TagResponse[].class).isEqualTo(new TagResponse[]{new TagResponse(tag)});
+                .expectBody(TaskTagResponse[].class).isEqualTo(new TaskTagResponse[]{new TaskTagResponse(tag)});
     }
 
     @Test

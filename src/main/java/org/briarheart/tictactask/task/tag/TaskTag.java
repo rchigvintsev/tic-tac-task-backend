@@ -11,7 +11,7 @@ import org.springframework.data.annotation.Id;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class Tag {
+public class TaskTag {
     @Id
     private Long id;
     private Long userId;
@@ -23,8 +23,8 @@ public class Tag {
      *
      * @param other tag to be copied (must not be {@code null})
      */
-    public Tag(Tag other) {
-        Assert.notNull(other, "Tag must not be null");
+    public TaskTag(TaskTag other) {
+        Assert.notNull(other, "Task tag must not be null");
         this.id = other.id;
         this.userId = other.userId;
         this.name = other.name;

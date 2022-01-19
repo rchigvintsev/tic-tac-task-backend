@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import org.briarheart.tictactask.task.Task;
 
 /**
- * Many-to-many relation between {@link Task} and {@link Tag}.
+ * Many-to-many relation between {@link Task} and {@link TaskTag}.
  *
  * @author Roman Chigvintsev
  */

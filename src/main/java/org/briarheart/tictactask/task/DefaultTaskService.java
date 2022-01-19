@@ -6,8 +6,8 @@ import org.briarheart.tictactask.task.comment.TaskComment;
 import org.briarheart.tictactask.task.comment.TaskCommentRepository;
 import org.briarheart.tictactask.task.list.TaskList;
 import org.briarheart.tictactask.task.list.TaskListRepository;
-import org.briarheart.tictactask.task.tag.Tag;
 import org.briarheart.tictactask.task.tag.TagRepository;
+import org.briarheart.tictactask.task.tag.TaskTag;
 import org.briarheart.tictactask.task.tag.TaskTagRelation;
 import org.briarheart.tictactask.task.tag.TaskTagRelationRepository;
 import org.briarheart.tictactask.user.User;
@@ -226,7 +226,7 @@ public class DefaultTaskService implements TaskService {
 
     @Transactional
     @Override
-    public Flux<Tag> getTags(Long taskId, User user) throws EntityNotFoundException {
+    public Flux<TaskTag> getTags(Long taskId, User user) throws EntityNotFoundException {
         return getTask(taskId, user).flatMapMany(task -> {
             Mono<List<TaskTagRelation>> taskTagRelations = taskTagRelationRepository.findByTaskId(taskId).collectList();
             return taskTagRelations.flatMapMany(relationList -> {
@@ -293,7 +293,7 @@ public class DefaultTaskService implements TaskService {
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Task with id " + id + " is not found")));
     }
 
-    private Mono<Tag> findTag(Long id, Long userId) {
+    private Mono<TaskTag> findTag(Long id, Long userId) {
         return tagRepository.findByIdAndUserId(id, userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")));
     }

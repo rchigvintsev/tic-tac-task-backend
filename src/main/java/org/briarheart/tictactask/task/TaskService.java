@@ -2,7 +2,7 @@ package org.briarheart.tictactask.task;
 
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.task.comment.TaskComment;
-import org.briarheart.tictactask.task.tag.Tag;
+import org.briarheart.tictactask.task.tag.TaskTag;
 import org.briarheart.tictactask.user.User;
 import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
@@ -167,7 +167,7 @@ public interface TaskService {
      * @return task tags or empty stream when task does not have any tag
      * @throws EntityNotFoundException if task is not found by id or does not belong to the given user
      */
-    Flux<Tag> getTags(Long taskId, User user) throws EntityNotFoundException;
+    Flux<TaskTag> getTags(Long taskId, User user) throws EntityNotFoundException;
 
     /**
      * Assigns tag with the given id to task with the given id. Both task and tag must belong to the given user.

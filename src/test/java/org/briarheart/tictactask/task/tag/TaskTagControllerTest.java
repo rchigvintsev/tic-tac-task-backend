@@ -5,9 +5,9 @@ import org.briarheart.tictactask.data.EntityAlreadyExistsException;
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.task.Task;
 import org.briarheart.tictactask.task.TaskController.TaskResponse;
-import org.briarheart.tictactask.task.tag.TagController.CreateTagRequest;
-import org.briarheart.tictactask.task.tag.TagController.TagResponse;
-import org.briarheart.tictactask.task.tag.TagController.UpdateTagRequest;
+import org.briarheart.tictactask.task.tag.TaskTagController.CreateTagRequest;
+import org.briarheart.tictactask.task.tag.TaskTagController.TaskTagResponse;
+import org.briarheart.tictactask.task.tag.TaskTagController.UpdateTagRequest;
 import org.briarheart.tictactask.user.User;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,17 +36,17 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
  * @author Roman Chigvintsev
  */
 @ExtendWith(SpringExtension.class)
-@WebFluxTest(TagController.class)
+@WebFluxTest(TaskTagController.class)
 @Import(PermitAllSecurityConfig.class)
 @ActiveProfiles("test")
-class TagControllerTest {
+class TaskTagControllerTest {
     private static final Locale DEFAULT_LOCALE = Locale.getDefault();
 
     @Autowired
     private WebTestClient testClient;
 
     @MockBean
-    private TagService tagService;
+    private TaskTagService taskTagService;
 
     @BeforeAll
     static void beforeAll() {
@@ -63,15 +63,15 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
-        when(tagService.getTags(user)).thenReturn(Flux.just(tag));
+        TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
+        when(taskTagService.getTags(user)).thenReturn(Flux.just(tag));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .get().uri("/api/v1/tags")
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TagResponse[].class).isEqualTo(new TagResponse[]{new TagResponse(tag)});
+                .expectBody(TaskTagResponse[].class).isEqualTo(new TaskTagResponse[]{new TaskTagResponse(tag)});
     }
 
     @Test
@@ -79,15 +79,15 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        Tag tag = Tag.builder().id(2L).userId(user.getId()).name("Test tag").build();
-        when(tagService.getTag(tag.getId(), user)).thenReturn(Mono.just(tag));
+        TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
+        when(taskTagService.getTag(tag.getId(), user)).thenReturn(Mono.just(tag));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .get().uri("/api/v1/tags/" + tag.getId())
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TagResponse.class).isEqualTo(new TagResponse(tag));
+                .expectBody(TaskTagResponse.class).isEqualTo(new TaskTagResponse(tag));
     }
 
     @Test
@@ -96,7 +96,7 @@ class TagControllerTest {
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Tag is not found";
-        when(tagService.getTag(anyLong(), eq(user))).thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
+        when(taskTagService.getTag(anyLong(), eq(user))).thenReturn(Mono.error(new EntityNotFoundException(errorMessage)));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .get().uri("/api/v1/tags/2")
@@ -116,7 +116,7 @@ class TagControllerTest {
 
         long tagId = 3L;
 
-        when(tagService.getUncompletedTasks(eq(tagId), eq(user), any())).thenReturn(Flux.just(task));
+        when(taskTagService.getUncompletedTasks(eq(tagId), eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
                 .get().uri("/api/v1/tags/" + tagId + "/tasks/uncompleted")
@@ -133,8 +133,8 @@ class TagControllerTest {
 
         long tagId = 2L;
 
-        when(tagService.createTag(any(Tag.class))).thenAnswer(args -> {
-            Tag t = new Tag(args.getArgument(0));
+        when(taskTagService.createTag(any(TaskTag.class))).thenAnswer(args -> {
+            TaskTag t = new TaskTag(args.getArgument(0));
             t.setId(tagId);
             return Mono.just(t);
         });
@@ -142,7 +142,7 @@ class TagControllerTest {
         CreateTagRequest createRequest = new CreateTagRequest();
         createRequest.setName("New tag");
 
-        TagResponse expectedResult = new TagResponse(createRequest.toTag());
+        TaskTagResponse expectedResult = new TaskTagResponse(createRequest.toTag());
         expectedResult.setId(tagId);
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
@@ -153,7 +153,7 @@ class TagControllerTest {
 
                 .expectStatus().isCreated()
                 .expectHeader().valueEquals("Location", "/api/v1/tags/" + tagId)
-                .expectBody(TagResponse.class).isEqualTo(expectedResult);
+                .expectBody(TaskTagResponse.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -221,7 +221,7 @@ class TagControllerTest {
         Authentication authenticationMock = createAuthentication(user);
 
         String errorMessage = "Tag already exists";
-        when(tagService.createTag(any(Tag.class)))
+        when(taskTagService.createTag(any(TaskTag.class)))
                 .thenReturn(Mono.error(new EntityAlreadyExistsException(errorMessage)));
 
         CreateTagRequest createRequest = new CreateTagRequest();
@@ -243,14 +243,14 @@ class TagControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(tagService.updateTag(any(Tag.class))).thenAnswer(args -> Mono.just(new Tag(args.getArgument(0))));
+        when(taskTagService.updateTag(any(TaskTag.class))).thenAnswer(args -> Mono.just(new TaskTag(args.getArgument(0))));
 
         long tagId = 2L;
 
         UpdateTagRequest updateRequest = new UpdateTagRequest();
         updateRequest.setName("Updated test tag");
 
-        TagResponse expectedResult = new TagResponse(updateRequest.toTag());
+        TaskTagResponse expectedResult = new TaskTagResponse(updateRequest.toTag());
         expectedResult.setId(tagId);
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
@@ -260,7 +260,7 @@ class TagControllerTest {
                 .exchange()
 
                 .expectStatus().isOk()
-                .expectBody(TagResponse.class).isEqualTo(expectedResult);
+                .expectBody(TaskTagResponse.class).isEqualTo(expectedResult);
     }
 
     @Test
@@ -270,14 +270,14 @@ class TagControllerTest {
 
         long tagId = 2L;
 
-        when(tagService.deleteTag(tagId, user)).thenReturn(Mono.empty());
+        when(taskTagService.deleteTag(tagId, user)).thenReturn(Mono.empty());
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .delete().uri("/api/v1/tags/" + tagId)
                 .exchange()
 
                 .expectStatus().isNoContent();
-        verify(tagService, times(1)).deleteTag(tagId, user);
+        verify(taskTagService, times(1)).deleteTag(tagId, user);
     }
 
     private Authentication createAuthentication(User user) {

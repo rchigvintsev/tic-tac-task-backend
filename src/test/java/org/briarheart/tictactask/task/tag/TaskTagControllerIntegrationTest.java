@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestPropertySource(properties = "security.disabled=false")
 @Import(TestJavaMailSenderConfiguration.class)
 @ActiveProfiles("test")
-class TagControllerIntegrationTest {
+class TaskTagControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
