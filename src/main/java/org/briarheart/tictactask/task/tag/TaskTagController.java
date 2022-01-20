@@ -1,6 +1,9 @@
 package org.briarheart.tictactask.task.tag;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,6 +34,7 @@ import java.net.URI;
 @RequestMapping("/api/v1/tags")
 @RequiredArgsConstructor
 @Tag(name = "Task tags", description = "Allows to manage task tags, get tasks by tag")
+@SecurityRequirement(name = "apiSecurityScheme")
 public class TaskTagController extends AbstractController {
     private final TaskTagService taskTagService;
 
@@ -42,7 +46,8 @@ public class TaskTagController extends AbstractController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get tag by id", description = "Returns tag by id")
-    public Mono<TaskTagResponse> getTag(@PathVariable Long id, Authentication authentication) {
+    public Mono<TaskTagResponse> getTag(@Parameter(description = "Tag id") @PathVariable Long id,
+                                        Authentication authentication) {
         return taskTagService.getTag(id, getUser(authentication)).map(TaskTagResponse::new);
     }
 
@@ -65,7 +70,7 @@ public class TaskTagController extends AbstractController {
     @PutMapping("/{id}")
     @Operation(summary = "Update tag", description = "Allows to update tag")
     public Mono<TaskTagResponse> updateTag(@Valid @RequestBody UpdateTagRequest updateRequest,
-                                           @PathVariable Long id,
+                                           @Parameter(description = "Tag id") @PathVariable Long id,
                                            Authentication authentication) {
         TaskTag tag = updateRequest.toTag();
         tag.setId(id);
@@ -76,18 +81,23 @@ public class TaskTagController extends AbstractController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete tag", description = "Allows to delete tag")
-    public Mono<Void> deleteTag(@PathVariable Long id, Authentication authentication) {
+    public Mono<Void> deleteTag(@Parameter(description = "Tag id") @PathVariable Long id,
+                                Authentication authentication) {
         return taskTagService.deleteTag(id, getUser(authentication));
     }
 
     @GetMapping("/{tagId}/tasks/uncompleted")
     @Operation(
             summary = "Get uncompleted tasks with tag",
-            description = "Returns uncompleted tasks with particular tag assigned"
+            description = "Returns uncompleted tasks with particular tag assigned",
+            parameters = {
+                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY)
+            }
     )
-    public Flux<TaskResponse> getUncompletedTasks(@PathVariable("tagId") Long tagId,
+    public Flux<TaskResponse> getUncompletedTasks(@Parameter(description = "Tag id") @PathVariable("tagId") Long tagId,
                                                   Authentication authentication,
-                                                  Pageable pageable) {
+                                                  @Parameter(hidden = true) Pageable pageable) {
         return taskTagService.getUncompletedTasks(tagId, getUser(authentication), pageable).map(TaskResponse::new);
     }
 

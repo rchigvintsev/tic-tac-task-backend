@@ -1,6 +1,9 @@
 package org.briarheart.tictactask.user;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.*;
 import org.briarheart.tictactask.controller.AbstractController;
@@ -80,7 +83,11 @@ public class UserController extends AbstractController {
     }
 
     @GetMapping("/count")
-    @Operation(summary = "Get total number of users", description = "Returns total number of registered users")
+    @Operation(
+            summary = "Get total number of users",
+            description = "Returns total number of registered users",
+            security = @SecurityRequirement(name = "apiSecurityScheme")
+    )
     public Mono<Long> getUserCount(Authentication authentication) {
         User user = getUser(authentication);
         if (!user.isAdmin()) {
@@ -90,8 +97,16 @@ public class UserController extends AbstractController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all users", description = "Returns all registered users")
-    public Flux<UserResponse> getUsers(Authentication authentication, Pageable pageable) {
+    @Operation(
+            summary = "Get all users",
+            description = "Returns all registered users",
+            parameters = {
+                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY)
+            },
+            security = @SecurityRequirement(name = "apiSecurityScheme")
+    )
+    public Flux<UserResponse> getUsers(Authentication authentication, @Parameter(hidden = true) Pageable pageable) {
         User user = getUser(authentication);
         if (!user.isAdmin()) {
             return Flux.error(new ResponseStatusException(HttpStatus.FORBIDDEN));
@@ -108,7 +123,8 @@ public class UserController extends AbstractController {
 
     @PostMapping("/{id}/email/confirmation/{token}")
     @Operation(summary = "Confirm user email", description = "Completes user registration by confirming user email")
-    public Mono<Void> confirmEmail(@PathVariable Long id, @PathVariable String token) {
+    public Mono<Void> confirmEmail(@Parameter(description = "User id") @PathVariable Long id,
+                                   @Parameter(description = "Email confirmation token") @PathVariable String token) {
         return emailConfirmationService.confirmEmail(id, token);
     }
 
@@ -132,9 +148,11 @@ public class UserController extends AbstractController {
             summary = "Confirm password reset",
             description = "Allows to set new value for user password if valid password reset token is provided"
     )
-    public Mono<Void> confirmPasswordReset(@PathVariable Long id,
-                                           @PathVariable String token,
-                                           ServerWebExchange exchange) {
+    public Mono<Void> confirmPasswordReset(
+            @Parameter(description = "User id") @PathVariable Long id,
+            @Parameter(description = "Password reset confirmation token") @PathVariable String token,
+            ServerWebExchange exchange
+    ) {
         return exchange.getFormData().flatMap(formData -> {
             String newPassword = formData.getFirst("password");
             return passwordService.confirmPasswordReset(id, token, newPassword);
@@ -142,8 +160,12 @@ public class UserController extends AbstractController {
     }
 
     @PostMapping("/{id}/password")
-    @Operation(summary = "Change user password", description = "Allows to change user password")
-    public Mono<Void> changePassword(@PathVariable Long id,
+    @Operation(
+            summary = "Change user password",
+            description = "Allows to change user password",
+            security = @SecurityRequirement(name = "apiSecurityScheme")
+    )
+    public Mono<Void> changePassword(@Parameter(description = "User id") @PathVariable Long id,
                                      ServerWebExchange exchange,
                                      Authentication authentication) {
         return ensureValidUserId(id, authentication).then(exchange.getFormData()
@@ -159,9 +181,13 @@ public class UserController extends AbstractController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update user", description = "Allows to change some user attributes")
+    @Operation(
+            summary = "Update user",
+            description = "Allows to change some user attributes",
+            security = @SecurityRequirement(name = "apiSecurityScheme")
+    )
     public Mono<UserResponse> updateUser(@Valid @RequestBody UpdateUserRequest updateRequest,
-                                         @PathVariable Long id,
+                                         @Parameter(description = "User id") @PathVariable Long id,
                                          Authentication authentication) {
         User user = updateRequest.toUser();
         user.setId(id);
@@ -173,9 +199,13 @@ public class UserController extends AbstractController {
     }
 
     @GetMapping(path = "/{id}/profile-picture")
-    @Operation(summary = "Get user profile picture", description = "Returns user profile picture")
+    @Operation(
+            summary = "Get user profile picture",
+            description = "Returns user profile picture",
+            security = @SecurityRequirement(name = "apiSecurityScheme")
+    )
     public Mono<ResponseEntity<Resource>> getProfilePicture(
-            @PathVariable("id") Long id,
+            @Parameter(description = "User id") @PathVariable("id") Long id,
             Authentication authentication
     ) {
         return ensureValidUserId(id, authentication).then(userService.getProfilePicture(id).map(picture -> {
@@ -189,13 +219,14 @@ public class UserController extends AbstractController {
 
     @PutMapping("/{id}/profile-picture")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Save user profile picture", description = "Allows to set custom user profile picture")
-    public Mono<Void> saveProfilePicture(
-            @PathVariable Long id,
-            @RequestPart("profilePicture") Mono<FilePart> profilePicture,
-            Authentication authentication,
-            ServerHttpRequest request
-    ) {
+    @Operation(
+            summary = "Save user profile picture",
+            description = "Allows to set custom user profile picture",
+            security = @SecurityRequirement(name = "apiSecurityScheme")
+    )
+    public Mono<Void> saveProfilePicture(@Parameter(description = "User id") @PathVariable Long id,
+                                         @RequestPart("profilePicture") Mono<FilePart> profilePicture,
+                                         Authentication authentication, ServerHttpRequest request) {
         User currentUser = getUser(authentication);
         return ensureValidUserId(id, currentUser).then(profilePicture.flatMapMany(Part::content)
                 .reduce(new ByteArrayOutputStream(), (buffer, content) -> {

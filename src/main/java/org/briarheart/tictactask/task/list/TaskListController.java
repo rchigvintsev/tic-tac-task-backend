@@ -1,6 +1,9 @@
 package org.briarheart.tictactask.task.list;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -35,6 +38,7 @@ import java.net.URI;
         description = "Allows to manage task lists, include task in list, exclude task from list, " +
                 "get tasks included in list"
 )
+@SecurityRequirement(name = "apiSecurityScheme")
 public class TaskListController extends AbstractController {
     private final TaskListService taskListService;
 
@@ -49,7 +53,8 @@ public class TaskListController extends AbstractController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get task list by id", description = "Returns task list by id")
-    public Mono<TaskListResponse> getTaskList(@PathVariable("id") Long id, Authentication authentication) {
+    public Mono<TaskListResponse> getTaskList(@Parameter(description = "Task list id") @PathVariable("id") Long id,
+                                              Authentication authentication) {
         return taskListService.getTaskList(id, getUser(authentication)).map(TaskListResponse::new);
     }
 
@@ -72,7 +77,7 @@ public class TaskListController extends AbstractController {
     @PutMapping("/{id}")
     @Operation(summary = "Update task list", description = "Allows to update task list")
     public Mono<TaskListResponse> updateTaskList(@Valid @RequestBody UpdateTaskListRequest updateRequest,
-                                                 @PathVariable Long id,
+                                                 @Parameter(description = "Task list id") @PathVariable Long id,
                                                  Authentication authentication) {
         TaskList taskList = updateRequest.toTaskList();
         taskList.setId(id);
@@ -86,7 +91,8 @@ public class TaskListController extends AbstractController {
             summary = "Complete task list",
             description = "Allows to complete task list along with all tasks included in it"
     )
-    public Mono<Void> completeTaskList(@PathVariable Long id, Authentication authentication) {
+    public Mono<Void> completeTaskList(@Parameter(description = "Task list id") @PathVariable Long id,
+                                       Authentication authentication) {
         return taskListService.completeTaskList(id, getUser(authentication));
     }
 
@@ -96,30 +102,40 @@ public class TaskListController extends AbstractController {
             summary = "Delete task list",
             description = "Allows to completely delete task list along with all tasks included in it"
     )
-    public Mono<Void> deleteTaskList(@PathVariable Long id, Authentication authentication) {
+    public Mono<Void> deleteTaskList(@Parameter(description = "Task list id") @PathVariable Long id,
+                                     Authentication authentication) {
         return taskListService.deleteTaskList(id, getUser(authentication));
     }
 
     @GetMapping("/{taskListId}/tasks")
-    @Operation(summary = "Get tasks from task list", description = "Returns tasks included in task list")
-    public Flux<TaskResponse> getTasks(@PathVariable Long taskListId,
+    @Operation(
+            summary = "Get tasks from task list",
+            description = "Returns tasks included in task list",
+            parameters = {
+                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY)
+            }
+    )
+    public Flux<TaskResponse> getTasks(@Parameter(description = "Task list id") @PathVariable Long taskListId,
                                        Authentication authentication,
-                                       Pageable pageable) {
+                                       @Parameter(hidden = true) Pageable pageable) {
         return taskListService.getTasks(taskListId, getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @PutMapping("/{taskListId}/tasks/{taskId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Add task to task list", description = "Allows to add task to task list")
-    public Mono<Void> addTask(@PathVariable Long taskListId, @PathVariable Long taskId, Authentication authentication) {
+    public Mono<Void> addTask(@Parameter(description = "Task list id") @PathVariable Long taskListId,
+                              @Parameter(description = "Task id") @PathVariable Long taskId,
+                              Authentication authentication) {
         return taskListService.addTask(taskListId, taskId, getUser(authentication));
     }
 
     @DeleteMapping("/{taskListId}/tasks/{taskId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Remove task from task list", description = "Allows to remove task from task list")
-    public Mono<Void> removeTask(@PathVariable Long taskListId,
-                                 @PathVariable Long taskId,
+    public Mono<Void> removeTask(@Parameter(description = "Task list id") @PathVariable Long taskListId,
+                                 @Parameter(description = "Task id") @PathVariable Long taskId,
                                  Authentication authentication) {
         return taskListService.removeTask(taskListId, taskId, getUser(authentication));
     }

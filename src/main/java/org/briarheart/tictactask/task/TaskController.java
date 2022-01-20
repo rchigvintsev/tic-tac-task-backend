@@ -1,6 +1,9 @@
 package org.briarheart.tictactask.task;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,12 +41,21 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
 @Tag(name = "Tasks", description = "Allows to manage tasks, add/remove task tags, add/remove task comments")
+@SecurityRequirement(name = "apiSecurityScheme")
 public class TaskController extends AbstractController {
     private final TaskService taskService;
 
     @GetMapping("/unprocessed")
-    @Operation(summary = "Get unprocessed tasks", description = "Returns unprocessed tasks created by current user")
-    public Flux<TaskResponse> getUnprocessedTasks(Authentication authentication, Pageable pageable) {
+    @Operation(
+            summary = "Get unprocessed tasks",
+            description = "Returns unprocessed tasks created by current user",
+            parameters = {
+                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY)
+            }
+    )
+    public Flux<TaskResponse> getUnprocessedTasks(Authentication authentication,
+                                                  @Parameter(hidden = true) Pageable pageable) {
         return taskService.getUnprocessedTasks(getUser(authentication), pageable).map(TaskResponse::new);
     }
 
@@ -57,13 +69,22 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/processed")
-    @Operation(summary = "Get processed tasks", description = "Returns processed tasks created by current user")
+    @Operation(
+            summary = "Get processed tasks",
+            description = "Returns processed tasks created by current user",
+            parameters = {
+                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY),
+            }
+    )
     public Flux<TaskResponse> getProcessedTasks(
+            @Parameter(description = "Lower bound of task deadline", in = ParameterIn.QUERY)
             @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
+            @Parameter(description = "Upper bound of task deadline", in = ParameterIn.QUERY)
             @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
             Authentication authentication,
             ServerHttpRequest request,
-            Pageable pageable
+            @Parameter(hidden = true) Pageable pageable
     ) {
         MultiValueMap<String, String> queryParams = request.getQueryParams();
         if (!queryParams.containsKey("deadlineFrom") && !queryParams.containsKey("deadlineTo")) {
@@ -79,7 +100,9 @@ public class TaskController extends AbstractController {
             description = "Returns number of processed tasks created by current user"
     )
     public Mono<Long> getProcessedTaskCount(
+            @Parameter(description = "Lower bound of task deadline", in = ParameterIn.QUERY)
             @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
+            @Parameter(description = "Upper bound of task deadline", in = ParameterIn.QUERY)
             @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
             Authentication authentication,
             ServerHttpRequest request
@@ -92,8 +115,16 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/uncompleted")
-    @Operation(summary = "Get uncompleted tasks", description = "Returns uncompleted tasks created by current user")
-    public Flux<TaskResponse> getUncompletedTasks(Authentication authentication, Pageable pageable) {
+    @Operation(
+            summary = "Get uncompleted tasks",
+            description = "Returns uncompleted tasks created by current user",
+            parameters = {
+                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY),
+            }
+    )
+    public Flux<TaskResponse> getUncompletedTasks(Authentication authentication,
+                                                  @Parameter(hidden = true) Pageable pageable) {
         return taskService.getUncompletedTasks(getUser(authentication), pageable).map(TaskResponse::new);
     }
 
@@ -107,8 +138,16 @@ public class TaskController extends AbstractController {
     }
 
     @GetMapping("/completed")
-    @Operation(summary = "Get completed tasks", description = "Returns completed tasks created by current user")
-    public Flux<TaskResponse> getCompletedTasks(Authentication authentication, Pageable pageable) {
+    @Operation(
+            summary = "Get completed tasks",
+            description = "Returns completed tasks created by current user",
+            parameters = {
+                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY),
+            }
+    )
+    public Flux<TaskResponse> getCompletedTasks(Authentication authentication,
+                                                @Parameter(hidden = true) Pageable pageable) {
         return taskService.getCompletedTasks(getUser(authentication), pageable).map(TaskResponse::new);
     }
 
@@ -137,7 +176,7 @@ public class TaskController extends AbstractController {
     @PutMapping("/{id}")
     @Operation(summary = "Update task", description = "Allows to update task")
     public Mono<TaskResponse> updateTask(@Valid @RequestBody UpdateTaskRequest updateRequest,
-                                         @PathVariable Long id,
+                                         @Parameter(description = "Task id") @PathVariable Long id,
                                          Authentication authentication) {
         Task task = updateRequest.toTask();
         task.setId(id);
@@ -147,34 +186,38 @@ public class TaskController extends AbstractController {
 
     @PutMapping("/completed/{id}")
     @Operation(summary = "Complete task", description = "Allows to complete task")
-    public Mono<TaskResponse> completeTask(@PathVariable Long id, Authentication authentication) {
+    public Mono<TaskResponse> completeTask(@Parameter(description = "Task id") @PathVariable Long id,
+                                           Authentication authentication) {
         return taskService.completeTask(id, getUser(authentication)).map(TaskResponse::new);
     }
 
     @DeleteMapping("/completed/{id}")
     @Operation(summary = "Restore task", description = "Allows to restore previously completed task")
-    public Mono<TaskResponse> restoreTask(@PathVariable Long id, Authentication authentication) {
+    public Mono<TaskResponse> restoreTask(@Parameter(description = "Task id") @PathVariable Long id,
+                                          Authentication authentication) {
         return taskService.restoreTask(id, getUser(authentication)).map(TaskResponse::new);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete task", description = "Allows to completely delete task")
-    public Mono<Void> deleteTask(@PathVariable Long id, Authentication authentication) {
+    public Mono<Void> deleteTask(@Parameter(description = "Task id") @PathVariable Long id,
+                                 Authentication authentication) {
         return taskService.deleteTask(id, getUser(authentication));
     }
 
     @GetMapping("/{taskId}/tags")
     @Operation(summary = "Get task tags", description = "Returns tags assigned to task")
-    public Flux<TaskTagResponse> getTags(@PathVariable("taskId") Long taskId, Authentication authentication) {
+    public Flux<TaskTagResponse> getTags(@Parameter(description = "Task id") @PathVariable("taskId") Long taskId,
+                                         Authentication authentication) {
         return taskService.getTags(taskId, getUser(authentication)).map(TaskTagResponse::new);
     }
 
     @PutMapping("/{taskId}/tags/{tagId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Assign tag to task", description = "Allows to assign tag to task")
-    public Mono<Void> assignTag(@PathVariable("taskId") Long taskId,
-                                @PathVariable("tagId") Long tagId,
+    public Mono<Void> assignTag(@Parameter(description = "Task id") @PathVariable("taskId") Long taskId,
+                                @Parameter(description = "Tag id") @PathVariable("tagId") Long tagId,
                                 Authentication authentication) {
         return taskService.assignTag(taskId, tagId, getUser(authentication));
     }
@@ -182,24 +225,33 @@ public class TaskController extends AbstractController {
     @DeleteMapping("/{taskId}/tags/{tagId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Remove tag", description = "Allows to remove tag previously assigned to task")
-    public Mono<Void> removeTag(@PathVariable("taskId") Long taskId,
-                                @PathVariable("tagId") Long tagId,
+    public Mono<Void> removeTag(@Parameter(description = "Task id") @PathVariable("taskId") Long taskId,
+                                @Parameter(description = "Tag id") @PathVariable("tagId") Long tagId,
                                 Authentication authentication) {
         return taskService.removeTag(taskId, tagId, getUser(authentication));
     }
 
     @GetMapping("/{taskId}/comments")
-    @Operation(summary = "Get task comments", description = "Returns task comments")
-    public Flux<TaskCommentResponse> getComments(@PathVariable("taskId") Long taskId,
-                                                 Authentication authentication,
-                                                 Pageable pageable) {
+    @Operation(
+            summary = "Get task comments",
+            description = "Returns task comments",
+            parameters = {
+                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY),
+            }
+    )
+    public Flux<TaskCommentResponse> getComments(
+            @Parameter(description = "Task id") @PathVariable("taskId") Long taskId,
+            Authentication authentication,
+            @Parameter(hidden = true) Pageable pageable
+    ) {
         return taskService.getComments(taskId, getUser(authentication), pageable).map(TaskCommentResponse::new);
     }
 
     @PostMapping("/{taskId}/comments")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Add task comment", description = "Allows to add task comment")
-    public Mono<TaskCommentResponse> addComment(@PathVariable("taskId") Long taskId,
+    public Mono<TaskCommentResponse> addComment(@Parameter(description = "Task id") @PathVariable("taskId") Long taskId,
                                                 @Valid @RequestBody CreateTaskCommentRequest createRequest,
                                                 Authentication authentication) {
         TaskComment comment = createRequest.toTaskComment();

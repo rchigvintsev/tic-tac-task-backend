@@ -1,6 +1,8 @@
 package org.briarheart.tictactask.task.comment;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,13 +27,14 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/v1/task-comments")
 @RequiredArgsConstructor
 @Tag(name = "Task comments", description = "Allows to update/delete task comments")
+@SecurityRequirement(name = "apiSecurityScheme")
 public class TaskCommentController extends AbstractController {
     private final TaskCommentService taskCommentService;
 
     @PutMapping("/{id}")
     @Operation(summary = "Update task comment", description = "Allows to update task comment")
     public Mono<TaskCommentResponse> updateComment(@Valid @RequestBody UpdateTaskCommentRequest updateRequest,
-                                                   @PathVariable Long id,
+                                                   @Parameter(description = "Task comment id") @PathVariable Long id,
                                                    Authentication authentication) {
         TaskComment comment = updateRequest.toTaskComment();
         comment.setId(id);
@@ -42,7 +45,8 @@ public class TaskCommentController extends AbstractController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete task comment", description = "Allows to completely delete task comment")
-    public Mono<Void> deleteComment(@PathVariable Long id, Authentication authentication) {
+    public Mono<Void> deleteComment(@Parameter(description = "Task comment id") @PathVariable Long id,
+                                    Authentication authentication) {
         return taskCommentService.deleteComment(id, getUser(authentication));
     }
 
