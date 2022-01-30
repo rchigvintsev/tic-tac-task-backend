@@ -58,91 +58,67 @@ public class DefaultTaskService implements TaskService {
     }
 
     @Override
-    public Mono<Long> getUnprocessedTaskCount(User user) {
+    public Mono<Long> getTaskCount(GetTasksRequest request, User user) {
+        Assert.notNull(request, "Request must not be null");
         Assert.notNull(user, "User must not be null");
-        return taskRepository.countAllByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId());
-    }
 
-    @Override
-    public Flux<Task> getUnprocessedTasks(User user, Pageable pageable) {
-        Assert.notNull(user, "User must not be null");
-        return taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.UNPROCESSED, user.getId(),
-                Pageables.getOffset(pageable), Pageables.getLimit(pageable));
-    }
+        Set<TaskStatus> statuses = request.getStatuses();
+        LocalDateTime deadlineFrom = request.getDeadlineFrom();
+        LocalDateTime deadlineTo = request.getDeadlineTo();
 
-    @Override
-    public Mono<Long> getProcessedTaskCount(User user) {
-        Assert.notNull(user, "User must not be null");
-        return taskRepository.countAllByStatusAndUserId(TaskStatus.PROCESSED, user.getId());
-    }
-
-    @Override
-    public Flux<Task> getProcessedTasks(User user, Pageable pageable) {
-        Assert.notNull(user, "User must not be null");
-        return taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(),
-                Pageables.getOffset(pageable), Pageables.getLimit(pageable));
-    }
-
-    @Override
-    public Mono<Long> getProcessedTaskCount(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, User user) {
-        Assert.notNull(user, "User must not be null");
-        if (deadlineFrom == null && deadlineTo == null) {
-            return taskRepository.countAllByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId());
+        if (!request.isDeadlineFromDirty() && !request.isDeadlineToDirty()) {
+            return taskRepository.countAllByStatusInAndUserId(statuses, user.getId());
         }
-        if (deadlineFrom == null) {
-            return taskRepository.countAllByDeadlineLessThanEqualAndStatusAndUserId(deadlineTo, TaskStatus.PROCESSED,
+
+        if (!request.isDeadlineToDirty()) {
+            return taskRepository.countAllByDeadlineGreaterThanEqualAndStatusInAndUserId(deadlineFrom, statuses,
                     user.getId());
         }
-        if (deadlineTo == null) {
-            return taskRepository.countAllByDeadlineGreaterThanEqualAndStatusAndUserId(deadlineFrom,
-                    TaskStatus.PROCESSED, user.getId());
-        }
-        return taskRepository.countAllByDeadlineBetweenAndStatusAndUserId(deadlineFrom, deadlineTo,
-                TaskStatus.PROCESSED, user.getId());
-    }
 
-    @Override
-    public Flux<Task> getProcessedTasks(
-            LocalDateTime deadlineFrom,
-            LocalDateTime deadlineTo,
-            User user,
-            Pageable pageable
-    ) {
-        Assert.notNull(user, "User must not be null");
+        if (!request.isDeadlineFromDirty()) {
+            return taskRepository.countAllByDeadlineLessThanEqualAndStatusInAndUserId(deadlineTo, statuses,
+                    user.getId());
+        }
+
         if (deadlineFrom == null && deadlineTo == null) {
-            return taskRepository.findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED,
-                    user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+            return taskRepository.countAllByDeadlineIsNullAndStatusInAndUserId(statuses, user.getId());
         }
-        if (deadlineFrom == null) {
-            return taskRepository.findByDeadlineLessThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(deadlineTo,
-                    TaskStatus.PROCESSED, user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
-        }
-        if (deadlineTo == null) {
-            return taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(deadlineFrom,
-                    TaskStatus.PROCESSED, user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
-        }
-        return taskRepository.findByDeadlineBetweenAndStatusAndUserIdOrderByCreatedAtAsc(deadlineFrom, deadlineTo,
-                TaskStatus.PROCESSED, user.getId(), Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+        return taskRepository.countAllByDeadlineBetweenAndStatusInAndUserId(deadlineFrom, deadlineTo, statuses,
+                user.getId());
     }
 
     @Override
-    public Mono<Long> getUncompletedTaskCount(User user) {
+    public Flux<Task> getTasks(GetTasksRequest request, User user, Pageable pageable) {
+        Assert.notNull(request, "Request must not be null");
         Assert.notNull(user, "User must not be null");
-        return taskRepository.countAllByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId());
-    }
 
-    @Override
-    public Flux<Task> getUncompletedTasks(User user, Pageable pageable) {
-        Assert.notNull(user, "User must not be null");
-        return taskRepository.findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, user.getId(),
-                Pageables.getOffset(pageable), Pageables.getLimit(pageable));
-    }
+        LocalDateTime deadlineTo = request.getDeadlineTo();
+        LocalDateTime deadlineFrom = request.getDeadlineFrom();
+        Set<TaskStatus> statuses = request.getStatuses();
 
-    @Override
-    public Flux<Task> getCompletedTasks(User user, Pageable pageable) {
-        Assert.notNull(user, "User must not be null");
-        return taskRepository.findByStatusAndUserIdOrderByCreatedAtDesc(TaskStatus.COMPLETED, user.getId(),
-                Pageables.getOffset(pageable), Pageables.getLimit(pageable));
+        long offset = Pageables.getOffset(pageable);
+        Integer limit = Pageables.getLimit(pageable);
+
+        if (!request.isDeadlineFromDirty() && !request.isDeadlineToDirty()) {
+            return taskRepository.findByStatusInAndUserIdOrderByCreatedAtAsc(statuses, user.getId(), offset, limit);
+        }
+
+        if (!request.isDeadlineToDirty()) {
+            return taskRepository.findByDeadlineGreaterThanEqualAndStatusInAndUserIdOrderByCreatedAtAsc(deadlineFrom,
+                    statuses, user.getId(), offset, limit);
+        }
+
+        if (!request.isDeadlineFromDirty()) {
+            return taskRepository.findByDeadlineLessThanEqualAndStatusInAndUserIdOrderByCreatedAtAsc(deadlineTo,
+                    statuses, user.getId(), offset, limit);
+        }
+
+        if (deadlineFrom == null && deadlineTo == null) {
+            return taskRepository.findByDeadlineIsNullAndStatusInAndUserIdOrderByCreatedAtAsc(statuses, user.getId(),
+                    offset, limit);
+        }
+        return taskRepository.findByDeadlineBetweenAndStatusInAndUserIdOrderByCreatedAtAsc(deadlineFrom, deadlineTo,
+                statuses, user.getId(), offset, limit);
     }
 
     @Override

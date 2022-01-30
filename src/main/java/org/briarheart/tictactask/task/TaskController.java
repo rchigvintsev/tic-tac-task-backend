@@ -2,7 +2,8 @@ package org.briarheart.tictactask.task;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
@@ -19,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.Authentication;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -31,6 +31,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.net.URI;
 import java.time.LocalDateTime;
+
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY;
 
 /**
  * REST-controller for task managing.
@@ -45,110 +47,46 @@ import java.time.LocalDateTime;
 public class TaskController extends AbstractController {
     private final TaskService taskService;
 
-    @GetMapping("/unprocessed")
+    @GetMapping("/count")
     @Operation(
-            summary = "Get unprocessed tasks",
-            description = "Returns unprocessed tasks created by current user",
+            summary = "Get number of tasks",
+            description = "Returns number of tasks created by current user",
             parameters = {
-                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
-                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY)
+                    @Parameter(
+                            name = "statuses",
+                            description = "Task statuses",
+                            in = QUERY,
+                            array = @ArraySchema(schema = @Schema(type = "string"), uniqueItems = true)
+                    ),
+                    @Parameter(name = "deadlineFrom", description = "Lower bound of task deadline", in = QUERY),
+                    @Parameter(name = "deadlineTo", description = "Upper bound of task deadline", in = QUERY)
             }
     )
-    public Flux<TaskResponse> getUnprocessedTasks(Authentication authentication,
-                                                  @Parameter(hidden = true) Pageable pageable) {
-        return taskService.getUnprocessedTasks(getUser(authentication), pageable).map(TaskResponse::new);
+    public Mono<Long> getTaskCount(@Parameter(hidden = true) GetTasksRequest request, Authentication authentication) {
+        return taskService.getTaskCount(request, getUser(authentication));
     }
 
-    @GetMapping("/unprocessed/count")
+    @GetMapping
     @Operation(
-            summary = "Get number of unprocessed tasks",
-            description = "Returns number of unprocessed tasks created by current user"
-    )
-    public Mono<Long> getUnprocessedTaskCount(Authentication authentication) {
-        return taskService.getUnprocessedTaskCount(getUser(authentication));
-    }
-
-    @GetMapping("/processed")
-    @Operation(
-            summary = "Get processed tasks",
-            description = "Returns processed tasks created by current user",
+            summary = "Get tasks",
+            description = "Returns tasks created by current user",
             parameters = {
-                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
-                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY),
+                    @Parameter(
+                            name = "statuses",
+                            description = "Task statuses",
+                            in = QUERY,
+                            array = @ArraySchema(schema = @Schema(type = "string"), uniqueItems = true)
+                    ),
+                    @Parameter(name = "deadlineFrom", description = "Lower bound of task deadline", in = QUERY),
+                    @Parameter(name = "deadlineTo", description = "Upper bound of task deadline", in = QUERY),
+                    @Parameter(name = "page", description = "Number of requested page", in = QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = QUERY)
             }
     )
-    public Flux<TaskResponse> getProcessedTasks(
-            @Parameter(description = "Lower bound of task deadline", in = ParameterIn.QUERY)
-            @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
-            @Parameter(description = "Upper bound of task deadline", in = ParameterIn.QUERY)
-            @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
-            Authentication authentication,
-            ServerHttpRequest request,
-            @Parameter(hidden = true) Pageable pageable
-    ) {
-        MultiValueMap<String, String> queryParams = request.getQueryParams();
-        if (!queryParams.containsKey("deadlineFrom") && !queryParams.containsKey("deadlineTo")) {
-            return taskService.getProcessedTasks(getUser(authentication), pageable).map(TaskResponse::new);
-        }
-        return taskService.getProcessedTasks(deadlineFrom, deadlineTo, getUser(authentication), pageable)
-                .map(TaskResponse::new);
-    }
-
-    @GetMapping("/processed/count")
-    @Operation(
-            summary = "Get number of processed tasks",
-            description = "Returns number of processed tasks created by current user"
-    )
-    public Mono<Long> getProcessedTaskCount(
-            @Parameter(description = "Lower bound of task deadline", in = ParameterIn.QUERY)
-            @RequestParam(name = "deadlineFrom", required = false) LocalDateTime deadlineFrom,
-            @Parameter(description = "Upper bound of task deadline", in = ParameterIn.QUERY)
-            @RequestParam(name = "deadlineTo", required = false) LocalDateTime deadlineTo,
-            Authentication authentication,
-            ServerHttpRequest request
-    ) {
-        MultiValueMap<String, String> queryParams = request.getQueryParams();
-        if (!queryParams.containsKey("deadlineFrom") && !queryParams.containsKey("deadlineTo")) {
-            return taskService.getProcessedTaskCount(getUser(authentication));
-        }
-        return taskService.getProcessedTaskCount(deadlineFrom, deadlineTo, getUser(authentication));
-    }
-
-    @GetMapping("/uncompleted")
-    @Operation(
-            summary = "Get uncompleted tasks",
-            description = "Returns uncompleted tasks created by current user",
-            parameters = {
-                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
-                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY),
-            }
-    )
-    public Flux<TaskResponse> getUncompletedTasks(Authentication authentication,
-                                                  @Parameter(hidden = true) Pageable pageable) {
-        return taskService.getUncompletedTasks(getUser(authentication), pageable).map(TaskResponse::new);
-    }
-
-    @GetMapping("/uncompleted/count")
-    @Operation(
-            summary = "Get number of uncompleted tasks",
-            description = "Returns number of uncompleted tasks created by current user"
-    )
-    public Mono<Long> getUncompletedTaskCount(Authentication authentication) {
-        return taskService.getUncompletedTaskCount(getUser(authentication));
-    }
-
-    @GetMapping("/completed")
-    @Operation(
-            summary = "Get completed tasks",
-            description = "Returns completed tasks created by current user",
-            parameters = {
-                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
-                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY),
-            }
-    )
-    public Flux<TaskResponse> getCompletedTasks(Authentication authentication,
-                                                @Parameter(hidden = true) Pageable pageable) {
-        return taskService.getCompletedTasks(getUser(authentication), pageable).map(TaskResponse::new);
+    public Flux<TaskResponse> getTasks(@Parameter(hidden = true) GetTasksRequest request,
+                                       Authentication authentication,
+                                       @Parameter(hidden = true) Pageable pageable) {
+        return taskService.getTasks(request, getUser(authentication), pageable).map(TaskResponse::new);
     }
 
     @GetMapping("/{id}")
@@ -236,8 +174,8 @@ public class TaskController extends AbstractController {
             summary = "Get task comments",
             description = "Returns task comments",
             parameters = {
-                    @Parameter(name = "page", description = "Number of requested page", in = ParameterIn.QUERY),
-                    @Parameter(name = "size", description = "Requested page size", in = ParameterIn.QUERY),
+                    @Parameter(name = "page", description = "Number of requested page", in = QUERY),
+                    @Parameter(name = "size", description = "Requested page size", in = QUERY),
             }
     )
     public Flux<TaskCommentResponse> getComments(

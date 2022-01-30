@@ -10,7 +10,21 @@ VALUES (2, 'jane.doe@mail.com', 1, 'Jane Doe', false, false);
 DELETE FROM tasks_tags;
 
 DELETE FROM task;
-INSERT INTO task (id, user_id, title, status) VALUES (1, 1, 'Test task', 'UNPROCESSED');
+
+INSERT INTO task (id, user_id, title, status) VALUES (1, 1, 'Unprocessed task 1', 'UNPROCESSED');
+INSERT INTO task (id, user_id, title, status) VALUES (2, 1, 'Unprocessed task 2', 'UNPROCESSED');
+INSERT INTO task (id, user_id, title, status) VALUES (3, 1, 'Unprocessed task 3', 'UNPROCESSED');
+
+INSERT INTO task (id, user_id, title, status, deadline)
+VALUES (4, 1, 'Processed task 1', 'PROCESSED', NULL);
+INSERT INTO task (id, user_id, title, status, deadline)
+VALUES (5, 1, 'Processed task 2', 'PROCESSED', '2022-01-01 00:00:00');
+INSERT INTO task (id, user_id, title, status, deadline)
+VALUES (6, 1, 'Processed task 3', 'PROCESSED', '2022-01-02 23:59:00');
+
+INSERT INTO task (id, user_id, title, status) VALUES (7, 1, 'Completed task 1', 'COMPLETED');
+INSERT INTO task (id, user_id, title, status) VALUES (8, 1, 'Completed task 2', 'COMPLETED');
+INSERT INTO task (id, user_id, title, status) VALUES (9, 1, 'Completed task 3', 'COMPLETED');
 
 DELETE FROM tag;
 INSERT INTO tag (id, user_id, name) VALUES (1, 1, 'Test tag');

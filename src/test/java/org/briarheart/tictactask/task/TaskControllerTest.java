@@ -33,6 +33,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -67,14 +70,17 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnAllUnprocessedTasks() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.UNPROCESSED));
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
-        when(taskService.getUnprocessedTasks(eq(user), any())).thenReturn(Flux.just(task));
+        when(taskService.getTasks(eq(request), eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/unprocessed")
+                .get().uri("/api/v1/tasks?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -83,13 +89,16 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfAllUnprocessedTasks() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.UNPROCESSED));
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(taskService.getUnprocessedTaskCount(user)).thenReturn(Mono.just(1L));
+        when(taskService.getTaskCount(request, user)).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/unprocessed/count")
+                .get().uri("/api/v1/tasks/count?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -98,6 +107,9 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnAllProcessedTasks() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.PROCESSED));
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
@@ -108,10 +120,10 @@ class TaskControllerTest {
                 .status(TaskStatus.PROCESSED)
                 .build();
 
-        when(taskService.getProcessedTasks(eq(user), any())).thenReturn(Flux.just(task));
+        when(taskService.getTasks(eq(request), eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/processed")
+                .get().uri("/api/v1/tasks?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -120,13 +132,16 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfAllProcessedTasks() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.PROCESSED));
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(taskService.getProcessedTaskCount(user)).thenReturn(Mono.just(1L));
+        when(taskService.getTaskCount(request, user)).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/processed/count")
+                .get().uri("/api/v1/tasks/count?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -135,6 +150,11 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnProcessedTasksWithoutDeadline() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.PROCESSED));
+        request.setDeadlineFrom(null);
+        request.setDeadlineTo(null);
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
@@ -145,10 +165,10 @@ class TaskControllerTest {
                 .status(TaskStatus.PROCESSED)
                 .build();
 
-        when(taskService.getProcessedTasks(null, null, user, PageRequest.of(0, 20))).thenReturn(Flux.just(task));
+        when(taskService.getTasks(eq(request), eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/processed?deadlineFrom=&deadlineTo=")
+                .get().uri("/api/v1/tasks?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -157,13 +177,18 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithoutDeadline() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.PROCESSED));
+        request.setDeadlineFrom(null);
+        request.setDeadlineTo(null);
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(taskService.getProcessedTaskCount(null, null, user)).thenReturn(Mono.just(1L));
+        when(taskService.getTaskCount(request, user)).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/processed/count?deadlineFrom=&deadlineTo=")
+                .get().uri("/api/v1/tasks/count?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -172,6 +197,14 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadline() {
+        String deadlineFrom = "2020-01-01T00:00";
+        String deadlineTo = "2020-01-31T23:59";
+
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.PROCESSED));
+        request.setDeadlineFrom(parseIsoDateTime(deadlineFrom));
+        request.setDeadlineTo(parseIsoDateTime(deadlineTo));
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
@@ -180,21 +213,13 @@ class TaskControllerTest {
                 .userId(user.getId())
                 .title("Test task")
                 .status(TaskStatus.PROCESSED)
-                .deadline(LocalDateTime.parse("2020-01-10T00:00:00", DateTimeFormatter.ISO_DATE_TIME))
+                .deadline(parseIsoDateTime("2020-01-10T00:00:00"))
                 .build();
 
-        String deadlineFrom = "2020-01-01T00:00";
-        String deadlineTo = "2020-01-31T23:59";
-
-        when(taskService.getProcessedTasks(
-                LocalDateTime.parse(deadlineFrom, DateTimeFormatter.ISO_DATE_TIME),
-                LocalDateTime.parse(deadlineTo, DateTimeFormatter.ISO_DATE_TIME),
-                user,
-                PageRequest.of(0, 20)
-        )).thenReturn(Flux.just(task));
+        when(taskService.getTasks(eq(request), eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/processed?deadlineFrom=" + deadlineFrom + "&deadlineTo=" + deadlineTo)
+                .get().uri("/api/v1/tasks?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -203,20 +228,21 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadline() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Authentication authenticationMock = createAuthentication(user);
-
         String deadlineFrom = "2020-01-01T00:00";
         String deadlineTo = "2020-01-31T23:59";
 
-        when(taskService.getProcessedTaskCount(
-                LocalDateTime.parse(deadlineFrom, DateTimeFormatter.ISO_DATE_TIME),
-                LocalDateTime.parse(deadlineTo, DateTimeFormatter.ISO_DATE_TIME),
-                user
-        )).thenReturn(Mono.just(1L));
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.PROCESSED));
+        request.setDeadlineFrom(parseIsoDateTime(deadlineFrom));
+        request.setDeadlineTo(parseIsoDateTime(deadlineTo));
+
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        Authentication authenticationMock = createAuthentication(user);
+
+        when(taskService.getTaskCount(request, user)).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/processed/count?deadlineFrom=" + deadlineFrom + "&deadlineTo=" + deadlineTo)
+                .get().uri("/api/v1/tasks/count?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -228,11 +254,14 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.UNPROCESSED, TaskStatus.PROCESSED));
+
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
-        when(taskService.getUncompletedTasks(eq(user), any())).thenReturn(Flux.just(task));
+        when(taskService.getTasks(eq(request), eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/uncompleted")
+                .get().uri("/api/v1/tasks?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -244,10 +273,13 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
-        when(taskService.getUncompletedTaskCount(eq(user))).thenReturn(Mono.just(1L));
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.UNPROCESSED, TaskStatus.PROCESSED));
+
+        when(taskService.getTaskCount(request, user)).thenReturn(Mono.just(1L));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/uncompleted/count")
+                .get().uri("/api/v1/tasks/count?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -259,11 +291,14 @@ class TaskControllerTest {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
 
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.COMPLETED));
+
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.COMPLETED).build();
-        when(taskService.getCompletedTasks(eq(user), any())).thenReturn(Flux.just(task));
+        when(taskService.getTasks(eq(request), eq(user), any())).thenReturn(Flux.just(task));
 
         testClient.mutateWith(mockAuthentication(authenticationMock))
-                .get().uri("/api/v1/tasks/completed")
+                .get().uri("/api/v1/tasks?" + requestToQueryString(request))
                 .exchange()
 
                 .expectStatus().isOk()
@@ -690,5 +725,22 @@ class TaskControllerTest {
         when(authenticationMock.getName()).thenReturn(user.getEmail());
         when(authenticationMock.getPrincipal()).thenReturn(user);
         return authenticationMock;
+    }
+
+    private String requestToQueryString(GetTasksRequest request) {
+        String result = "statuses=" + request.getStatuses().stream()
+                .map(Enum::toString)
+                .collect(Collectors.joining(","));
+        if (request.isDeadlineFromDirty()) {
+            result += "&deadlineFrom=" + Objects.toString(request.getDeadlineFrom(), "");
+        }
+        if (request.isDeadlineToDirty()) {
+            result += "&deadlineTo=" + Objects.toString(request.getDeadlineTo(), "");
+        }
+        return result;
+    }
+
+    private LocalDateTime parseIsoDateTime(String dateTime) {
+        return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_DATE_TIME);
     }
 }

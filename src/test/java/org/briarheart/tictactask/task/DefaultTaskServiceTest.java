@@ -60,305 +60,221 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldReturnNumberOfAllUnprocessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        when(taskRepository.countAllByStatusAndUserId(TaskStatus.UNPROCESSED, user.getId())).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getUnprocessedTaskCount(user).block());
+    void shouldThrowExceptionOnTaskCountGetWhenGetTasksRequestIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getTaskCount(null, User.builder().id(1L).build()).block());
+        assertEquals("Request must not be null", e.getMessage());
     }
 
     @Test
-    void shouldThrowExceptionOnUnprocessedTaskCountGetWhenUserIsNull() {
+    void shouldThrowExceptionOnTaskCountGetWhenUserIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getUnprocessedTaskCount(null).block());
+                () -> taskService.getTaskCount(new GetTasksRequest(), null).block());
         assertEquals("User must not be null", e.getMessage());
     }
 
     @Test
-    void shouldReturnAllUnprocessedTasks() {
+    void shouldThrowExceptionOnTasksGetWhenGetTasksRequestIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getTasks(null, User.builder().id(1L).build(), Pageable.unpaged()).blockFirst());
+        assertEquals("Request must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionOnTasksGetWhenUserIsNull() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> taskService.getTasks(new GetTasksRequest(), null, Pageable.unpaged()).blockFirst());
+        assertEquals("User must not be null", e.getMessage());
+    }
+
+    @Test
+    void shouldReturnNumberOfAllTasks() {
+        GetTasksRequest request = new GetTasksRequest();
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        when(taskRepository.countAllByStatusInAndUserId(request.getStatuses(), user.getId())).thenReturn(Mono.just(1L));
+        assertEquals(1L, taskService.getTaskCount(request, user).block());
+    }
+
+    @Test
+    void shouldReturnAllTasks() {
+        GetTasksRequest request = new GetTasksRequest();
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
-        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.UNPROCESSED, user.getId(), 0, null))
+        when(taskRepository.findByStatusInAndUserIdOrderByCreatedAtAsc(request.getStatuses(), user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
 
-        Task result = taskService.getUnprocessedTasks(user, Pageable.unpaged()).blockFirst();
+        Task result = taskService.getTasks(request, user, Pageable.unpaged()).blockFirst();
         assertEquals(task, result);
     }
 
     @Test
-    void shouldReturnAllUnprocessedTasksWithPagingRestriction() {
+    void shouldReturnTasksWithPagingRestriction() {
+        GetTasksRequest request = new GetTasksRequest();
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.UNPROCESSED, user.getId(),
+        when(taskRepository.findByStatusInAndUserIdOrderByCreatedAtAsc(request.getStatuses(), user.getId(),
                 pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
 
-        Task result = taskService.getUnprocessedTasks(user, pageRequest).blockFirst();
+        Task result = taskService.getTasks(request, user, pageRequest).blockFirst();
         assertEquals(task, result);
     }
 
     @Test
-    void shouldThrowExceptionOnUnprocessedTasksGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getUnprocessedTasks(null, Pageable.unpaged()).blockFirst());
-        assertEquals("User must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldReturnNumberOfAllProcessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        when(taskRepository.countAllByStatusAndUserId(TaskStatus.PROCESSED, user.getId())).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getProcessedTaskCount(user).block());
-    }
-
-    @Test
-    void shouldThrowExceptionOnProcessedTaskCountGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getProcessedTaskCount(null).block());
-        assertEquals("User must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldReturnAllProcessedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
-        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(), 0, null))
-                .thenReturn(Flux.just(task));
-
-        Task result = taskService.getProcessedTasks(user, Pageable.unpaged()).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldReturnAllProcessedTasksWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
-        PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED, user.getId(),
-                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
-
-        Task result = taskService.getProcessedTasks(user, pageRequest).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldThrowExceptionOnProcessedTasksGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getProcessedTasks(null, Pageable.unpaged()).blockFirst());
-        assertEquals("User must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldReturnNumberOfProcessedTasksWithDeadlineDateBetween() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+    void shouldReturnNumberOfTasksWithDeadlineDateBetween() {
         LocalDateTime deadlineFrom = LocalDateTime.now();
         LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
-        when(taskRepository.countAllByDeadlineBetweenAndStatusAndUserId(
+
+        GetTasksRequest request = new GetTasksRequest();
+        request.setDeadlineFrom(deadlineFrom);
+        request.setDeadlineTo(deadlineTo);
+
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+
+        when(taskRepository.countAllByDeadlineBetweenAndStatusInAndUserId(
                 deadlineFrom,
                 deadlineTo,
-                TaskStatus.PROCESSED,
+                request.getStatuses(),
                 user.getId()
         )).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getProcessedTaskCount(deadlineFrom, deadlineTo, user).block());
+        assertEquals(1L, taskService.getTaskCount(request, user).block());
     }
 
     @Test
-    void shouldThrowExceptionOnProcessedTaskWithDeadlineCountGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getProcessedTaskCount(null, null, null).block());
-        assertEquals("User must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldReturnProcessedTasksWithDeadlineDateBetween() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+    void shouldReturnTasksWithDeadlineDateBetween() {
         LocalDateTime deadlineFrom = LocalDateTime.now();
         LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
+
+        GetTasksRequest request = new GetTasksRequest();
+        request.setDeadlineFrom(deadlineFrom);
+        request.setDeadlineTo(deadlineTo);
+
+        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+
         Task task = Task.builder()
                 .id(2L)
                 .userId(user.getId())
                 .title("Test task")
-                .status(TaskStatus.PROCESSED)
                 .deadline(deadlineTo)
                 .build();
-        when(taskRepository.findByDeadlineBetweenAndStatusAndUserIdOrderByCreatedAtAsc(
+        when(taskRepository.findByDeadlineBetweenAndStatusInAndUserIdOrderByCreatedAtAsc(
                 deadlineFrom,
                 deadlineTo,
-                TaskStatus.PROCESSED,
+                request.getStatuses(),
                 user.getId(),
                 0,
                 null
         )).thenReturn(Flux.just(task));
 
-        Task result = taskService.getProcessedTasks(deadlineFrom, deadlineTo, user, null).blockFirst();
+        Task result = taskService.getTasks(request, user, null).blockFirst();
         assertEquals(task, result);
     }
 
     @Test
-    void shouldReturnNumberOfProcessedTasksWithDeadlineDateLessThanOrEqual() {
+    void shouldReturnNumberOfTasksWithDeadlineDateLessThanOrEqual() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setDeadlineTo(LocalDateTime.now().plus(1, ChronoUnit.DAYS));
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
-        when(taskRepository.countAllByDeadlineLessThanEqualAndStatusAndUserId(
-                deadlineTo,
-                TaskStatus.PROCESSED,
+
+        when(taskRepository.countAllByDeadlineLessThanEqualAndStatusInAndUserId(
+                request.getDeadlineTo(),
+                request.getStatuses(),
                 user.getId()
         )).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getProcessedTaskCount(null, deadlineTo, user).block());
+        assertEquals(1L, taskService.getTaskCount(request, user).block());
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadlineDateLessThanOrEqual() {
+    void shouldReturnTasksWithDeadlineDateLessThanOrEqual() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setDeadlineTo(LocalDateTime.now().plus(1, ChronoUnit.DAYS));
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        LocalDateTime deadlineTo = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
+
         Task task = Task.builder()
                 .id(2L)
                 .userId(user.getId())
                 .title("Test task")
-                .status(TaskStatus.PROCESSED)
-                .deadline(deadlineTo)
+                .deadline(request.getDeadlineTo())
                 .build();
-        when(taskRepository.findByDeadlineLessThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(
-                deadlineTo,
-                TaskStatus.PROCESSED,
+        when(taskRepository.findByDeadlineLessThanEqualAndStatusInAndUserIdOrderByCreatedAtAsc(
+                request.getDeadlineTo(),
+                request.getStatuses(),
                 user.getId(),
                 0,
                 null
         )).thenReturn(Flux.just(task));
 
-        Task result = taskService.getProcessedTasks(null, deadlineTo, user, null).blockFirst();
+        Task result = taskService.getTasks(request, user, null).blockFirst();
         assertEquals(task, result);
     }
 
     @Test
-    void shouldReturnNumberOfProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
+    void shouldReturnNumberOfTasksWithDeadlineDateGreaterThanOrEqual() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setDeadlineFrom(LocalDateTime.now());
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        LocalDateTime deadlineFrom = LocalDateTime.now();
-        when(taskRepository.countAllByDeadlineGreaterThanEqualAndStatusAndUserId(
-                deadlineFrom,
-                TaskStatus.PROCESSED,
+
+        when(taskRepository.countAllByDeadlineGreaterThanEqualAndStatusInAndUserId(
+                request.getDeadlineFrom(),
+                request.getStatuses(),
                 user.getId()
         )).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getProcessedTaskCount(deadlineFrom, null, user).block());
+        assertEquals(1L, taskService.getTaskCount(request, user).block());
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
+    void shouldReturnTasksWithDeadlineDateGreaterThanOrEqual() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setDeadlineFrom(LocalDateTime.now());
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        LocalDateTime deadlineFrom = LocalDateTime.now();
+
         Task task = Task.builder()
                 .id(2L)
                 .userId(user.getId())
                 .title("Test task")
-                .status(TaskStatus.PROCESSED)
-                .deadline(deadlineFrom)
+                .deadline(request.getDeadlineFrom())
                 .build();
-        when(taskRepository.findByDeadlineGreaterThanEqualAndStatusAndUserIdOrderByCreatedAtAsc(
-                deadlineFrom,
-                TaskStatus.PROCESSED,
+        when(taskRepository.findByDeadlineGreaterThanEqualAndStatusInAndUserIdOrderByCreatedAtAsc(
+                request.getDeadlineFrom(),
+                request.getStatuses(),
                 user.getId(),
                 0,
                 null
         )).thenReturn(Flux.just(task));
 
-        Task result = taskService.getProcessedTasks(deadlineFrom, null, user, null).blockFirst();
+        Task result = taskService.getTasks(request, user, null).blockFirst();
         assertEquals(task, result);
     }
 
     @Test
-    void shouldReturnNumberOfProcessedTasksWithoutDeadlineDate() {
+    void shouldReturnNumberOfTasksWithoutDeadlineDate() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setDeadlineFrom(null);
+        request.setDeadlineTo(null);
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        when(taskRepository.countAllByDeadlineIsNullAndStatusAndUserId(TaskStatus.PROCESSED, user.getId()))
+        when(taskRepository.countAllByDeadlineIsNullAndStatusInAndUserId(request.getStatuses(), user.getId()))
                 .thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getProcessedTaskCount(null, null, user).block());
+        assertEquals(1L, taskService.getTaskCount(request, user).block());
     }
 
     @Test
-    void shouldReturnProcessedTasksWithoutDeadlineDate() {
+    void shouldReturnTasksWithoutDeadlineDate() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setDeadlineFrom(null);
+        request.setDeadlineTo(null);
+
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
-        when(taskRepository.findByDeadlineIsNullAndStatusAndUserIdOrderByCreatedAtAsc(TaskStatus.PROCESSED,
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
+        when(taskRepository.findByDeadlineIsNullAndStatusInAndUserIdOrderByCreatedAtAsc(request.getStatuses(),
                 user.getId(), 0, null)).thenReturn(Flux.just(task));
 
-        Task result = taskService.getProcessedTasks(null, null, user, null).blockFirst();
+        Task result = taskService.getTasks(request, user, null).blockFirst();
         assertEquals(task, result);
-    }
-
-    @Test
-    void shouldThrowExceptionOnProcessedTasksWithDeadlineGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getProcessedTasks(null, null, null, Pageable.unpaged()).blockFirst());
-        assertEquals("User must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldReturnNumberOfAllUncompletedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        when(taskRepository.countAllByStatusNotAndUserId(TaskStatus.COMPLETED, user.getId())).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getUncompletedTaskCount(user).block());
-    }
-
-    @Test
-    void shouldThrowExceptionOnUncompletedTaskCountGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getUncompletedTaskCount(null).block());
-        assertEquals("User must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldReturnAllUncompletedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
-        when(taskRepository.findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, user.getId(), 0, null))
-                .thenReturn(Flux.just(task));
-        Task result = taskService.getUncompletedTasks(user, Pageable.unpaged()).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldReturnUncompletedTasksWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.PROCESSED).build();
-        PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusNotAndUserIdOrderByCreatedAtAsc(TaskStatus.COMPLETED, user.getId(),
-                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
-
-        Task result = taskService.getUncompletedTasks(user, pageRequest).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldThrowExceptionOnUncompletedTasksGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getUncompletedTasks(null, Pageable.unpaged()).blockFirst());
-        assertEquals("User must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldReturnAllCompletedTasks() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.COMPLETED).build();
-        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtDesc(TaskStatus.COMPLETED, user.getId(), 0, null))
-                .thenReturn(Flux.just(task));
-        Task result = taskService.getCompletedTasks(user, Pageable.unpaged()).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldReturnCompletedTasksWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").status(TaskStatus.COMPLETED).build();
-        PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusAndUserIdOrderByCreatedAtDesc(TaskStatus.COMPLETED, user.getId(),
-                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
-
-        Task result = taskService.getCompletedTasks(user, pageRequest).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldThrowExceptionOnCompletedTasksGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getCompletedTasks(null, Pageable.unpaged()).blockFirst());
-        assertEquals("User must not be null", e.getMessage());
     }
 
     @Test

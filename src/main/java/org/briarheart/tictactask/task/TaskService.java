@@ -8,8 +8,6 @@ import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-
 /**
  * Service for task managing.
  *
@@ -18,90 +16,23 @@ import java.time.LocalDateTime;
  */
 public interface TaskService {
     /**
-     * Returns number of all unprocessed tasks belonging to the given user.
+     * Returns number of tasks belonging to the given user.
      *
-     * @param user task author (must not be {@code null})
-     * @return number of unprocessed tasks or empty stream when there is no task meeting the given criteria
+     * @param request request filters (must not be {@code null})
+     * @param user    task author (must not be {@code null})
+     * @return number of tasks or empty stream when there is no task meeting the given criteria
      */
-    Mono<Long> getUnprocessedTaskCount(User user);
+    Mono<Long> getTaskCount(GetTasksRequest request, User user);
 
     /**
-     * Returns all unprocessed tasks belonging to the given user.
+     * Returns tasks belonging to the given user.
      *
+     * @param request  request filters (must not be {@code null})
      * @param user     task author (must not be {@code null})
      * @param pageable paging restriction
-     * @return unprocessed tasks or empty stream when there is no task meeting the given criteria
+     * @return tasks or empty stream when there is no task meeting the given criteria
      */
-    Flux<Task> getUnprocessedTasks(User user, Pageable pageable);
-
-    /**
-     * Returns number of all processed tasks belonging to the given user.
-     *
-     * @param user task author (must not be {@code null})
-     * @return number of processed tasks or empty stream when there is no task meeting the given criteria
-     */
-    Mono<Long> getProcessedTaskCount(User user);
-
-    /**
-     * Returns all processed tasks belonging to the given user.
-     *
-     * @param user     task author (must not be {@code null})
-     * @param pageable paging restriction
-     * @return processed tasks or empty stream when there is no task meeting the given criteria
-     */
-    Flux<Task> getProcessedTasks(User user, Pageable pageable);
-
-    /**
-     * Returns number of processed tasks optionally falling within the given deadline bounds and belonging to the given
-     * user. If deadline bounds are not specified this method returns number of processed tasks without deadline.
-     *
-     * @param deadlineFrom optional deadline from bound
-     * @param deadlineTo   optional deadline to bound
-     * @param user         task author (must not be {@code null})
-     * @return number of processed tasks or empty stream when there is no task meeting the given criteria
-     */
-    Mono<Long> getProcessedTaskCount(LocalDateTime deadlineFrom, LocalDateTime deadlineTo, User user);
-
-    /**
-     * Returns processed tasks optionally falling within the given deadline bounds and belonging to the given user.
-     * If deadline bounds are not specified this method returns processed tasks without deadline.
-     *
-     * @param deadlineFrom optional deadline from bound
-     * @param deadlineTo   optional deadline to bound
-     * @param user         task author (must not be {@code null})
-     * @param pageable     paging restriction
-     * @return processed tasks or empty stream when there is no task meeting the given criteria
-     */
-    Flux<Task> getProcessedTasks(LocalDateTime deadlineFrom,
-                                 LocalDateTime deadlineTo,
-                                 User user,
-                                 Pageable pageable);
-
-    /**
-     * Returns number of all uncompleted tasks (either unprocessed or processed) belonging to the given user.
-     *
-     * @param user task author (must not be {@code null})
-     * @return number of uncompleted tasks or empty stream when there is no task meeting the given criteria
-     */
-    Mono<Long> getUncompletedTaskCount(User user);
-
-    /**
-     * Returns uncompleted tasks (either unprocessed or processed) belonging to the given user.
-     *
-     * @param user     task author (must not be {@code null})
-     * @param pageable paging restriction
-     * @return uncompleted tasks or empty stream when there is no task meeting the given criteria
-     */
-    Flux<Task> getUncompletedTasks(User user, Pageable pageable);
-
-    /**
-     * Returns completed tasks belonging to the given user.
-     *
-     * @param user     task author (must not be {@code null})
-     * @param pageable paging restriction
-     * @return completed tasks or empty stream when there is no task meeting the given criteria
-     */
-    Flux<Task> getCompletedTasks(User user, Pageable pageable);
+    Flux<Task> getTasks(GetTasksRequest request, User user, Pageable pageable);
 
     /**
      * Returns task with the given id and belonging to the given user.
