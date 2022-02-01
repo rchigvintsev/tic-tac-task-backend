@@ -25,6 +25,7 @@ public class Task {
     @Builder.Default
     private TaskStatus status = TaskStatus.UNPROCESSED;
     private LocalDateTime createdAt;
+    private LocalDateTime completedAt;
     private LocalDateTime deadline;
     private boolean deadlineTimeExplicitlySet;
     private TaskRecurrenceStrategy recurrenceStrategy;
@@ -44,6 +45,7 @@ public class Task {
         this.previousStatus = other.previousStatus;
         this.status = other.status;
         this.createdAt = other.createdAt;
+        this.completedAt = other.completedAt;
         this.deadline = other.deadline;
         this.deadlineTimeExplicitlySet = other.deadlineTimeExplicitlySet;
         this.recurrenceStrategy = other.recurrenceStrategy;

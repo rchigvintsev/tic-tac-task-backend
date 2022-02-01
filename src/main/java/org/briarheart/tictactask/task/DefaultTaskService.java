@@ -173,6 +173,9 @@ public class DefaultTaskService implements TaskService {
                         task.setPreviousStatus(task.getStatus());
                         task.setStatus(TaskStatus.COMPLETED);
                     }
+                    // Update "completed_at" for recurring tasks too to be able to show them among other tasks that
+                    // were completed today
+                    task.setCompletedAt(LocalDateTime.now(ZoneOffset.UTC));
                     return taskRepository.save(task)
                             .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId()));
                 });

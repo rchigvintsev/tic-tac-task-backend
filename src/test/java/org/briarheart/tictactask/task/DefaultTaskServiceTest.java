@@ -90,7 +90,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldReturnNumberOfAllTasks() {
         GetTasksRequest request = new GetTasksRequest();
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         when(taskRepository.countAllByStatusInAndUserId(request.getStatuses(), user.getId())).thenReturn(Mono.just(1L));
         assertEquals(1L, taskService.getTaskCount(request, user).block());
     }
@@ -98,7 +98,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldReturnAllTasks() {
         GetTasksRequest request = new GetTasksRequest();
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByStatusInAndUserIdOrderByCreatedAtAsc(request.getStatuses(), user.getId(), 0, null))
                 .thenReturn(Flux.just(task));
@@ -110,7 +110,7 @@ class DefaultTaskServiceTest {
     @Test
     void shouldReturnTasksWithPagingRestriction() {
         GetTasksRequest request = new GetTasksRequest();
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         PageRequest pageRequest = PageRequest.of(3, 50);
         when(taskRepository.findByStatusInAndUserIdOrderByCreatedAtAsc(request.getStatuses(), user.getId(),
@@ -129,7 +129,7 @@ class DefaultTaskServiceTest {
         request.setDeadlineFrom(deadlineFrom);
         request.setDeadlineTo(deadlineTo);
 
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
 
         when(taskRepository.countAllByDeadlineBetweenAndStatusInAndUserId(
                 deadlineFrom,
@@ -149,7 +149,7 @@ class DefaultTaskServiceTest {
         request.setDeadlineFrom(deadlineFrom);
         request.setDeadlineTo(deadlineTo);
 
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
 
         Task task = Task.builder()
                 .id(2L)
@@ -175,7 +175,7 @@ class DefaultTaskServiceTest {
         GetTasksRequest request = new GetTasksRequest();
         request.setDeadlineTo(LocalDateTime.now().plus(1, ChronoUnit.DAYS));
 
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
 
         when(taskRepository.countAllByDeadlineLessThanEqualAndStatusInAndUserId(
                 request.getDeadlineTo(),
@@ -190,7 +190,7 @@ class DefaultTaskServiceTest {
         GetTasksRequest request = new GetTasksRequest();
         request.setDeadlineTo(LocalDateTime.now().plus(1, ChronoUnit.DAYS));
 
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
 
         Task task = Task.builder()
                 .id(2L)
@@ -215,7 +215,7 @@ class DefaultTaskServiceTest {
         GetTasksRequest request = new GetTasksRequest();
         request.setDeadlineFrom(LocalDateTime.now());
 
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
 
         when(taskRepository.countAllByDeadlineGreaterThanEqualAndStatusInAndUserId(
                 request.getDeadlineFrom(),
@@ -230,7 +230,7 @@ class DefaultTaskServiceTest {
         GetTasksRequest request = new GetTasksRequest();
         request.setDeadlineFrom(LocalDateTime.now());
 
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
 
         Task task = Task.builder()
                 .id(2L)
@@ -256,7 +256,7 @@ class DefaultTaskServiceTest {
         request.setDeadlineFrom(null);
         request.setDeadlineTo(null);
 
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         when(taskRepository.countAllByDeadlineIsNullAndStatusInAndUserId(request.getStatuses(), user.getId()))
                 .thenReturn(Mono.just(1L));
         assertEquals(1L, taskService.getTaskCount(request, user).block());
@@ -268,7 +268,7 @@ class DefaultTaskServiceTest {
         request.setDeadlineFrom(null);
         request.setDeadlineTo(null);
 
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByDeadlineIsNullAndStatusInAndUserIdOrderByCreatedAtAsc(request.getStatuses(),
                 user.getId(), 0, null)).thenReturn(Flux.just(task));
@@ -279,7 +279,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnTaskById() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
 
@@ -296,7 +296,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskGetWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         long taskId = 2L;
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
@@ -471,7 +471,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldCompleteTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
@@ -482,7 +482,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRescheduleTaskOnCompleteWhenTaskRecurrenceIsEnabled() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         LocalDateTime taskDeadline = LocalDateTime.now(ZoneOffset.UTC);
         Task task = Task.builder()
                 .id(2L)
@@ -500,6 +500,17 @@ class DefaultTaskServiceTest {
     }
 
     @Test
+    void shouldUpdateCompletedAtAttributeOnTaskComplete() {
+        User user = createActiveUser();
+        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
+        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
+
+        taskService.completeTask(task.getId(), user).block();
+        assertNotNull(task.getCompletedAt());
+    }
+
+    @Test
     void shouldThrowExceptionOnTaskCompleteWhenUserIsNull() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> taskService.completeTask(1L, null).block());
@@ -508,7 +519,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskCompleteWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
@@ -519,7 +530,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRestoreTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder()
                 .id(2L)
                 .userId(user.getId())
@@ -537,7 +548,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRestoreTaskFromTaskList() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         TaskList taskList = TaskList.builder()
                 .id(2L)
                 .userId(user.getId())
@@ -570,7 +581,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskRestoreWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
@@ -581,7 +592,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldDeleteTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
 
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
@@ -600,7 +611,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskDeleteWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
@@ -611,7 +622,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllTagsForTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         TaskTag tag = TaskTag.builder().id(3L).userId(user.getId()).name("Test tag").build();
 
@@ -633,7 +644,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagsGetWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
@@ -644,7 +655,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldAssignTagToTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         TaskTag tag = TaskTag.builder().id(3L).userId(user.getId()).name("Test tag").build();
 
@@ -667,7 +678,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagAssignWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         long taskId = 3L;
 
@@ -682,7 +693,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagAssignWhenTagIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         Long tagId = 3L;
 
@@ -697,7 +708,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRemoveTagFromTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
         TaskTag tag = TaskTag.builder().id(3L).name("Test tag").userId(user.getId()).build();
 
@@ -718,7 +729,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagRemoveWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Long taskId = 2L;
         Long tagId = 3L;
 
@@ -730,7 +741,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllCommentsForTask() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         TaskComment comment = TaskComment.builder()
                 .id(3L)
@@ -749,7 +760,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnCommentsForTaskWithPagingRestriction() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         Task task = Task.builder().id(1L).userId(user.getId()).title("Test task").build();
         TaskComment comment = TaskComment.builder()
                 .id(3L)
@@ -776,7 +787,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnCommentsGetWhenTaskIsNotFound() {
-        User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
+        User user = createActiveUser();
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class,
                 () -> taskService.getComments(1L, user, Pageable.unpaged()).blockFirst());
@@ -848,5 +859,9 @@ class DefaultTaskServiceTest {
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> taskService.addComment(comment).block());
         assertEquals("Task with id " + comment.getTaskId() + " is not found", e.getMessage());
+    }
+
+    private User createActiveUser() {
+        return User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
     }
 }
