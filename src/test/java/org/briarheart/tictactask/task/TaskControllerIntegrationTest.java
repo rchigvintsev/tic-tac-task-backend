@@ -4,7 +4,6 @@ import org.briarheart.tictactask.config.TestJavaMailSenderConfiguration;
 import org.briarheart.tictactask.task.TaskController.TaskResponse;
 import org.briarheart.tictactask.util.TestAccessTokens;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -13,20 +12,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import static org.briarheart.tictactask.task.TaskAssertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Roman Chigvintsev
  */
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = "security.disabled=false")
 @Import(TestJavaMailSenderConfiguration.class)
@@ -406,50 +398,5 @@ class TaskControllerIntegrationTest {
 
     private void addCookieHeader(HttpHeaders headers) {
         headers.add(HttpHeaders.COOKIE, "access_token=" + TestAccessTokens.JOHN_DOE);
-    }
-
-    private void assertAllTasksWithStatuses(TaskResponse[] tasks, TaskStatus... expectedStatuses) {
-        Set<TaskStatus> statusSet = Arrays.stream(expectedStatuses).collect(Collectors.toSet());
-        for (TaskResponse task : tasks) {
-            assertTrue(statusSet.contains(task.getStatus()), "Unexpected task status: " + task.getStatus());
-        }
-    }
-
-    private void assertAllTasksWithDeadlineWithinRange(TaskResponse[] tasks, String deadlineFrom, String deadlineTo) {
-        for (TaskResponse task : tasks) {
-            LocalDateTime deadline = task.getDeadline();
-            assertNotNull(deadline);
-            assertTrue(!deadline.isBefore(parseIsoDateTime(deadlineFrom))
-                            && !deadline.isAfter(parseIsoDateTime(deadlineTo)), "Task deadline (" + deadline
-                    + ") was expected to be within range from " + deadlineFrom + " to " + deadlineTo);
-        }
-    }
-
-    private void assertAllTasksWithDeadlineLessThanOrEqual(TaskResponse[] tasks, String deadlineTo) {
-        for (TaskResponse task : tasks) {
-            LocalDateTime deadline = task.getDeadline();
-            assertNotNull(deadline);
-            assertFalse(deadline.isAfter(parseIsoDateTime(deadlineTo)), "Task deadline (" + deadline
-                    + ") was expected to be less than or equal to " + deadlineTo);
-        }
-    }
-
-    private void assertAllTasksWithDeadlineGreaterThanOrEqual(TaskResponse[] tasks, String deadlineFrom) {
-        for (TaskResponse task : tasks) {
-            LocalDateTime deadline = task.getDeadline();
-            assertNotNull(deadline);
-            assertFalse(deadline.isBefore(parseIsoDateTime(deadlineFrom)), "Task deadline (" + deadline
-                    + ") was expected to be greater than or equal to " + deadlineFrom);
-        }
-    }
-
-    private void assertAllTasksWithoutDeadline(TaskResponse[] tasks) {
-        for (TaskResponse task : tasks) {
-            assertNull(task.getDeadline());
-        }
-    }
-
-    private LocalDateTime parseIsoDateTime(String dateTime) {
-        return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_DATE_TIME);
     }
 }

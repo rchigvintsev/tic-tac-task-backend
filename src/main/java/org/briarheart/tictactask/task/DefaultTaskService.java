@@ -59,66 +59,12 @@ public class DefaultTaskService implements TaskService {
 
     @Override
     public Mono<Long> getTaskCount(GetTasksRequest request, User user) {
-        Assert.notNull(request, "Request must not be null");
-        Assert.notNull(user, "User must not be null");
-
-        Set<TaskStatus> statuses = request.getStatuses();
-        LocalDateTime deadlineFrom = request.getDeadlineFrom();
-        LocalDateTime deadlineTo = request.getDeadlineTo();
-
-        if (!request.isDeadlineFromDirty() && !request.isDeadlineToDirty()) {
-            return taskRepository.countAllByStatusInAndUserId(statuses, user.getId());
-        }
-
-        if (!request.isDeadlineToDirty()) {
-            return taskRepository.countAllByDeadlineGreaterThanEqualAndStatusInAndUserId(deadlineFrom, statuses,
-                    user.getId());
-        }
-
-        if (!request.isDeadlineFromDirty()) {
-            return taskRepository.countAllByDeadlineLessThanEqualAndStatusInAndUserId(deadlineTo, statuses,
-                    user.getId());
-        }
-
-        if (deadlineFrom == null && deadlineTo == null) {
-            return taskRepository.countAllByDeadlineIsNullAndStatusInAndUserId(statuses, user.getId());
-        }
-        return taskRepository.countAllByDeadlineBetweenAndStatusInAndUserId(deadlineFrom, deadlineTo, statuses,
-                user.getId());
+        return taskRepository.count(request, user);
     }
 
     @Override
     public Flux<Task> getTasks(GetTasksRequest request, User user, Pageable pageable) {
-        Assert.notNull(request, "Request must not be null");
-        Assert.notNull(user, "User must not be null");
-
-        LocalDateTime deadlineTo = request.getDeadlineTo();
-        LocalDateTime deadlineFrom = request.getDeadlineFrom();
-        Set<TaskStatus> statuses = request.getStatuses();
-
-        long offset = Pageables.getOffset(pageable);
-        Integer limit = Pageables.getLimit(pageable);
-
-        if (!request.isDeadlineFromDirty() && !request.isDeadlineToDirty()) {
-            return taskRepository.findByStatusInAndUserIdOrderByCreatedAtAsc(statuses, user.getId(), offset, limit);
-        }
-
-        if (!request.isDeadlineToDirty()) {
-            return taskRepository.findByDeadlineGreaterThanEqualAndStatusInAndUserIdOrderByCreatedAtAsc(deadlineFrom,
-                    statuses, user.getId(), offset, limit);
-        }
-
-        if (!request.isDeadlineFromDirty()) {
-            return taskRepository.findByDeadlineLessThanEqualAndStatusInAndUserIdOrderByCreatedAtAsc(deadlineTo,
-                    statuses, user.getId(), offset, limit);
-        }
-
-        if (deadlineFrom == null && deadlineTo == null) {
-            return taskRepository.findByDeadlineIsNullAndStatusInAndUserIdOrderByCreatedAtAsc(statuses, user.getId(),
-                    offset, limit);
-        }
-        return taskRepository.findByDeadlineBetweenAndStatusInAndUserIdOrderByCreatedAtAsc(deadlineFrom, deadlineTo,
-                statuses, user.getId(), offset, limit);
+        return taskRepository.find(request, user, pageable);
     }
 
     @Override

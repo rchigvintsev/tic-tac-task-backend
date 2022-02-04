@@ -9,14 +9,14 @@ import reactor.core.publisher.Mono;
  * @author Roman Chigvintsev
  */
 @Component
-public class ProfilePictureCreatorImpl implements ProfilePictureCreator {
+public class CustomizedProfilePictureRepositoryImpl implements CustomizedProfilePictureRepository {
     @SuppressWarnings("SqlResolve")
     private static final String SQL_CREATE_PROFILE_PICTURE = "INSERT INTO profile_picture (user_id, data, type) "
             + "VALUES (:userId, :data, :type)";
 
     private final DatabaseClient databaseClient;
 
-    public ProfilePictureCreatorImpl(DatabaseClient databaseClient) {
+    public CustomizedProfilePictureRepositoryImpl(DatabaseClient databaseClient) {
         Assert.notNull(databaseClient, "Database client must not be null");
         this.databaseClient = databaseClient;
     }

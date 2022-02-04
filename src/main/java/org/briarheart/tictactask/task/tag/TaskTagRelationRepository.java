@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
  * @author Roman Chigvintsev
  */
 public interface TaskTagRelationRepository
-        extends ReactiveCrudRepository<TaskTagRelation, Void>, TaskTagRelationCreator {
+        extends ReactiveCrudRepository<TaskTagRelation, Void>, CustomizedTaskTagRelationRepository {
     @Query("SELECT * FROM tasks_tags WHERE task_id = :taskId AND tag_id = :tagId")
     Mono<TaskTagRelation> findByTaskIdAndTagId(Long taskId, Long tagId);
 
@@ -18,7 +18,4 @@ public interface TaskTagRelationRepository
 
     @Query("DELETE FROM tasks_tags WHERE task_id = :taskId AND tag_id = :tagId")
     Mono<Void> deleteByTaskIdAndTagId(Long taskId, Long tagId);
-
-    @Query("DELETE FROM tasks_tags WHERE tag_id = :tagId")
-    Mono<Void> deleteByTagId(Long tagId);
 }

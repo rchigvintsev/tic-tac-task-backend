@@ -9,14 +9,14 @@ import reactor.core.publisher.Mono;
  * @author Roman Chigvintsev
  */
 @Component
-public class TaskTagRelationCreatorImpl implements TaskTagRelationCreator {
+public class CustomizedTaskTagRelationRepositoryImpl implements CustomizedTaskTagRelationRepository {
     @SuppressWarnings("SqlResolve")
     private static final String SQL_CREATE_TASK_TAG_RELATION = "INSERT INTO tasks_tags (task_id, tag_id) "
             + "VALUES (:taskId, :tagId)";
 
     private final DatabaseClient databaseClient;
 
-    public TaskTagRelationCreatorImpl(DatabaseClient databaseClient) {
+    public CustomizedTaskTagRelationRepositoryImpl(DatabaseClient databaseClient) {
         Assert.notNull(databaseClient, "Database client must not be null");
         this.databaseClient = databaseClient;
     }

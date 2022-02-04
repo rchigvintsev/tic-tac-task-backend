@@ -11,6 +11,7 @@ import org.briarheart.tictactask.task.tag.TaskTag;
 import org.briarheart.tictactask.task.tag.TaskTagRelation;
 import org.briarheart.tictactask.task.tag.TaskTagRelationRepository;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.TestUsers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
@@ -60,220 +61,19 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionOnTaskCountGetWhenGetTasksRequestIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getTaskCount(null, User.builder().id(1L).build()).block());
-        assertEquals("Request must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldThrowExceptionOnTaskCountGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getTaskCount(new GetTasksRequest(), null).block());
-        assertEquals("User must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldThrowExceptionOnTasksGetWhenGetTasksRequestIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getTasks(null, User.builder().id(1L).build(), Pageable.unpaged()).blockFirst());
-        assertEquals("Request must not be null", e.getMessage());
-    }
-
-    @Test
-    void shouldThrowExceptionOnTasksGetWhenUserIsNull() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> taskService.getTasks(new GetTasksRequest(), null, Pageable.unpaged()).blockFirst());
-        assertEquals("User must not be null", e.getMessage());
-    }
-
-    @Test
     void shouldReturnNumberOfAllTasks() {
         GetTasksRequest request = new GetTasksRequest();
-        User user = createActiveUser();
-        when(taskRepository.countAllByStatusInAndUserId(request.getStatuses(), user.getId())).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getTaskCount(request, user).block());
+        when(taskRepository.count(request, TestUsers.JOHN_DOE)).thenReturn(Mono.just(1L));
+        assertEquals(1L, taskService.getTaskCount(request, TestUsers.JOHN_DOE).block());
     }
 
     @Test
     void shouldReturnAllTasks() {
         GetTasksRequest request = new GetTasksRequest();
-        User user = createActiveUser();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
-        when(taskRepository.findByStatusInAndUserIdOrderByCreatedAtAsc(request.getStatuses(), user.getId(), 0, null))
-                .thenReturn(Flux.just(task));
+        Task task = Task.builder().id(2L).userId(TestUsers.JOHN_DOE.getId()).title("Test task").build();
+        when(taskRepository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged())).thenReturn(Flux.just(task));
 
-        Task result = taskService.getTasks(request, user, Pageable.unpaged()).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldReturnTasksWithPagingRestriction() {
-        GetTasksRequest request = new GetTasksRequest();
-        User user = createActiveUser();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
-        PageRequest pageRequest = PageRequest.of(3, 50);
-        when(taskRepository.findByStatusInAndUserIdOrderByCreatedAtAsc(request.getStatuses(), user.getId(),
-                pageRequest.getOffset(), pageRequest.getPageSize())).thenReturn(Flux.just(task));
-
-        Task result = taskService.getTasks(request, user, pageRequest).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldReturnNumberOfTasksWithDeadlineDateBetween() {
-        LocalDateTime deadlineFrom = LocalDateTime.now();
-        LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
-
-        GetTasksRequest request = new GetTasksRequest();
-        request.setDeadlineFrom(deadlineFrom);
-        request.setDeadlineTo(deadlineTo);
-
-        User user = createActiveUser();
-
-        when(taskRepository.countAllByDeadlineBetweenAndStatusInAndUserId(
-                deadlineFrom,
-                deadlineTo,
-                request.getStatuses(),
-                user.getId()
-        )).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getTaskCount(request, user).block());
-    }
-
-    @Test
-    void shouldReturnTasksWithDeadlineDateBetween() {
-        LocalDateTime deadlineFrom = LocalDateTime.now();
-        LocalDateTime deadlineTo = deadlineFrom.plus(1, ChronoUnit.DAYS);
-
-        GetTasksRequest request = new GetTasksRequest();
-        request.setDeadlineFrom(deadlineFrom);
-        request.setDeadlineTo(deadlineTo);
-
-        User user = createActiveUser();
-
-        Task task = Task.builder()
-                .id(2L)
-                .userId(user.getId())
-                .title("Test task")
-                .deadline(deadlineTo)
-                .build();
-        when(taskRepository.findByDeadlineBetweenAndStatusInAndUserIdOrderByCreatedAtAsc(
-                deadlineFrom,
-                deadlineTo,
-                request.getStatuses(),
-                user.getId(),
-                0,
-                null
-        )).thenReturn(Flux.just(task));
-
-        Task result = taskService.getTasks(request, user, null).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldReturnNumberOfTasksWithDeadlineDateLessThanOrEqual() {
-        GetTasksRequest request = new GetTasksRequest();
-        request.setDeadlineTo(LocalDateTime.now().plus(1, ChronoUnit.DAYS));
-
-        User user = createActiveUser();
-
-        when(taskRepository.countAllByDeadlineLessThanEqualAndStatusInAndUserId(
-                request.getDeadlineTo(),
-                request.getStatuses(),
-                user.getId()
-        )).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getTaskCount(request, user).block());
-    }
-
-    @Test
-    void shouldReturnTasksWithDeadlineDateLessThanOrEqual() {
-        GetTasksRequest request = new GetTasksRequest();
-        request.setDeadlineTo(LocalDateTime.now().plus(1, ChronoUnit.DAYS));
-
-        User user = createActiveUser();
-
-        Task task = Task.builder()
-                .id(2L)
-                .userId(user.getId())
-                .title("Test task")
-                .deadline(request.getDeadlineTo())
-                .build();
-        when(taskRepository.findByDeadlineLessThanEqualAndStatusInAndUserIdOrderByCreatedAtAsc(
-                request.getDeadlineTo(),
-                request.getStatuses(),
-                user.getId(),
-                0,
-                null
-        )).thenReturn(Flux.just(task));
-
-        Task result = taskService.getTasks(request, user, null).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldReturnNumberOfTasksWithDeadlineDateGreaterThanOrEqual() {
-        GetTasksRequest request = new GetTasksRequest();
-        request.setDeadlineFrom(LocalDateTime.now());
-
-        User user = createActiveUser();
-
-        when(taskRepository.countAllByDeadlineGreaterThanEqualAndStatusInAndUserId(
-                request.getDeadlineFrom(),
-                request.getStatuses(),
-                user.getId()
-        )).thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getTaskCount(request, user).block());
-    }
-
-    @Test
-    void shouldReturnTasksWithDeadlineDateGreaterThanOrEqual() {
-        GetTasksRequest request = new GetTasksRequest();
-        request.setDeadlineFrom(LocalDateTime.now());
-
-        User user = createActiveUser();
-
-        Task task = Task.builder()
-                .id(2L)
-                .userId(user.getId())
-                .title("Test task")
-                .deadline(request.getDeadlineFrom())
-                .build();
-        when(taskRepository.findByDeadlineGreaterThanEqualAndStatusInAndUserIdOrderByCreatedAtAsc(
-                request.getDeadlineFrom(),
-                request.getStatuses(),
-                user.getId(),
-                0,
-                null
-        )).thenReturn(Flux.just(task));
-
-        Task result = taskService.getTasks(request, user, null).blockFirst();
-        assertEquals(task, result);
-    }
-
-    @Test
-    void shouldReturnNumberOfTasksWithoutDeadlineDate() {
-        GetTasksRequest request = new GetTasksRequest();
-        request.setDeadlineFrom(null);
-        request.setDeadlineTo(null);
-
-        User user = createActiveUser();
-        when(taskRepository.countAllByDeadlineIsNullAndStatusInAndUserId(request.getStatuses(), user.getId()))
-                .thenReturn(Mono.just(1L));
-        assertEquals(1L, taskService.getTaskCount(request, user).block());
-    }
-
-    @Test
-    void shouldReturnTasksWithoutDeadlineDate() {
-        GetTasksRequest request = new GetTasksRequest();
-        request.setDeadlineFrom(null);
-        request.setDeadlineTo(null);
-
-        User user = createActiveUser();
-        Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
-        when(taskRepository.findByDeadlineIsNullAndStatusInAndUserIdOrderByCreatedAtAsc(request.getStatuses(),
-                user.getId(), 0, null)).thenReturn(Flux.just(task));
-
-        Task result = taskService.getTasks(request, user, null).blockFirst();
+        Task result = taskService.getTasks(request, TestUsers.JOHN_DOE, Pageable.unpaged()).blockFirst();
         assertEquals(task, result);
     }
 

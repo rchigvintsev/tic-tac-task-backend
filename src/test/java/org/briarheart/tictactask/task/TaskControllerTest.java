@@ -14,7 +14,6 @@ import org.briarheart.tictactask.user.User;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -24,7 +23,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -45,7 +43,6 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 /**
  * @author Roman Chigvintsev
  */
-@ExtendWith(SpringExtension.class)
 @WebFluxTest(TaskController.class)
 @Import(PermitAllSecurityConfig.class)
 @ActiveProfiles("test")

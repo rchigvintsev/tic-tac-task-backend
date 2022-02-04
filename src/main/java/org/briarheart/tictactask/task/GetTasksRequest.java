@@ -26,6 +26,14 @@ public class GetTasksRequest {
     @Getter(AccessLevel.PACKAGE)
     private boolean deadlineToDirty;
 
+    @Getter
+    @Setter
+    private LocalDateTime completedAtFrom;
+
+    @Getter
+    @Setter
+    private LocalDateTime completedAtTo;
+
     public void setDeadlineFrom(LocalDateTime deadlineFrom) {
         this.deadlineFrom = deadlineFrom;
         this.deadlineFromDirty = true;

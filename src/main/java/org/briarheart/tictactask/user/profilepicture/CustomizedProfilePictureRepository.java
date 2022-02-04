@@ -5,6 +5,6 @@ import reactor.core.publisher.Mono;
 /**
  * @author Roman Chigvintsev
  */
-public interface ProfilePictureCreator {
+public interface CustomizedProfilePictureRepository {
     Mono<ProfilePicture> create(ProfilePicture picture);
 }

@@ -5,6 +5,6 @@ import reactor.core.publisher.Mono;
 /**
  * @author Roman Chigvintsev
  */
-public interface TaskTagRelationCreator {
+public interface CustomizedTaskTagRelationRepository {
     Mono<TaskTagRelation> create(Long taskId, Long tagId);
 }

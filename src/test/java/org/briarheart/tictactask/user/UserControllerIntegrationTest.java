@@ -6,7 +6,6 @@ import org.briarheart.tictactask.user.UserController.CreateUserRequest;
 import org.briarheart.tictactask.util.TestAccessTokens;
 import org.briarheart.tictactask.util.TestUsers;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -17,7 +16,6 @@ import org.springframework.http.*;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.MultiValueMap;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Roman Chigvintsev
  */
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = "security.disabled=false")
 @Import(TestJavaMailSenderConfiguration.class)
