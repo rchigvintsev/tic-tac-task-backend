@@ -1,100 +1,160 @@
 package org.briarheart.tictactask.task;
 
-import org.briarheart.tictactask.controller.format.LocalDateTimeFormatter;
 import org.briarheart.tictactask.task.TaskController.TaskResponse;
-import org.springframework.format.Formatter;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.function.ThrowingConsumer;
+import org.junit.platform.commons.util.UnrecoverableExceptions;
 
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TaskAssertions {
-    private static final Formatter<LocalDateTime> LOCAL_DATE_TIME_FORMATTER = new LocalDateTimeFormatter();
-
     private TaskAssertions() {
         //no instance
     }
 
-    public static void assertAllTasksWithStatuses(List<Task> tasks, TaskStatus... expectedStatuses) {
+    public static void assertAllWithStatuses(List<Task> tasks, TaskStatus... statuses) {
         TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
-        assertAllTasksWithStatuses(responses, expectedStatuses);
+        assertAllWithStatuses(responses, statuses);
     }
 
-    public static void assertAllTasksWithStatuses(TaskResponse[] tasks, TaskStatus... expectedStatuses) {
-        Set<TaskStatus> statusSet = Arrays.stream(expectedStatuses).collect(Collectors.toSet());
+    public static void assertAllWithStatuses(TaskResponse[] tasks, TaskStatus... statuses) {
+        Set<TaskStatus> statusSet = Arrays.stream(statuses).collect(Collectors.toSet());
         for (TaskResponse task : tasks) {
             assertTrue(statusSet.contains(task.getStatus()), "Unexpected task status: " + task.getStatus());
         }
     }
 
-    public static void assertAllTasksWithDeadlineWithinRange(List<Task> tasks, String deadlineFrom, String deadlineTo) {
-        TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
-        assertAllTasksWithDeadlineWithinRange(responses, deadlineFrom, deadlineTo);
-    }
-
-    public static void assertAllTasksWithDeadlineWithinRange(TaskResponse[] tasks,
-                                                             String deadlineFrom,
-                                                             String deadlineTo) {
-        for (TaskResponse task : tasks) {
-            LocalDateTime deadline = task.getDeadline();
-            assertNotNull(deadline);
-            assertTrue(!deadline.isBefore(parseLocalDateTime(deadlineFrom))
-                    && !deadline.isAfter(parseLocalDateTime(deadlineTo)), "Task deadline (" + deadline
-                    + ") was expected to be within range from " + deadlineFrom + " to " + deadlineTo);
+    public static void assertAllByStatus(List<Task> tasks, Map<TaskStatus, ThrowingConsumer<Task>> consumers) {
+        for (Task task : tasks) {
+            ThrowingConsumer<Task> consumer = consumers.get(task.getStatus());
+            assertNotNull(consumer, "Unexpected task status: " + task.getStatus());
+            try {
+                consumer.accept(task);
+            } catch (Throwable t) {
+                UnrecoverableExceptions.rethrowIfUnrecoverable(t);
+                Assertions.fail(t);
+            }
         }
     }
 
-    public static void assertAllTasksWithDeadlineLessThanOrEqual(List<Task> tasks, String deadlineTo) {
-        TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
-        assertAllTasksWithDeadlineLessThanOrEqual(responses, deadlineTo);
-    }
-
-    public static void assertAllTasksWithDeadlineLessThanOrEqual(TaskResponse[] tasks, String deadlineTo) {
+    public static void assertAllByStatus(TaskResponse[] tasks,
+                                         Map<TaskStatus, ThrowingConsumer<TaskResponse>> consumers) {
         for (TaskResponse task : tasks) {
-            LocalDateTime deadline = task.getDeadline();
-            assertNotNull(deadline);
-            assertFalse(deadline.isAfter(parseLocalDateTime(deadlineTo)), "Task deadline (" + deadline
-                    + ") was expected to be less than or equal to " + deadlineTo);
+            ThrowingConsumer<TaskResponse> consumer = consumers.get(task.getStatus());
+            assertNotNull(consumer, "Unexpected task status: " + task.getStatus());
+            try {
+                consumer.accept(task);
+            } catch (Throwable t) {
+                UnrecoverableExceptions.rethrowIfUnrecoverable(t);
+                Assertions.fail(t);
+            }
         }
     }
 
-    public static void assertAllTasksWithDeadlineGreaterThanOrEqual(List<Task> tasks, String deadlineFrom) {
-        TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
-        assertAllTasksWithDeadlineGreaterThanOrEqual(responses, deadlineFrom);
+    public static void assertWithDeadlineWithinRange(Task task, LocalDateTime from, LocalDateTime to) {
+        assertWithDeadlineWithinRange(new TaskResponse(task), from, to);
     }
 
-    public static void assertAllTasksWithDeadlineGreaterThanOrEqual(TaskResponse[] tasks, String deadlineFrom) {
+    public static void assertWithDeadlineWithinRange(TaskResponse task, LocalDateTime from, LocalDateTime to) {
+        LocalDateTime deadline = task.getDeadline();
+        assertNotNull(deadline);
+        assertTrue(!deadline.isBefore(from) && !deadline.isAfter(to),
+                "Task deadline (" + deadline + ") was expected to be within range from " + from + " to " + to);
+    }
+
+    public static void assertAllWithDeadlineWithinRange(List<Task> tasks, LocalDateTime from, LocalDateTime to) {
+        TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
+        assertAllWithDeadlineWithinRange(responses, from, to);
+    }
+
+    public static void assertAllWithDeadlineWithinRange(TaskResponse[] tasks, LocalDateTime from, LocalDateTime to) {
         for (TaskResponse task : tasks) {
-            LocalDateTime deadline = task.getDeadline();
-            assertNotNull(deadline);
-            assertFalse(deadline.isBefore(parseLocalDateTime(deadlineFrom)), "Task deadline (" + deadline
-                    + ") was expected to be greater than or equal to " + deadlineFrom);
+            assertWithDeadlineWithinRange(task, from, to);
         }
     }
 
-    public static void assertAllTasksWithoutDeadline(List<Task> tasks) {
+    public static void assertAllDeadlineLessThanOrEqual(List<Task> tasks, LocalDateTime deadline) {
         TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
-        assertAllTasksWithoutDeadline(responses);
+        assertAllDeadlineLessThanOrEqual(responses, deadline);
     }
 
-    public static void assertAllTasksWithoutDeadline(TaskResponse[] tasks) {
+    public static void assertAllDeadlineLessThanOrEqual(TaskResponse[] tasks, LocalDateTime deadline) {
+        for (TaskResponse task : tasks) {
+            LocalDateTime taskDeadline = task.getDeadline();
+            assertNotNull(taskDeadline);
+            assertFalse(taskDeadline.isAfter(deadline),
+                    "Task deadline (" + taskDeadline + ") was expected to be less than or equal to " + deadline);
+        }
+    }
+
+    public static void assertAllWithDeadlineGreaterThanOrEqual(List<Task> tasks, LocalDateTime deadline) {
+        TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
+        assertAllWithDeadlineGreaterThanOrEqual(responses, deadline);
+    }
+
+    public static void assertAllWithDeadlineGreaterThanOrEqual(TaskResponse[] tasks, LocalDateTime deadline) {
+        for (TaskResponse task : tasks) {
+            LocalDateTime taskDeadline = task.getDeadline();
+            assertNotNull(taskDeadline);
+            assertFalse(taskDeadline.isBefore(deadline),
+                    "Task deadline (" + taskDeadline + ") was expected to be greater than or equal to " + deadline);
+        }
+    }
+
+    public static void assertAllWithoutDeadline(List<Task> tasks) {
+        TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
+        assertAllWithoutDeadline(responses);
+    }
+
+    public static void assertAllWithoutDeadline(TaskResponse[] tasks) {
         for (TaskResponse task : tasks) {
             assertNull(task.getDeadline());
         }
     }
 
-    private static LocalDateTime parseLocalDateTime(String dateTime) {
-        try {
-            return LOCAL_DATE_TIME_FORMATTER.parse(dateTime, Locale.getDefault());
-        } catch (ParseException e) {
-            throw new RuntimeException("Failed to parse string " + dateTime + " to produce instance of "
-                    + LocalDateTime.class.getName(), e);
+    public static void assertWithCompletedAtWithinRange(Task task, LocalDateTime from, LocalDateTime to) {
+        assertWithCompletedAtWithinRange(new TaskResponse(task), from, to);
+    }
+
+    public static void assertWithCompletedAtWithinRange(TaskResponse task, LocalDateTime from, LocalDateTime to) {
+        LocalDateTime completedAt = task.getCompletedAt();
+        assertNotNull(completedAt);
+        assertTrue(!completedAt.isBefore(from) && !completedAt.isAfter(to),
+                "Task was expected to be completed at time within range from " + from + " to " + to);
+    }
+
+    public static void assertAllWithCompletedAtLessThanOrEqual(List<Task> tasks, LocalDateTime completedAt) {
+        TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
+        assertAllWithCompletedAtLessThanOrEqual(responses, completedAt);
+    }
+
+    public static void assertAllWithCompletedAtLessThanOrEqual(TaskResponse[] tasks, LocalDateTime completedAt) {
+        for (TaskResponse task : tasks) {
+            LocalDateTime taskCompletedAt = task.getCompletedAt();
+            assertNotNull(taskCompletedAt);
+            assertFalse(taskCompletedAt.isAfter(completedAt),
+                    "Task was expected to be completed at time less than or equal to " + completedAt);
+        }
+    }
+
+    public static void assertAllWithCompletedAtGreaterThanOrEqual(List<Task> tasks, LocalDateTime completedAt) {
+        TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
+        assertAllWithCompletedAtGreaterThanOrEqual(responses, completedAt);
+    }
+
+    public static void assertAllWithCompletedAtGreaterThanOrEqual(TaskResponse[] tasks, LocalDateTime completedAt) {
+        for (TaskResponse task : tasks) {
+            LocalDateTime taskCompletedAt = task.getCompletedAt();
+            assertNotNull(taskCompletedAt);
+            assertFalse(taskCompletedAt.isBefore(completedAt),
+                    "Task was expected to be completed at time greater than or equal to " + completedAt);
         }
     }
 }

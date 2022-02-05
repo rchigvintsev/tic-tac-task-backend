@@ -1,7 +1,7 @@
 package org.briarheart.tictactask.controller.format;
 
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.springframework.format.Formatter;
-import org.springframework.util.Assert;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
@@ -18,18 +18,19 @@ import java.util.Locale;
 public class LocalDateTimeFormatter implements Formatter<LocalDateTime> {
     @Override
     public LocalDateTime parse(String text, Locale locale) throws ParseException {
-        Assert.hasLength(text, "Text to parse must not be null or empty");
         try {
-            return LocalDateTime.parse(text, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        } catch (DateTimeParseException e) {
-            throw new ParseException("Failed to parse date/time from string '" + text + "': " + e.getMessage(),
-                    e.getErrorIndex());
+            return DateTimeUtils.parseIsoDateTime(text);
+        } catch (RuntimeException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof DateTimeParseException) {
+                throw new ParseException(e.getMessage(), ((DateTimeParseException) cause).getErrorIndex());
+            }
+            throw e;
         }
     }
 
     @Override
     public String print(LocalDateTime object, Locale locale) {
-        Assert.notNull(object, "Date/time to print must not be null");
-        return object.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return DateTimeUtils.formatIsoDateTime(object);
     }
 }

@@ -22,9 +22,12 @@ VALUES (5, 1, 'Processed task 2', 'PROCESSED', '2022-01-01 00:00:00');
 INSERT INTO task (id, user_id, title, status, deadline)
 VALUES (6, 1, 'Processed task 3', 'PROCESSED', '2022-01-02 23:59:00');
 
-INSERT INTO task (id, user_id, title, status) VALUES (7, 1, 'Completed task 1', 'COMPLETED');
-INSERT INTO task (id, user_id, title, status) VALUES (8, 1, 'Completed task 2', 'COMPLETED');
-INSERT INTO task (id, user_id, title, status) VALUES (9, 1, 'Completed task 3', 'COMPLETED');
+INSERT INTO task (id, user_id, title, status, completed_at)
+VALUES (7, 1, 'Completed task 1', 'COMPLETED', NULL);
+INSERT INTO task (id, user_id, title, status, completed_at)
+VALUES (8, 1, 'Completed task 2', 'COMPLETED', '2022-01-01 00:00:00');
+INSERT INTO task (id, user_id, title, status, completed_at)
+VALUES (9, 1, 'Completed task 3', 'COMPLETED', '2022-01-02 23:59:00');
 
 DELETE FROM tag;
 INSERT INTO tag (id, user_id, name) VALUES (1, 1, 'Test tag');

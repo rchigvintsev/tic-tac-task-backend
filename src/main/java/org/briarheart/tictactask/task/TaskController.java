@@ -207,6 +207,7 @@ public class TaskController extends AbstractController {
         private String description;
         private TaskStatus status;
         private LocalDateTime createdAt;
+        private LocalDateTime completedAt;
         private LocalDateTime deadline;
         private boolean deadlineTimeExplicitlySet;
         private TaskRecurrenceStrategy recurrenceStrategy;
@@ -218,6 +219,7 @@ public class TaskController extends AbstractController {
             this.description = task.getDescription();
             this.status = task.getStatus();
             this.createdAt = task.getCreatedAt();
+            this.completedAt = task.getCompletedAt();
             this.deadline = task.getDeadline();
             this.deadlineTimeExplicitlySet = task.isDeadlineTimeExplicitlySet();
             this.recurrenceStrategy = task.getRecurrenceStrategy();

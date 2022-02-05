@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.briarheart.tictactask.task.TaskAssertions.*;
+import static org.briarheart.tictactask.util.DateTimeUtils.parseIsoDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -60,7 +61,7 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertTrue(tasks.length > 2, "At least three unprocessed tasks were expected but got " + tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.UNPROCESSED);
+        assertAllWithStatuses(tasks, TaskStatus.UNPROCESSED);
     }
 
     @Test
@@ -77,7 +78,7 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertEquals(2, tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.UNPROCESSED);
+        assertAllWithStatuses(tasks, TaskStatus.UNPROCESSED);
     }
 
     @Test
@@ -110,7 +111,7 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertTrue(tasks.length > 2, "At least three processed tasks were expected but got " + tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.PROCESSED);
+        assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
     }
 
     @Test
@@ -127,7 +128,7 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertEquals(2, tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.PROCESSED);
+        assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
     }
 
     @Test
@@ -164,8 +165,8 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertEquals(2, tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.PROCESSED);
-        assertAllTasksWithDeadlineWithinRange(tasks, deadlineFrom, deadlineTo);
+        assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
+        assertAllWithDeadlineWithinRange(tasks, parseIsoDateTime(deadlineFrom), parseIsoDateTime(deadlineTo));
     }
 
     @Test
@@ -199,8 +200,8 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertEquals(1, tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.PROCESSED);
-        assertAllTasksWithDeadlineLessThanOrEqual(tasks, deadlineTo);
+        assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
+        assertAllDeadlineLessThanOrEqual(tasks, parseIsoDateTime(deadlineTo));
     }
 
     @Test
@@ -234,8 +235,8 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertEquals(1, tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.PROCESSED);
-        assertAllTasksWithDeadlineGreaterThanOrEqual(tasks, deadlineFrom);
+        assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
+        assertAllWithDeadlineGreaterThanOrEqual(tasks, parseIsoDateTime(deadlineFrom));
     }
 
     @Test
@@ -268,8 +269,8 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertEquals(1, tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.PROCESSED);
-        assertAllTasksWithoutDeadline(tasks);
+        assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
+        assertAllWithoutDeadline(tasks);
     }
 
     @Test
@@ -302,7 +303,7 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertTrue(tasks.length > 5, "At least six uncompleted tasks were expected but got " + tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.UNPROCESSED, TaskStatus.PROCESSED);
+        assertAllWithStatuses(tasks, TaskStatus.UNPROCESSED, TaskStatus.PROCESSED);
     }
 
     @Test
@@ -319,7 +320,7 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertEquals(2, tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.UNPROCESSED, TaskStatus.PROCESSED);
+        assertAllWithStatuses(tasks, TaskStatus.UNPROCESSED, TaskStatus.PROCESSED);
     }
 
     @Test
@@ -352,7 +353,7 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertTrue(tasks.length > 2, "At least three completed tasks were expected but got " + tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.COMPLETED);
+        assertAllWithStatuses(tasks, TaskStatus.COMPLETED);
     }
 
     @Test
@@ -369,7 +370,7 @@ class TaskControllerIntegrationTest {
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
         assertEquals(2, tasks.length);
-        assertAllTasksWithStatuses(tasks, TaskStatus.COMPLETED);
+        assertAllWithStatuses(tasks, TaskStatus.COMPLETED);
     }
 
     @Test

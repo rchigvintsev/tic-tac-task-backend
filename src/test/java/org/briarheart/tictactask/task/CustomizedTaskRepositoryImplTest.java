@@ -1,7 +1,6 @@
 package org.briarheart.tictactask.task;
 
 import org.briarheart.tictactask.config.TestR2dbcConnectionFactoryConfig;
-import org.briarheart.tictactask.controller.format.LocalDateTimeFormatter;
 import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.util.TestUsers;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,15 +12,14 @@ import org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.format.Formatter;
 
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import static org.briarheart.tictactask.task.TaskAssertions.*;
+import static org.briarheart.tictactask.util.DateTimeUtils.parseIsoDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, classes = {
@@ -31,8 +29,6 @@ import static org.junit.jupiter.api.Assertions.*;
         FlywayAutoConfiguration.class
 })
 class CustomizedTaskRepositoryImplTest {
-    private static final Formatter<LocalDateTime> LOCAL_DATE_TIME_FORMATTER = new LocalDateTimeFormatter();
-
     @Autowired
     private R2dbcEntityTemplate entityTemplate;
     private CustomizedTaskRepositoryImpl repository;
@@ -92,7 +88,7 @@ class CustomizedTaskRepositoryImplTest {
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
         assertNotNull(result);
         assertEquals(3L, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.UNPROCESSED);
+        assertAllWithStatuses(result, TaskStatus.UNPROCESSED);
     }
 
     @Test
@@ -103,7 +99,7 @@ class CustomizedTaskRepositoryImplTest {
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.ofSize(2)).collectList().block();
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.UNPROCESSED);
+        assertAllWithStatuses(result, TaskStatus.UNPROCESSED);
     }
 
     @Test
@@ -121,7 +117,7 @@ class CustomizedTaskRepositoryImplTest {
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
         assertNotNull(result);
         assertEquals(3L, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.PROCESSED);
+        assertAllWithStatuses(result, TaskStatus.PROCESSED);
     }
 
     @Test
@@ -132,83 +128,83 @@ class CustomizedTaskRepositoryImplTest {
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.ofSize(2)).collectList().block();
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.PROCESSED);
+        assertAllWithStatuses(result, TaskStatus.PROCESSED);
     }
 
     @Test
-    void shouldReturnNumberOfProcessedTasksWithDeadlineDateBetween() {
+    void shouldReturnNumberOfProcessedTasksWithDeadlineBetween() {
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineFrom(parseLocalDateTime("2022-01-01T00:00"));
-        request.setDeadlineTo(parseLocalDateTime("2022-01-02T23:59"));
+        request.setDeadlineFrom(parseIsoDateTime("2022-01-01T00:00"));
+        request.setDeadlineTo(parseIsoDateTime("2022-01-02T23:59"));
         assertEquals(2L, repository.count(request, TestUsers.JOHN_DOE).block());
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadlineDateBetween() {
-        String deadlineFrom = "2022-01-01T00:00";
-        String deadlineTo = "2022-01-02T23:59";
+    void shouldReturnProcessedTasksWithDeadlineBetween() {
+        LocalDateTime deadlineFrom = parseIsoDateTime("2022-01-01T00:00");
+        LocalDateTime deadlineTo = parseIsoDateTime("2022-01-02T23:59");
 
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineFrom(parseLocalDateTime(deadlineFrom));
-        request.setDeadlineTo(parseLocalDateTime(deadlineTo));
+        request.setDeadlineFrom(deadlineFrom);
+        request.setDeadlineTo(deadlineTo);
 
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.PROCESSED);
-        assertAllTasksWithDeadlineWithinRange(result, deadlineFrom, deadlineTo);
+        assertAllWithStatuses(result, TaskStatus.PROCESSED);
+        assertAllWithDeadlineWithinRange(result, deadlineFrom, deadlineTo);
     }
 
     @Test
-    void shouldReturnNumberOfProcessedTasksWithDeadlineDateLessThanOrEqual() {
+    void shouldReturnNumberOfProcessedTasksWithDeadlineLessThanOrEqual() {
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineTo(parseLocalDateTime("2022-01-01T00:00"));
+        request.setDeadlineTo(parseIsoDateTime("2022-01-01T00:00"));
         assertEquals(1L, repository.count(request, TestUsers.JOHN_DOE).block());
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadlineDateLessThanOrEqual() {
-        String deadlineTo = "2022-01-01T00:00";
+    void shouldReturnProcessedTasksWithDeadlineLessThanOrEqual() {
+        LocalDateTime deadlineTo = parseIsoDateTime("2022-01-01T00:00");
 
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineTo(parseLocalDateTime(deadlineTo));
+        request.setDeadlineTo(deadlineTo);
 
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.PROCESSED);
-        assertAllTasksWithDeadlineLessThanOrEqual(result, deadlineTo);
+        assertAllWithStatuses(result, TaskStatus.PROCESSED);
+        assertAllDeadlineLessThanOrEqual(result, deadlineTo);
     }
 
     @Test
-    void shouldReturnNumberOfProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
+    void shouldReturnNumberOfProcessedTasksWithDeadlineGreaterThanOrEqual() {
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineFrom(parseLocalDateTime("2022-01-02T23:59"));
+        request.setDeadlineFrom(parseIsoDateTime("2022-01-02T23:59"));
         assertEquals(1L, repository.count(request, TestUsers.JOHN_DOE).block());
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadlineDateGreaterThanOrEqual() {
-        String deadlineFrom = "2022-01-02T23:59";
+    void shouldReturnProcessedTasksWithDeadlineGreaterThanOrEqual() {
+        LocalDateTime deadlineFrom = parseIsoDateTime("2022-01-02T23:59");
 
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineFrom(parseLocalDateTime(deadlineFrom));
+        request.setDeadlineFrom(deadlineFrom);
 
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.PROCESSED);
-        assertAllTasksWithDeadlineGreaterThanOrEqual(result, deadlineFrom);
+        assertAllWithStatuses(result, TaskStatus.PROCESSED);
+        assertAllWithDeadlineGreaterThanOrEqual(result, deadlineFrom);
     }
 
     @Test
-    void shouldReturnNumberOfProcessedTasksWithoutDeadlineDate() {
+    void shouldReturnNumberOfProcessedTasksWithoutDeadline() {
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
         request.setDeadlineFrom(null);
@@ -217,7 +213,7 @@ class CustomizedTaskRepositoryImplTest {
     }
 
     @Test
-    void shouldReturnProcessedTasksWithoutDeadlineDate() {
+    void shouldReturnProcessedTasksWithoutDeadline() {
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
         request.setDeadlineFrom(null);
@@ -226,8 +222,8 @@ class CustomizedTaskRepositoryImplTest {
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.PROCESSED);
-        assertAllTasksWithoutDeadline(result);
+        assertAllWithStatuses(result, TaskStatus.PROCESSED);
+        assertAllWithoutDeadline(result);
     }
 
     @Test
@@ -245,7 +241,7 @@ class CustomizedTaskRepositoryImplTest {
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
         assertNotNull(result);
         assertEquals(6L, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.UNPROCESSED, TaskStatus.PROCESSED);
+        assertAllWithStatuses(result, TaskStatus.UNPROCESSED, TaskStatus.PROCESSED);
     }
 
     @Test
@@ -256,7 +252,7 @@ class CustomizedTaskRepositoryImplTest {
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.ofSize(2)).collectList().block();
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.UNPROCESSED, TaskStatus.PROCESSED);
+        assertAllWithStatuses(result, TaskStatus.UNPROCESSED, TaskStatus.PROCESSED);
     }
 
     @Test
@@ -274,7 +270,7 @@ class CustomizedTaskRepositoryImplTest {
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
         assertNotNull(result);
         assertEquals(3L, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.COMPLETED);
+        assertAllWithStatuses(result, TaskStatus.COMPLETED);
     }
 
     @Test
@@ -285,15 +281,90 @@ class CustomizedTaskRepositoryImplTest {
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.ofSize(2)).collectList().block();
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertAllTasksWithStatuses(result, TaskStatus.COMPLETED);
+        assertAllWithStatuses(result, TaskStatus.COMPLETED);
     }
 
-    private static LocalDateTime parseLocalDateTime(String dateTime) {
-        try {
-            return LOCAL_DATE_TIME_FORMATTER.parse(dateTime, Locale.getDefault());
-        } catch (ParseException e) {
-            throw new RuntimeException("Failed to parse string " + dateTime + " to produce instance of "
-                    + LocalDateTime.class.getName(), e);
-        }
+    @Test
+    void shouldReturnNumberOfEitherProcessedOrCompletedTasksWithDeadlineBetweenAndCompletedAtBetween() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.PROCESSED, TaskStatus.COMPLETED));
+
+        LocalDateTime dateFrom = parseIsoDateTime("2022-01-01T00:00");
+        LocalDateTime dateTo = parseIsoDateTime("2022-01-01T23:59");
+
+        request.setDeadlineFrom(dateFrom);
+        request.setDeadlineTo(dateTo);
+        request.setCompletedAtFrom(dateFrom);
+        request.setCompletedAtTo(dateTo);
+
+        assertEquals(2L, repository.count(request, TestUsers.JOHN_DOE).block());
+    }
+
+    @Test
+    void shouldReturnEitherProcessedOrCompletedTasksWithDeadlineBetweenAndCompletedAtBetween() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.PROCESSED, TaskStatus.COMPLETED));
+
+        LocalDateTime dateFrom = parseIsoDateTime("2022-01-01T00:00");
+        LocalDateTime dateTo = parseIsoDateTime("2022-01-01T23:59");
+
+        request.setDeadlineFrom(dateFrom);
+        request.setDeadlineTo(dateTo);
+        request.setCompletedAtFrom(dateFrom);
+        request.setCompletedAtTo(dateTo);
+
+        List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
+        assertNotNull(result);
+        assertEquals(2L, result.size());
+        assertAllByStatus(result, Map.of(
+                TaskStatus.PROCESSED, t -> assertWithDeadlineWithinRange(t, dateFrom, dateTo),
+                TaskStatus.COMPLETED, t -> assertWithCompletedAtWithinRange(t, dateFrom, dateTo)
+        ));
+    }
+
+    @Test
+    void shouldReturnNumberOfCompletedTasksWithCompletedAtLessThanOrEqual() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.COMPLETED));
+        request.setCompletedAtTo(parseIsoDateTime("2022-01-01T00:00"));
+        assertEquals(1L, repository.count(request, TestUsers.JOHN_DOE).block());
+    }
+
+    @Test
+    void shouldReturnCompletedTasksWithCompletedAtLessThanOrEqual() {
+        LocalDateTime completedAtTo = parseIsoDateTime("2022-01-01T00:00");
+
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.COMPLETED));
+        request.setCompletedAtTo(completedAtTo);
+
+        List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertAllWithStatuses(result, TaskStatus.COMPLETED);
+        assertAllWithCompletedAtLessThanOrEqual(result, completedAtTo);
+    }
+
+    @Test
+    void shouldReturnNumberOfCompletedTasksWithCompletedAtGreaterThanOrEqual() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.COMPLETED));
+        request.setCompletedAtFrom(parseIsoDateTime("2022-01-02T23:59"));
+        assertEquals(1L, repository.count(request, TestUsers.JOHN_DOE).block());
+    }
+
+    @Test
+    void shouldReturnCompletedTasksWithCompletedAtGreaterThanOrEqual() {
+        LocalDateTime completedAtFrom = parseIsoDateTime("2022-01-02T23:59");
+
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.COMPLETED));
+        request.setCompletedAtFrom(completedAtFrom);
+
+        List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertAllWithStatuses(result, TaskStatus.COMPLETED);
+        assertAllWithCompletedAtGreaterThanOrEqual(result, completedAtFrom);
     }
 }
