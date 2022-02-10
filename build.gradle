@@ -27,6 +27,7 @@ ext {
     bouncycastleVersion = '1.69'
     jodaTimeVersion = '2.10.13'
     springdocOpenapiVersion = '1.6.4'
+    embeddedDatabaseSpringTestVersion = '2.1.0'
 }
 
 group = 'org.briarheart'
@@ -35,8 +36,6 @@ sourceCompatibility = '16'
 
 repositories {
     mavenCentral()
-    maven { url 'https://repo.spring.io/milestone' }
-    maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
@@ -74,22 +73,14 @@ dependencies {
     }
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.springframework.security:spring-security-test'
-    testImplementation "io.r2dbc:r2dbc-h2:$r2dbcH2Version"
+    testImplementation "io.zonky.test:embedded-database-spring-test:$embeddedDatabaseSpringTestVersion"
 
-    testRuntimeOnly 'com.h2database:h2'
+    testCompileOnly 'org.postgresql:postgresql'
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 }
 
 test {
-    environment 'JDBC_DATABASE_URL', 'jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL'
-    environment 'JDBC_DATABASE_USERNAME', 'sa'
-    environment 'JDBC_DATABASE_PASSWORD', ''
-
-    environment 'R2DBC_DATABASE_URL', 'r2dbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL'
-    environment 'R2DBC_DATABASE_USERNAME', 'sa'
-    environment 'R2DBC_DATABASE_PASSWORD', ''
-
     useJUnitPlatform()
 }
 

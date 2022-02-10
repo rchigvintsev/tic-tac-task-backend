@@ -14,10 +14,15 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
  * @author Roman Chigvintsev
  */
 @EnableWebFluxSecurity
-@ConditionalOnProperty(name = "security.disabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "test.security.disabled", havingValue = "true")
 public class PermitAllSecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity security) {
-        return security.authorizeExchange().anyExchange().permitAll().and().build();
+        return security
+                .authorizeExchange()
+                    .anyExchange().permitAll()
+                .and()
+                    .csrf().disable()
+                .build();
     }
 }

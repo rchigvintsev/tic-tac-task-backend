@@ -1,6 +1,6 @@
 package org.briarheart.tictactask.task;
 
-import org.briarheart.tictactask.config.TestJavaMailSenderConfiguration;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.briarheart.tictactask.task.TaskController.TaskResponse;
 import org.briarheart.tictactask.util.TestAccessTokens;
 import org.junit.jupiter.api.Test;
@@ -8,10 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
 import static org.briarheart.tictactask.task.TaskAssertions.*;
 import static org.briarheart.tictactask.util.DateTimeUtils.parseIsoDateTime;
@@ -21,9 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Roman Chigvintsev
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(properties = "security.disabled=false")
-@Import(TestJavaMailSenderConfiguration.class)
 @ActiveProfiles("test")
+@AutoConfigureEmbeddedDatabase
 class TaskControllerIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;

@@ -15,6 +15,17 @@ spring:
 
   mail.test-connection: false
 
+
+  r2dbc:
+    url:
+    username:
+    password:
+
+  flyway:
+    url:
+    user:
+    password:
+
 application:
   domain: awesome.app
   security.authentication.access-token.signing-key: /oCUiKbT+Db1HLagb/1HrbKUCGoSl6nkUlk1Hw3fs/0khVpdEmNbNouNeg9peMi7XCrMawHxqMy/3qSbc4pMUw==

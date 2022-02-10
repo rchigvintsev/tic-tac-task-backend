@@ -1,5 +1,6 @@
 package org.briarheart.tictactask.task;
 
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.briarheart.tictactask.config.TestR2dbcConnectionFactoryConfig;
 import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.util.TestUsers;
@@ -12,6 +13,7 @@ import org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.*;
         R2dbcDataAutoConfiguration.class,
         FlywayAutoConfiguration.class
 })
+@ActiveProfiles("test")
+@AutoConfigureEmbeddedDatabase
 class CustomizedTaskRepositoryImplTest {
     @Autowired
     private R2dbcEntityTemplate entityTemplate;

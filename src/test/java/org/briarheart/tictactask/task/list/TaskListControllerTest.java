@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,6 +37,7 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
  */
 @WebFluxTest(TaskListController.class)
 @Import(PermitAllSecurityConfig.class)
+@TestPropertySource(properties = "test.security.disabled=true")
 @ActiveProfiles("test")
 class TaskListControllerTest {
     private static final Locale DEFAULT_LOCALE = Locale.getDefault();

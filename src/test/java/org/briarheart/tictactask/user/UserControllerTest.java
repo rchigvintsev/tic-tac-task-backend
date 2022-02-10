@@ -24,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
@@ -44,6 +45,7 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
  */
 @WebFluxTest(UserController.class)
 @Import({PermitAllSecurityConfig.class, I18nConfig.class})
+@TestPropertySource(properties = "test.security.disabled=true")
 @ActiveProfiles("test")
 class UserControllerTest {
     private static final Locale DEFAULT_LOCALE = Locale.getDefault();
