@@ -14,6 +14,7 @@ import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.util.TestUsers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
@@ -295,8 +296,11 @@ class DefaultTaskServiceTest {
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         taskService.completeTask(task.getId(), user).block();
-        assertSame(TaskStatus.UNPROCESSED, task.getStatus());
-        assertTrue(task.getDeadline().isAfter(taskDeadline));
+
+        ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
+        verify(taskRepository, times(2)).save(taskCaptor.capture());
+        Task rescheduledTask = taskCaptor.getAllValues().get(0);
+        assertTrue(rescheduledTask.getDeadline().isAfter(taskDeadline));
     }
 
     @Test

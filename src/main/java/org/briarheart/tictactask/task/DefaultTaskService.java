@@ -77,12 +77,9 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> createTask(Task task) {
         Assert.notNull(task, "Task must not be null");
         return Mono.defer(() -> {
-            Task newTask = new Task(task);
-            newTask.setId(null);
+            Task newTask = copyTask(task);
             newTask.setTaskListId(null);
-            newTask.setPreviousStatus(null);
             newTask.setStatus(determineTaskStatus(task));
-            newTask.setCreatedAt(getCurrentTime());
             newTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
             return taskRepository.save(newTask).doOnSuccess(t -> log.debug("Task with id {} is created", t.getId()));
         });
@@ -113,17 +110,12 @@ public class DefaultTaskService implements TaskService {
         return getTask(id, user)
                 .filter(task -> task.getStatus() != TaskStatus.COMPLETED)
                 .flatMap(task -> {
-                    if (isTaskRecurrenceEnabled(task)) {
-                        task.getRecurrenceStrategy().reschedule(task);
-                    } else {
-                        task.setPreviousStatus(task.getStatus());
-                        task.setStatus(TaskStatus.COMPLETED);
-                    }
-                    // Update "completed_at" for recurring tasks too to be able to show them among other tasks that
-                    // were completed today
+                    Mono<Task> result = rescheduleTaskIfNecessary(task);
+                    task.setPreviousStatus(task.getStatus());
+                    task.setStatus(TaskStatus.COMPLETED);
                     task.setCompletedAt(LocalDateTime.now(ZoneOffset.UTC));
-                    return taskRepository.save(task)
-                            .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId()));
+                    return result.then(taskRepository.save(task)
+                            .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId())));
                 });
     }
 
@@ -223,11 +215,20 @@ public class DefaultTaskService implements TaskService {
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + id + " is not found")));
     }
 
+    private Task copyTask(Task task) {
+        Task copy = new Task(task);
+        copy.setId(null);
+        copy.setPreviousStatus(null);
+        copy.setCreatedAt(getCurrentTime());
+        copy.setCompletedAt(null);
+        return copy;
+    }
+
     private TaskStatus determineTaskStatus(Task task) {
         TaskStatus result = task.getStatus() == TaskStatus.PROCESSED ? TaskStatus.PROCESSED : TaskStatus.UNPROCESSED;
         if (result == TaskStatus.UNPROCESSED && task.getDeadline() != null) {
-            log.debug("Task with id {} is unprocessed and deadline is set. Changing task status to \"processed\".",
-                    task.getId());
+            log.debug("Task with id {} is unprocessed and deadline is set. Changing task status to \"{}\".",
+                    task.getId(), TaskStatus.PROCESSED);
             result = TaskStatus.PROCESSED;
         }
         return result;
@@ -246,7 +247,14 @@ public class DefaultTaskService implements TaskService {
         return Mono.just(task);
     }
 
-    private boolean isTaskRecurrenceEnabled(Task task) {
-        return task.getDeadline() != null && task.getRecurrenceStrategy() != null;
+    private Mono<Task> rescheduleTaskIfNecessary(Task task) {
+        if (task.isRecurrenceEnabled()) {
+            Task copy = copyTask(task);
+            copy.setStatus(TaskStatus.PROCESSED);
+            copy.reschedule();
+            return taskRepository.save(copy).doOnSuccess(t -> log.debug("Task with id {} is rescheduled to {}",
+                            task.getId(), t.getDeadline()));
+        }
+        return Mono.empty();
     }
 }
