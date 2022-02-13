@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 public class Task {
     @Id
     private Long id;
+    private Long parentId;
     private Long userId;
     private Long taskListId;
     private String title;
@@ -27,7 +28,7 @@ public class Task {
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
     private LocalDateTime deadline;
-    private boolean deadlineTimeExplicitlySet;
+    private boolean deadlineTimeSpecified;
     private TaskRecurrenceStrategy recurrenceStrategy;
 
     /**
@@ -38,6 +39,7 @@ public class Task {
     public Task(Task other) {
         Assert.notNull(other, "Task must not be null");
         this.id = other.id;
+        this.parentId = other.parentId;
         this.userId = other.userId;
         this.taskListId = other.taskListId;
         this.title = other.title;
@@ -47,7 +49,7 @@ public class Task {
         this.createdAt = other.createdAt;
         this.completedAt = other.completedAt;
         this.deadline = other.deadline;
-        this.deadlineTimeExplicitlySet = other.deadlineTimeExplicitlySet;
+        this.deadlineTimeSpecified = other.deadlineTimeSpecified;
         this.recurrenceStrategy = other.recurrenceStrategy;
     }
 

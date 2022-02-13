@@ -76,13 +76,8 @@ public class DefaultTaskService implements TaskService {
     @Override
     public Mono<Task> createTask(Task task) {
         Assert.notNull(task, "Task must not be null");
-        return Mono.defer(() -> {
-            Task newTask = copyTask(task);
-            newTask.setTaskListId(null);
-            newTask.setStatus(determineTaskStatus(task));
-            newTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
-            return taskRepository.save(newTask).doOnSuccess(t -> log.debug("Task with id {} is created", t.getId()));
-        });
+        return Mono.defer(() -> taskRepository.save(copyTask(task))
+                .doOnSuccess(t -> log.debug("Task with id {} is created", t.getId())));
     }
 
     @Transactional
@@ -98,7 +93,7 @@ public class DefaultTaskService implements TaskService {
                 updatedTask.setPreviousStatus(existingTask.getStatus());
             }
             updatedTask.setCreatedAt(existingTask.getCreatedAt());
-            updatedTask.setDeadlineTimeExplicitlySet(task.getDeadline() != null && task.isDeadlineTimeExplicitlySet());
+            updatedTask.setDeadlineTimeSpecified(task.getDeadline() != null && task.isDeadlineTimeSpecified());
             return taskRepository.save(updatedTask)
                     .doOnSuccess(t -> log.debug("Task with id {} is updated", t.getId()));
         });
@@ -124,6 +119,7 @@ public class DefaultTaskService implements TaskService {
     public Mono<Task> restoreTask(Long id, User user) throws EntityNotFoundException {
         return getTask(id, user)
                 .filter(task -> task.getStatus() == TaskStatus.COMPLETED)
+                .flatMap(this::deleteChildTasks)
                 .flatMap(this::restoreTaskList)
                 .flatMap(task -> {
                     task.setStatus(task.getPreviousStatus());
@@ -218,9 +214,12 @@ public class DefaultTaskService implements TaskService {
     private Task copyTask(Task task) {
         Task copy = new Task(task);
         copy.setId(null);
+        copy.setParentId(task.getId());
         copy.setPreviousStatus(null);
+        copy.setStatus(determineTaskStatus(task));
         copy.setCreatedAt(getCurrentTime());
         copy.setCompletedAt(null);
+        copy.setDeadlineTimeSpecified(task.getDeadline() != null && task.isDeadlineTimeSpecified());
         return copy;
     }
 
@@ -250,11 +249,16 @@ public class DefaultTaskService implements TaskService {
     private Mono<Task> rescheduleTaskIfNecessary(Task task) {
         if (task.isRecurrenceEnabled()) {
             Task copy = copyTask(task);
-            copy.setStatus(TaskStatus.PROCESSED);
             copy.reschedule();
             return taskRepository.save(copy).doOnSuccess(t -> log.debug("Task with id {} is rescheduled to {}",
                             task.getId(), t.getDeadline()));
         }
         return Mono.empty();
+    }
+
+    private Mono<Task> deleteChildTasks(Task task) {
+        return taskRepository.findByParentId(task.getId())
+                .flatMap(taskRepository::delete)
+                .then(Mono.just(task));
     }
 }

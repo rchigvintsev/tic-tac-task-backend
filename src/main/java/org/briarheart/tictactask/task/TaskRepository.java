@@ -12,6 +12,9 @@ public interface TaskRepository extends ReactiveCrudRepository<Task, Long>, Cust
     @Query("SELECT * FROM task WHERE id = :id AND user_id = :userId")
     Mono<Task> findByIdAndUserId(Long id, Long userId);
 
+    @Query("SELECT * FROM task WHERE parent_id = :parent_id")
+    Flux<Task> findByParentId(Long parentId);
+
     @Query("SELECT * FROM task WHERE status <> :status AND id IN (SELECT task_id FROM tasks_tags WHERE tag_id = :tagId)"
             + " ORDER BY created_at ASC LIMIT :limit OFFSET :offset")
     Flux<Task> findByStatusNotAndTagIdOrderByCreatedAtAsc(TaskStatus status, Long tagId, long offset, Integer limit);

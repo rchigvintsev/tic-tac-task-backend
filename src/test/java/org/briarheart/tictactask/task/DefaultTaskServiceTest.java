@@ -80,7 +80,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnTaskById() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
 
@@ -97,7 +97,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskGetWhenTaskIsNotFound() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         long taskId = 2L;
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
@@ -118,20 +118,6 @@ class DefaultTaskServiceTest {
 
         Task expectedResult = new Task(task);
         expectedResult.setId(taskId);
-        expectedResult.setCreatedAt(currentTime);
-
-        Task result = taskService.createTask(task).block();
-        assertEquals(expectedResult, result);
-    }
-
-    @Test
-    void shouldNotAllowToSetTaskListIdFieldOnTaskCreate() {
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
-
-        Task task = Task.builder().userId(1L).taskListId(2L).status(TaskStatus.PROCESSED).title("New task").build();
-
-        Task expectedResult = new Task(task);
-        expectedResult.setTaskListId(null);
         expectedResult.setCreatedAt(currentTime);
 
         Task result = taskService.createTask(task).block();
@@ -272,7 +258,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldCompleteTask() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
@@ -283,7 +269,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRescheduleTaskOnCompleteWhenTaskRecurrenceIsEnabled() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         LocalDateTime taskDeadline = LocalDateTime.now(ZoneOffset.UTC);
         Task task = Task.builder()
                 .id(2L)
@@ -305,7 +291,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldUpdateCompletedAtAttributeOnTaskComplete() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
@@ -323,7 +309,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskCompleteWhenTaskIsNotFound() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
@@ -334,7 +320,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRestoreTask() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder()
                 .id(2L)
                 .userId(user.getId())
@@ -343,6 +329,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.COMPLETED)
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(taskRepository.findByParentId(task.getId())).thenReturn(Flux.empty());
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task result = taskService.restoreTask(task.getId(), user).block();
@@ -352,7 +339,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRestoreTaskFromTaskList() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         TaskList taskList = TaskList.builder()
                 .id(2L)
                 .userId(user.getId())
@@ -369,11 +356,38 @@ class DefaultTaskServiceTest {
                 .build();
         when(taskListRepository.findById(taskList.getId())).thenReturn(Mono.just(taskList));
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
+        when(taskRepository.findByParentId(task.getId())).thenReturn(Flux.empty());
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task result = taskService.restoreTask(task.getId(), user).block();
         assertNotNull(result);
         assertSame(TaskStatus.PROCESSED, result.getStatus());
+    }
+
+    @Test
+    void shouldDeleteChildTaskOnTaskRestore() {
+        User user = TestUsers.JOHN_DOE;
+        Task parentTask = Task.builder()
+                .id(2L)
+                .userId(user.getId())
+                .title("Parent task")
+                .previousStatus(TaskStatus.PROCESSED)
+                .status(TaskStatus.COMPLETED)
+                .build();
+        Task childTask = Task.builder()
+                .id(3L)
+                .parentId(parentTask.getId())
+                .userId(user.getId())
+                .title("Child task")
+                .status(TaskStatus.PROCESSED)
+                .build();
+        when(taskRepository.findByIdAndUserId(parentTask.getId(), user.getId())).thenReturn(Mono.just(parentTask));
+        when(taskRepository.findByParentId(parentTask.getId())).thenReturn(Flux.just(childTask));
+        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
+        when(taskRepository.delete(any(Task.class))).thenReturn(Mono.just(true).then());
+
+        taskService.restoreTask(parentTask.getId(), user).block();
+        verify(taskRepository, times(1)).delete(childTask);
     }
 
     @Test
@@ -385,7 +399,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskRestoreWhenTaskIsNotFound() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
@@ -396,7 +410,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldDeleteTask() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
 
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
@@ -415,7 +429,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTaskDeleteWhenTaskIsNotFound() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(taskId, user.getId())).thenReturn(Mono.empty());
@@ -426,7 +440,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllTagsForTask() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         TaskTag tag = TaskTag.builder().id(3L).userId(user.getId()).name("Test tag").build();
 
@@ -448,7 +462,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagsGetWhenTaskIsNotFound() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         long taskId = 2L;
 
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
@@ -459,7 +473,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldAssignTagToTask() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         TaskTag tag = TaskTag.builder().id(3L).userId(user.getId()).name("Test tag").build();
 
@@ -482,7 +496,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagAssignWhenTaskIsNotFound() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
         long taskId = 3L;
 
@@ -497,7 +511,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagAssignWhenTagIsNotFound() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         Long tagId = 3L;
 
@@ -512,7 +526,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldRemoveTagFromTask() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).title("Test task").userId(user.getId()).build();
         TaskTag tag = TaskTag.builder().id(3L).name("Test tag").userId(user.getId()).build();
 
@@ -533,7 +547,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnTagRemoveWhenTaskIsNotFound() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Long taskId = 2L;
         Long tagId = 3L;
 
@@ -545,7 +559,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnAllCommentsForTask() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         TaskComment comment = TaskComment.builder()
                 .id(3L)
@@ -564,7 +578,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldReturnCommentsForTaskWithPagingRestriction() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(1L).userId(user.getId()).title("Test task").build();
         TaskComment comment = TaskComment.builder()
                 .id(3L)
@@ -591,7 +605,7 @@ class DefaultTaskServiceTest {
 
     @Test
     void shouldThrowExceptionOnCommentsGetWhenTaskIsNotFound() {
-        User user = createActiveUser();
+        User user = TestUsers.JOHN_DOE;
         when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
         assertThrows(EntityNotFoundException.class,
                 () -> taskService.getComments(1L, user, Pageable.unpaged()).blockFirst());
@@ -663,9 +677,5 @@ class DefaultTaskServiceTest {
         EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
                 () -> taskService.addComment(comment).block());
         assertEquals("Task with id " + comment.getTaskId() + " is not found", e.getMessage());
-    }
-
-    private User createActiveUser() {
-        return User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
     }
 }

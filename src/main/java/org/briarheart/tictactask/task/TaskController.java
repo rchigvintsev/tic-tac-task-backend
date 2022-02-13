@@ -209,7 +209,7 @@ public class TaskController extends AbstractController {
         private LocalDateTime createdAt;
         private LocalDateTime completedAt;
         private LocalDateTime deadline;
-        private boolean deadlineTimeExplicitlySet;
+        private boolean deadlineTimeSpecified;
         private TaskRecurrenceStrategy recurrenceStrategy;
 
         public TaskResponse(Task task) {
@@ -221,7 +221,7 @@ public class TaskController extends AbstractController {
             this.createdAt = task.getCreatedAt();
             this.completedAt = task.getCompletedAt();
             this.deadline = task.getDeadline();
-            this.deadlineTimeExplicitlySet = task.isDeadlineTimeExplicitlySet();
+            this.deadlineTimeSpecified = task.isDeadlineTimeSpecified();
             this.recurrenceStrategy = task.getRecurrenceStrategy();
         }
     }
@@ -236,7 +236,7 @@ public class TaskController extends AbstractController {
         private TaskStatus status;
         @FutureOrPresent
         private LocalDateTime deadline;
-        private boolean deadlineTimeExplicitlySet;
+        private boolean deadlineTimeSpecified;
         private TaskRecurrenceStrategy recurrenceStrategy;
 
         public Task toTask() {
@@ -245,7 +245,7 @@ public class TaskController extends AbstractController {
                     .description(description)
                     .status(status)
                     .deadline(deadline)
-                    .deadlineTimeExplicitlySet(deadlineTimeExplicitlySet)
+                    .deadlineTimeSpecified(deadlineTimeSpecified)
                     .recurrenceStrategy(recurrenceStrategy)
                     .build();
         }
