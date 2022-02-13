@@ -3,6 +3,7 @@ package org.briarheart.tictactask.task.tag;
 import io.jsonwebtoken.lang.Assert;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 /**
  * @author Roman Chigvintsev
@@ -11,6 +12,7 @@ import org.springframework.data.annotation.Id;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
+@Table("tag")
 public class TaskTag {
     @Id
     private Long id;
