@@ -4,6 +4,7 @@ import io.jsonwebtoken.lang.Assert;
 import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.util.Pageables;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
@@ -38,7 +39,7 @@ public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
         long offset = Pageables.getOffset(pageable);
         Integer limit = Pageables.getLimit(pageable);
 
-        Query query = Query.query(criteria).offset(offset);
+        Query query = Query.query(criteria).offset(offset).sort(Sort.by("created_at").ascending());
         if (limit != null) {
             query = query.limit(limit);
         }
