@@ -2,6 +2,7 @@ package org.briarheart.tictactask.task.tag;
 
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.briarheart.tictactask.task.TaskController.TaskResponse;
+import org.briarheart.tictactask.task.tag.TaskTagController.TaskTagResponse;
 import org.briarheart.tictactask.util.TestAccessTokens;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,18 @@ class TaskTagControllerIntegrationTest {
 
     @LocalServerPort
     private int port;
+
+    @Test
+    void shouldCreateTag() {
+        HttpHeaders headers = new HttpHeaders();
+        addCookieHeader(headers);
+        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        String body = "{\"name\": \"My tag\"}";
+
+        ResponseEntity<TaskTagResponse> response = restTemplate.exchange("http://localhost:{port}/api/v1/tags",
+                HttpMethod.POST, new HttpEntity<>(body, headers), TaskTagResponse.class, port);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    }
 
     @Test
     void shouldReturnUncompletedTasks() {
