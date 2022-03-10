@@ -30,3 +30,5 @@ HELP.md
 .vscode/
 
 flyway.conf
+
+/db/
