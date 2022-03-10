@@ -9,6 +9,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -56,34 +57,35 @@ public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
     }
 
     private Criteria buildCriteriaForTaskStatus(TaskStatus status, GetTasksRequest request) {
-        switch (status) {
-            case UNPROCESSED:
-                return Criteria.where("status").is(TaskStatus.UNPROCESSED);
-            case PROCESSED: {
-                Criteria criteria = Criteria.where("status").is(TaskStatus.PROCESSED);
+        if (status == TaskStatus.UNPROCESSED) {
+            return Criteria.where("status").is(TaskStatus.UNPROCESSED);
+        }
 
-                if (request.isDeadlineFromDirty()) {
-                    LocalDateTime deadlineFrom = request.getDeadlineFrom();
-                    if (deadlineFrom != null) {
-                        criteria = criteria.and("deadline").greaterThanOrEquals(deadlineFrom);
-                    } else {
-                        criteria = criteria.and("deadline").isNull();
-                    }
+        if (status == TaskStatus.PROCESSED || status == TaskStatus.COMPLETED) {
+            Criteria criteria = Criteria.where("status").is(status);
+
+            if (request.isDeadlineFromDirty()) {
+                LocalDateTime deadlineFrom = request.getDeadlineFrom();
+                if (deadlineFrom != null) {
+                    criteria = criteria.and("deadline").greaterThanOrEquals(deadlineFrom);
+                } else {
+                    criteria = criteria.and("deadline").isNull();
                 }
-
-                if (request.isDeadlineToDirty()) {
-                    LocalDateTime deadlineTo = request.getDeadlineTo();
-                    if (deadlineTo != null) {
-                        criteria = criteria.and("deadline").lessThanOrEquals(deadlineTo);
-                    } else if (!request.isDeadlineFromDirty() || request.getDeadlineFrom() != null) {
-                        criteria = criteria.and("deadline").isNull();
-                    }
-                }
-
-                return criteria;
             }
-            case COMPLETED: {
-                Criteria criteria = Criteria.where("status").is(TaskStatus.COMPLETED);
+
+            if (request.isDeadlineToDirty()) {
+                LocalDateTime deadlineTo = request.getDeadlineTo();
+                if (deadlineTo != null) {
+                    criteria = criteria.and("deadline").lessThanOrEquals(deadlineTo);
+                } else if (!request.isDeadlineFromDirty() || request.getDeadlineFrom() != null) {
+                    criteria = criteria.and("deadline").isNull();
+                }
+            }
+
+            if (status == TaskStatus.COMPLETED) {
+                if (!CollectionUtils.isEmpty(request.getPreviousStatuses())) {
+                    criteria = criteria.and("previous_status").in(request.getPreviousStatuses());
+                }
 
                 LocalDateTime completedAtFrom = request.getCompletedAtFrom();
                 LocalDateTime completedAtTo = request.getCompletedAtTo();
@@ -96,11 +98,11 @@ public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
                         criteria = criteria.and("completed_at").lessThanOrEquals(completedAtTo);
                     }
                 }
-
-                return criteria;
             }
-            default:
-                return Criteria.empty();
+
+            return criteria;
         }
+
+        return Criteria.empty();
     }
 }

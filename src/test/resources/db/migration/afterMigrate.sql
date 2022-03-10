@@ -19,12 +19,14 @@ INSERT INTO task (user_id, title, status, deadline) VALUES (1, 'Processed task 1
 INSERT INTO task (user_id, title, status, deadline) VALUES (1, 'Processed task 2', 'PROCESSED', '2022-01-01 00:00:00');
 INSERT INTO task (user_id, title, status, deadline) VALUES (1, 'Processed task 3', 'PROCESSED', '2022-01-02 23:59:00');
 
-INSERT INTO task (user_id, title, status, completed_at)
-VALUES (1, 'Completed task 1', 'COMPLETED', NULL);
-INSERT INTO task (user_id, title, status, completed_at)
-VALUES (1, 'Completed task 2', 'COMPLETED', '2022-01-01 00:00:00');
-INSERT INTO task (user_id, title, status, completed_at)
-VALUES (1, 'Completed task 3', 'COMPLETED', '2022-01-02 23:59:00');
+INSERT INTO task (user_id, title, status, previous_status, deadline, completed_at)
+VALUES (1, 'Completed task 1', 'COMPLETED', 'UNPROCESSED', NULL, NULL);
+INSERT INTO task (user_id, title, status, previous_status, deadline, completed_at)
+VALUES (1, 'Completed task 2', 'COMPLETED', 'PROCESSED', '2022-01-01 00:01:00', '2022-01-01 00:00:00');
+INSERT INTO task (user_id, title, status, previous_status, deadline, completed_at)
+VALUES (1, 'Completed task 3', 'COMPLETED', 'PROCESSED', '2022-01-01 23:59:00', '2022-01-02 23:59:00');
+INSERT INTO task (user_id, title, status, previous_status, deadline, completed_at)
+VALUES (1, 'Completed task 4', 'COMPLETED', 'PROCESSED', '2022-01-02 00:00:00', '2022-01-01 00:01:00');
 
 DELETE FROM tag;
 INSERT INTO tag (user_id, name) VALUES (1, 'Test tag');

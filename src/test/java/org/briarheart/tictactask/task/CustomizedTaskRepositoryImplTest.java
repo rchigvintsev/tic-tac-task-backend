@@ -263,7 +263,7 @@ class CustomizedTaskRepositoryImplTest {
     void shouldReturnNumberOfAllCompletedTasks() {
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.COMPLETED));
-        assertEquals(3L, repository.count(request, TestUsers.JOHN_DOE).block());
+        assertEquals(4L, repository.count(request, TestUsers.JOHN_DOE).block());
     }
 
     @Test
@@ -273,7 +273,7 @@ class CustomizedTaskRepositoryImplTest {
 
         List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
         assertNotNull(result);
-        assertEquals(3L, result.size());
+        assertEquals(4L, result.size());
         assertAllWithStatuses(result, TaskStatus.COMPLETED);
     }
 
@@ -370,5 +370,25 @@ class CustomizedTaskRepositoryImplTest {
         assertEquals(1, result.size());
         assertAllWithStatuses(result, TaskStatus.COMPLETED);
         assertAllWithCompletedAtGreaterThanOrEqual(result, completedAtFrom);
+    }
+
+    @Test
+    void shouldReturnNumberOfCompletedTasksBeingPreviouslyUnprocessed() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.COMPLETED));
+        request.setPreviousStatuses(Set.of(TaskStatus.UNPROCESSED));
+        assertEquals(1L, repository.count(request, TestUsers.JOHN_DOE).block());
+    }
+
+    @Test
+    void shouldCompletedTasksBeingPreviouslyUnprocessed() {
+        GetTasksRequest request = new GetTasksRequest();
+        request.setStatuses(Set.of(TaskStatus.COMPLETED));
+        request.setPreviousStatuses(Set.of(TaskStatus.UNPROCESSED));
+
+        List<Task> result = repository.find(request, TestUsers.JOHN_DOE, Pageable.unpaged()).collectList().block();
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertAllWithStatuses(result, TaskStatus.COMPLETED);
     }
 }

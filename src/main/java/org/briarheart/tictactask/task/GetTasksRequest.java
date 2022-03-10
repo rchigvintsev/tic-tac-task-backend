@@ -15,6 +15,10 @@ public class GetTasksRequest {
     private Set<TaskStatus> statuses;
 
     @Getter
+    @Setter
+    private Set<TaskStatus> previousStatuses;
+
+    @Getter
     private LocalDateTime deadlineFrom;
 
     @Getter(AccessLevel.PACKAGE)
