@@ -9,11 +9,12 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
@@ -83,8 +84,11 @@ public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
             }
 
             if (status == TaskStatus.COMPLETED) {
-                if (!CollectionUtils.isEmpty(request.getPreviousStatuses())) {
-                    criteria = criteria.and("previous_status").in(request.getPreviousStatuses());
+                Set<TaskStatus> previousStatuses = request.getStatuses().stream()
+                        .filter(s -> s != TaskStatus.COMPLETED)
+                        .collect(Collectors.toSet());
+                if (!previousStatuses.isEmpty()) {
+                    criteria = criteria.and("previous_status").in(previousStatuses);
                 }
 
                 LocalDateTime completedAtFrom = request.getCompletedAtFrom();
