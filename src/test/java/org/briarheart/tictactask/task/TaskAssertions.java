@@ -63,7 +63,7 @@ public class TaskAssertions {
     }
 
     public static void assertWithDeadlineWithinRange(TaskResponse task, LocalDateTime from, LocalDateTime to) {
-        LocalDateTime deadline = task.getDeadline();
+        LocalDateTime deadline = task.getDeadlineDateTime();
         assertNotNull(deadline);
         assertTrue(!deadline.isBefore(from) && !deadline.isAfter(to),
                 "Task deadline (" + deadline + ") was expected to be within range from " + from + " to " + to);
@@ -87,7 +87,7 @@ public class TaskAssertions {
 
     public static void assertAllDeadlineLessThanOrEqual(TaskResponse[] tasks, LocalDateTime deadline) {
         for (TaskResponse task : tasks) {
-            LocalDateTime taskDeadline = task.getDeadline();
+            LocalDateTime taskDeadline = task.getDeadlineDateTime();
             assertNotNull(taskDeadline);
             assertFalse(taskDeadline.isAfter(deadline),
                     "Task deadline (" + taskDeadline + ") was expected to be less than or equal to " + deadline);
@@ -101,7 +101,7 @@ public class TaskAssertions {
 
     public static void assertAllWithDeadlineGreaterThanOrEqual(TaskResponse[] tasks, LocalDateTime deadline) {
         for (TaskResponse task : tasks) {
-            LocalDateTime taskDeadline = task.getDeadline();
+            LocalDateTime taskDeadline = task.getDeadlineDateTime();
             assertNotNull(taskDeadline);
             assertFalse(taskDeadline.isBefore(deadline),
                     "Task deadline (" + taskDeadline + ") was expected to be greater than or equal to " + deadline);
@@ -115,7 +115,7 @@ public class TaskAssertions {
 
     public static void assertAllWithoutDeadline(TaskResponse[] tasks) {
         for (TaskResponse task : tasks) {
-            assertNull(task.getDeadline());
+            assertNull(task.getDeadlineDateTime());
         }
     }
 

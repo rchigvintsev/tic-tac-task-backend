@@ -20,7 +20,7 @@ public class MonthlyTaskRecurrenceStrategy extends AbstractTaskRecurrenceStrateg
     @Override
     protected void doReschedule(Task task) {
         LocalDateTime deadline = LocalDateTime.now(ZoneOffset.UTC).plusMonths(1).withDayOfMonth(getDayOfNextMonth());
-        task.setDeadline(deadline);
+        task.setDeadlineDateTime(deadline);
     }
 
     private int getDayOfNextMonth() {

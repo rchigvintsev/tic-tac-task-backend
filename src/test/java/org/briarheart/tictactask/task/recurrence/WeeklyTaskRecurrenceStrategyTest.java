@@ -26,9 +26,9 @@ class WeeklyTaskRecurrenceStrategyTest {
         task.setId(1L);
 
         strategy.reschedule(task);
-        assertNotNull(task.getDeadline());
-        assertTrue(task.getDeadline().isAfter(LocalDateTime.now(ZoneOffset.UTC)));
-        assertSame(DayOfWeek.MONDAY, task.getDeadline().getDayOfWeek());
+        assertNotNull(task.getDeadlineDateTime());
+        assertTrue(task.getDeadlineDateTime().isAfter(LocalDateTime.now(ZoneOffset.UTC)));
+        assertSame(DayOfWeek.MONDAY, task.getDeadlineDateTime().getDayOfWeek());
     }
 
     @Test

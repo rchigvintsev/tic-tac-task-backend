@@ -24,8 +24,8 @@ class DailyTaskRecurrenceStrategyTest {
         strategy.reschedule(task);
 
         LocalDateTime expectedDeadline = LocalDateTime.now(ZoneOffset.UTC).plusDays(1);
-        assertNotNull(task.getDeadline());
-        assertEquals(expectedDeadline.getDayOfYear(), task.getDeadline().getDayOfYear());
+        assertNotNull(task.getDeadlineDateTime());
+        assertEquals(expectedDeadline.getDayOfYear(), task.getDeadlineDateTime().getDayOfYear());
     }
 
     @Test

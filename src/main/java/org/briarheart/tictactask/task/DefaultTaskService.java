@@ -93,7 +93,6 @@ public class DefaultTaskService implements TaskService {
                 updatedTask.setPreviousStatus(existingTask.getStatus());
             }
             updatedTask.setCreatedAt(existingTask.getCreatedAt());
-            updatedTask.setDeadlineTimeSpecified(task.getDeadline() != null && task.isDeadlineTimeSpecified());
             return taskRepository.save(updatedTask)
                     .doOnSuccess(t -> log.debug("Task with id {} is updated", t.getId()));
         });
@@ -219,13 +218,12 @@ public class DefaultTaskService implements TaskService {
         copy.setStatus(determineTaskStatus(task));
         copy.setCreatedAt(getCurrentTime());
         copy.setCompletedAt(null);
-        copy.setDeadlineTimeSpecified(task.getDeadline() != null && task.isDeadlineTimeSpecified());
         return copy;
     }
 
     private TaskStatus determineTaskStatus(Task task) {
         TaskStatus result = task.getStatus() == TaskStatus.PROCESSED ? TaskStatus.PROCESSED : TaskStatus.UNPROCESSED;
-        if (result == TaskStatus.UNPROCESSED && task.getDeadline() != null) {
+        if (result == TaskStatus.UNPROCESSED && (task.getDeadlineDate() != null || task.getDeadlineDateTime() != null)) {
             log.debug("Task with id {} is unprocessed and deadline is set. Changing task status to \"{}\".",
                     task.getId(), TaskStatus.PROCESSED);
             result = TaskStatus.PROCESSED;
@@ -251,7 +249,7 @@ public class DefaultTaskService implements TaskService {
             Task copy = copyTask(task);
             copy.reschedule();
             return taskRepository.save(copy).doOnSuccess(t -> log.debug("Task with id {} is rescheduled to {}",
-                            task.getId(), t.getDeadline()));
+                            task.getId(), t.getDeadlineDateTime()));
         }
         return Mono.empty();
     }

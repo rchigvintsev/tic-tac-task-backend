@@ -23,6 +23,6 @@ public class WeeklyTaskRecurrenceStrategy extends AbstractTaskRecurrenceStrategy
         LocalDateTime deadline = LocalDateTime.now(ZoneOffset.UTC)
                 .plusWeeks(1)
                 .with(ChronoField.DAY_OF_WEEK, dayOfWeek.getValue());
-        task.setDeadline(deadline);
+        task.setDeadlineDateTime(deadline);
     }
 }

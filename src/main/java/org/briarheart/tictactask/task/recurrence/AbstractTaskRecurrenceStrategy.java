@@ -12,7 +12,7 @@ public abstract class AbstractTaskRecurrenceStrategy implements TaskRecurrenceSt
     public void reschedule(Task task) {
         Assert.notNull(task, "Task must not be null");
         doReschedule(task);
-        log.debug("Task with id {} is rescheduled to {}", task.getId(), task.getDeadline());
+        log.debug("Task with id {} is rescheduled to {}", task.getId(), task.getDeadlineDateTime());
     }
 
     protected abstract void doReschedule(Task task);

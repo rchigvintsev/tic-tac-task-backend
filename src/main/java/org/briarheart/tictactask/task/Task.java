@@ -5,6 +5,7 @@ import org.briarheart.tictactask.task.recurrence.TaskRecurrenceStrategy;
 import org.springframework.data.annotation.Id;
 import org.springframework.util.Assert;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -27,8 +28,8 @@ public class Task {
     private TaskStatus status = TaskStatus.UNPROCESSED;
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
-    private LocalDateTime deadline;
-    private boolean deadlineTimeSpecified;
+    private LocalDate deadlineDate;
+    private LocalDateTime deadlineDateTime;
     private TaskRecurrenceStrategy recurrenceStrategy;
 
     /**
@@ -48,13 +49,13 @@ public class Task {
         this.status = other.status;
         this.createdAt = other.createdAt;
         this.completedAt = other.completedAt;
-        this.deadline = other.deadline;
-        this.deadlineTimeSpecified = other.deadlineTimeSpecified;
+        this.deadlineDate = other.deadlineDate;
+        this.deadlineDateTime = other.deadlineDateTime;
         this.recurrenceStrategy = other.recurrenceStrategy;
     }
 
     public boolean isRecurrenceEnabled() {
-        return deadline != null && recurrenceStrategy != null;
+        return (deadlineDate != null || deadlineDateTime != null) && recurrenceStrategy != null;
     }
 
     public void reschedule() {

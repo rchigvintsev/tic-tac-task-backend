@@ -30,6 +30,7 @@ import javax.validation.constraints.FutureOrPresent;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.net.URI;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY;
@@ -208,8 +209,8 @@ public class TaskController extends AbstractController {
         private TaskStatus status;
         private LocalDateTime createdAt;
         private LocalDateTime completedAt;
-        private LocalDateTime deadline;
-        private boolean deadlineTimeSpecified;
+        private LocalDate deadlineDate;
+        private LocalDateTime deadlineDateTime;
         private TaskRecurrenceStrategy recurrenceStrategy;
 
         public TaskResponse(Task task) {
@@ -220,8 +221,8 @@ public class TaskController extends AbstractController {
             this.status = task.getStatus();
             this.createdAt = task.getCreatedAt();
             this.completedAt = task.getCompletedAt();
-            this.deadline = task.getDeadline();
-            this.deadlineTimeSpecified = task.isDeadlineTimeSpecified();
+            this.deadlineDate = task.getDeadlineDate();
+            this.deadlineDateTime = task.getDeadlineDateTime();
             this.recurrenceStrategy = task.getRecurrenceStrategy();
         }
     }
@@ -235,7 +236,9 @@ public class TaskController extends AbstractController {
         private String description;
         private TaskStatus status;
         @FutureOrPresent
-        private LocalDateTime deadline;
+        private LocalDate deadlineDate;
+        @FutureOrPresent
+        private LocalDateTime deadlineDateTime;
         private boolean deadlineTimeSpecified;
         private TaskRecurrenceStrategy recurrenceStrategy;
 
@@ -244,8 +247,8 @@ public class TaskController extends AbstractController {
                     .title(title)
                     .description(description)
                     .status(status)
-                    .deadline(deadline)
-                    .deadlineTimeSpecified(deadlineTimeSpecified)
+                    .deadlineDate(deadlineDate)
+                    .deadlineDateTime(deadlineDateTime)
                     .recurrenceStrategy(recurrenceStrategy)
                     .build();
         }

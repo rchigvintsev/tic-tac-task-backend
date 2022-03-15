@@ -212,7 +212,7 @@ class TaskControllerTest {
                 .userId(user.getId())
                 .title("Test task")
                 .status(TaskStatus.PROCESSED)
-                .deadline(parseIsoDateTime("2020-01-10T00:00:00"))
+                .deadlineDateTime(parseIsoDateTime("2020-01-10T00:00:00"))
                 .build();
 
         when(taskService.getTasks(eq(request), eq(user), any())).thenReturn(Flux.just(task));
@@ -453,7 +453,7 @@ class TaskControllerTest {
 
         CreateTaskRequest createRequest = new CreateTaskRequest();
         createRequest.setTitle("Test title");
-        createRequest.setDeadline(LocalDateTime.now().minus(3, ChronoUnit.DAYS));
+        createRequest.setDeadlineDateTime(LocalDateTime.now().minus(3, ChronoUnit.DAYS));
 
         testClient.mutateWith(mockAuthentication(authenticationMock)).mutateWith(csrf())
                 .post().uri("/api/v1/tasks")

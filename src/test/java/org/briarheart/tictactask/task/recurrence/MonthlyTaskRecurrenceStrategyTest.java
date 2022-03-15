@@ -26,9 +26,9 @@ class MonthlyTaskRecurrenceStrategyTest {
         task.setId(1L);
 
         strategy.reschedule(task);
-        assertNotNull(task.getDeadline());
-        assertTrue(task.getDeadline().isAfter(LocalDateTime.now(ZoneOffset.UTC)));
-        assertEquals(1, task.getDeadline().getDayOfMonth());
+        assertNotNull(task.getDeadlineDateTime());
+        assertTrue(task.getDeadlineDateTime().isAfter(LocalDateTime.now(ZoneOffset.UTC)));
+        assertEquals(1, task.getDeadlineDateTime().getDayOfMonth());
     }
 
     @Test
@@ -39,10 +39,10 @@ class MonthlyTaskRecurrenceStrategyTest {
         task.setId(1L);
 
         strategy.reschedule(task);
-        assertNotNull(task.getDeadline());
-        assertTrue(task.getDeadline().isAfter(LocalDateTime.now(ZoneOffset.UTC)));
+        assertNotNull(task.getDeadlineDateTime());
+        assertTrue(task.getDeadlineDateTime().isAfter(LocalDateTime.now(ZoneOffset.UTC)));
         YearMonth nextMonth = YearMonth.now(ZoneOffset.UTC).plusMonths(1);
-        assertEquals(nextMonth.lengthOfMonth(), task.getDeadline().getDayOfMonth());
+        assertEquals(nextMonth.lengthOfMonth(), task.getDeadlineDateTime().getDayOfMonth());
     }
 
     @Test

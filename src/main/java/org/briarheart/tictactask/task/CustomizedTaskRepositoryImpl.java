@@ -68,18 +68,18 @@ public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
             if (request.isDeadlineFromDirty()) {
                 LocalDateTime deadlineFrom = request.getDeadlineFrom();
                 if (deadlineFrom != null) {
-                    criteria = criteria.and("deadline").greaterThanOrEquals(deadlineFrom);
+                    criteria = criteria.and("deadline_date_time").greaterThanOrEquals(deadlineFrom);
                 } else {
-                    criteria = criteria.and("deadline").isNull();
+                    criteria = criteria.and("deadline_date_time").isNull();
                 }
             }
 
             if (request.isDeadlineToDirty()) {
                 LocalDateTime deadlineTo = request.getDeadlineTo();
                 if (deadlineTo != null) {
-                    criteria = criteria.and("deadline").lessThanOrEquals(deadlineTo);
+                    criteria = criteria.and("deadline_date_time").lessThanOrEquals(deadlineTo);
                 } else if (!request.isDeadlineFromDirty() || request.getDeadlineFrom() != null) {
-                    criteria = criteria.and("deadline").isNull();
+                    criteria = criteria.and("deadline_date_time").isNull();
                 }
             }
 

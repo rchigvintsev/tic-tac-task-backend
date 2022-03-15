@@ -234,7 +234,7 @@ class DefaultTaskServiceTest {
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task updatedTask = new Task(task);
-        updatedTask.setDeadline(currentTime.plus(3, ChronoUnit.DAYS));
+        updatedTask.setDeadlineDateTime(currentTime.plus(3, ChronoUnit.DAYS));
 
         Task result = taskService.updateTask(updatedTask).block();
         assertNotNull(result);
@@ -275,7 +275,7 @@ class DefaultTaskServiceTest {
                 .id(2L)
                 .userId(user.getId())
                 .title("Test task")
-                .deadline(taskDeadline)
+                .deadlineDateTime(taskDeadline)
                 .recurrenceStrategy(new DailyTaskRecurrenceStrategy())
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
@@ -286,7 +286,7 @@ class DefaultTaskServiceTest {
         ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
         verify(taskRepository, times(2)).save(taskCaptor.capture());
         Task rescheduledTask = taskCaptor.getAllValues().get(0);
-        assertTrue(rescheduledTask.getDeadline().isAfter(taskDeadline));
+        assertTrue(rescheduledTask.getDeadlineDateTime().isAfter(taskDeadline));
     }
 
     @Test

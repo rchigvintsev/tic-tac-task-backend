@@ -12,6 +12,6 @@ public class DailyTaskRecurrenceStrategy extends AbstractTaskRecurrenceStrategy 
     @Override
     protected void doReschedule(Task task) {
         LocalDateTime deadline = LocalDateTime.now(ZoneOffset.UTC).plusDays(1);
-        task.setDeadline(deadline);
+        task.setDeadlineDateTime(deadline);
     }
 }

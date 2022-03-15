@@ -33,7 +33,7 @@ public class AnnuallyTaskRecurrenceStrategy extends AbstractTaskRecurrenceStrate
                 .plusYears(1)
                 .withMonth(month.getValue())
                 .withDayOfMonth(getDayOfMonthFromNextYear());
-        task.setDeadline(deadline);
+        task.setDeadlineDateTime(deadline);
     }
 
     private int getDayOfMonthFromNextYear() {
