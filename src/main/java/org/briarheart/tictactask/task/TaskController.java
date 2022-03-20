@@ -59,8 +59,8 @@ public class TaskController extends AbstractController {
                             in = QUERY,
                             array = @ArraySchema(schema = @Schema(type = "string"), uniqueItems = true)
                     ),
-                    @Parameter(name = "deadlineFrom", description = "Lower bound of task deadline", in = QUERY),
-                    @Parameter(name = "deadlineTo", description = "Upper bound of task deadline", in = QUERY)
+                    @Parameter(name = "deadlineDateTimeFrom", description = "Lower bound of task deadline", in = QUERY),
+                    @Parameter(name = "deadlineDateTimeTo", description = "Upper bound of task deadline", in = QUERY)
             }
     )
     public Mono<Long> getTaskCount(@Parameter(hidden = true) GetTasksRequest request, Authentication authentication) {
@@ -78,8 +78,8 @@ public class TaskController extends AbstractController {
                             in = QUERY,
                             array = @ArraySchema(schema = @Schema(type = "string"), uniqueItems = true)
                     ),
-                    @Parameter(name = "deadlineFrom", description = "Lower bound of task deadline", in = QUERY),
-                    @Parameter(name = "deadlineTo", description = "Upper bound of task deadline", in = QUERY),
+                    @Parameter(name = "deadlineDateTimeFrom", description = "Lower bound of task deadline", in = QUERY),
+                    @Parameter(name = "deadlineDateTimeTo", description = "Upper bound of task deadline", in = QUERY),
                     @Parameter(name = "page", description = "Number of requested page", in = QUERY),
                     @Parameter(name = "size", description = "Requested page size", in = QUERY)
             }

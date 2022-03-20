@@ -1,46 +1,19 @@
 package org.briarheart.tictactask.task;
 
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-@EqualsAndHashCode
+@Data
 public class GetTasksRequest {
-    @Getter
-    @Setter
     private Set<TaskStatus> statuses;
-
-    @Getter
-    private LocalDateTime deadlineFrom;
-
-    @Getter(AccessLevel.PACKAGE)
-    private boolean deadlineFromDirty;
-
-    @Getter
-    private LocalDateTime deadlineTo;
-
-    @Getter(AccessLevel.PACKAGE)
-    private boolean deadlineToDirty;
-
-    @Getter
-    @Setter
+    private boolean withoutDeadline;
+    private LocalDate deadlineDateFrom;
+    private LocalDate deadlineDateTo;
+    private LocalDateTime deadlineDateTimeFrom;
+    private LocalDateTime deadlineDateTimeTo;
     private LocalDateTime completedAtFrom;
-
-    @Getter
-    @Setter
     private LocalDateTime completedAtTo;
-
-    public void setDeadlineFrom(LocalDateTime deadlineFrom) {
-        this.deadlineFrom = deadlineFrom;
-        this.deadlineFromDirty = true;
-    }
-
-    public void setDeadlineTo(LocalDateTime deadlineTo) {
-        this.deadlineTo = deadlineTo;
-        this.deadlineToDirty = true;
-    }
 }

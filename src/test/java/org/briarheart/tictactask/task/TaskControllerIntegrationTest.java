@@ -129,12 +129,58 @@ class TaskControllerIntegrationTest {
     }
 
     @Test
-    void shouldReturnNumberOfProcessedTasksWithDeadlineDateBetween() {
+    void shouldReturnNumberOfProcessedTasksWithDeadlineBetween() {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);
 
-        String url = "http://localhost:{port}/api/v1/tasks/count?statuses=PROCESSED&deadlineFrom=2022-01-01T00:00" +
-                "&deadlineTo=2022-01-02T23:59";
+        String url = "http://localhost:{port}/api/v1/tasks/count?statuses=PROCESSED"
+                + "&deadlineDateFrom=2022-01-01"
+                + "&deadlineDateTo=2022-01-02"
+                + "&deadlineDateTimeFrom=2022-01-01T00:00"
+                + "&deadlineDateTimeTo=2022-01-02T23:59";
+        ResponseEntity<Long> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
+                Long.class, port);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        Long taskCount = response.getBody();
+        assertNotNull(taskCount);
+        assertEquals(4, taskCount);
+    }
+
+    @Test
+    void shouldReturnProcessedTasksWithDeadlineDateBetween() {
+        HttpHeaders headers = new HttpHeaders();
+        addCookieHeader(headers);
+
+        String deadlineDateTimeFrom = "2022-01-01T00:00";
+        String deadlineDateTimeTo = "2022-01-02T23:59";
+        String url = "http://localhost:{port}/api/v1/tasks?statuses=PROCESSED"
+                + "&deadlineDateFrom=2022-01-01"
+                + "&deadlineDateTo=2022-01-02"
+                + "&deadlineDateTimeFrom=" + deadlineDateTimeFrom
+                + "&deadlineDateTimeTo=" + deadlineDateTimeTo;
+        ResponseEntity<TaskResponse[]> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
+                TaskResponse[].class, port);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        TaskResponse[] tasks = response.getBody();
+        assertNotNull(tasks);
+        assertEquals(4, tasks.length);
+        assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
+        assertAllWithDeadlineWithinRange(tasks, parseIsoDateTime(deadlineDateTimeFrom),
+                parseIsoDateTime(deadlineDateTimeTo));
+    }
+
+    @Test
+    void shouldReturnNumberOfProcessedTasksWithDeadlineDateLessThanOrEqual() {
+        HttpHeaders headers = new HttpHeaders();
+        addCookieHeader(headers);
+
+        String url = "http://localhost:{port}/api/v1/tasks/count?statuses=PROCESSED"
+                + "&deadlineDateTo=2022-01-01"
+                + "&deadlineDateTimeTo=2022-01-01T00:00";
         ResponseEntity<Long> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
                 Long.class, port);
 
@@ -146,14 +192,14 @@ class TaskControllerIntegrationTest {
     }
 
     @Test
-    void shouldReturnProcessedTasksWithDeadlineDateBetween() {
+    void shouldReturnProcessedTasksWithDeadlineDateLessThanOrEqual() {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);
 
-        String deadlineFrom = "2022-01-01T00:00";
-        String deadlineTo = "2022-01-02T23:59";
-        String url = "http://localhost:{port}/api/v1/tasks?statuses=PROCESSED&deadlineFrom=" + deadlineFrom
-                + "&deadlineTo=" + deadlineTo;
+        String deadlineDateTimeTo = "2022-01-01T00:00";
+        String url = "http://localhost:{port}/api/v1/tasks?statuses=PROCESSED"
+                + "&deadlineDateTo=2022-01-01"
+                + "&deadlineDateTimeTo=" + deadlineDateTimeTo;
         ResponseEntity<TaskResponse[]> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
                 TaskResponse[].class, port);
 
@@ -163,42 +209,7 @@ class TaskControllerIntegrationTest {
         assertNotNull(tasks);
         assertEquals(2, tasks.length);
         assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
-        assertAllWithDeadlineWithinRange(tasks, parseIsoDateTime(deadlineFrom), parseIsoDateTime(deadlineTo));
-    }
-
-    @Test
-    void shouldReturnNumberOfProcessedTasksWithDeadlineDateLessThanOrEqual() {
-        HttpHeaders headers = new HttpHeaders();
-        addCookieHeader(headers);
-
-        String url = "http://localhost:{port}/api/v1/tasks/count?statuses=PROCESSED&deadlineTo=2022-01-01T00:00";
-        ResponseEntity<Long> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
-                Long.class, port);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        Long taskCount = response.getBody();
-        assertNotNull(taskCount);
-        assertEquals(1, taskCount);
-    }
-
-    @Test
-    void shouldReturnProcessedTasksWithDeadlineDateLessThanOrEqual() {
-        HttpHeaders headers = new HttpHeaders();
-        addCookieHeader(headers);
-
-        String deadlineTo = "2022-01-01T00:00";
-        String url = "http://localhost:{port}/api/v1/tasks?statuses=PROCESSED&deadlineTo=" + deadlineTo;
-        ResponseEntity<TaskResponse[]> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
-                TaskResponse[].class, port);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-
-        TaskResponse[] tasks = response.getBody();
-        assertNotNull(tasks);
-        assertEquals(1, tasks.length);
-        assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
-        assertAllDeadlineLessThanOrEqual(tasks, parseIsoDateTime(deadlineTo));
+        assertAllWithDeadlineLessThanOrEqual(tasks, parseIsoDateTime(deadlineDateTimeTo));
     }
 
     @Test
@@ -206,7 +217,9 @@ class TaskControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);
 
-        String url = "http://localhost:{port}/api/v1/tasks/count?statuses=PROCESSED&deadlineFrom=2022-01-02T23:59";
+        String url = "http://localhost:{port}/api/v1/tasks/count?statuses=PROCESSED"
+                + "&deadlineDateFrom=2022-01-02"
+                + "&deadlineDateTimeFrom=2022-01-02T23:59";
         ResponseEntity<Long> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
                 Long.class, port);
 
@@ -214,7 +227,7 @@ class TaskControllerIntegrationTest {
 
         Long taskCount = response.getBody();
         assertNotNull(taskCount);
-        assertEquals(1, taskCount);
+        assertEquals(2, taskCount);
     }
 
     @Test
@@ -222,8 +235,10 @@ class TaskControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);
 
-        String deadlineFrom = "2022-01-02T23:59";
-        String url = "http://localhost:{port}/api/v1/tasks?statuses=PROCESSED&deadlineFrom=" + deadlineFrom;
+        String deadlineDateTimeFrom = "2022-01-02T23:59";
+        String url = "http://localhost:{port}/api/v1/tasks?statuses=PROCESSED"
+                + "&deadlineDateFrom=2022-01-02"
+                + "&deadlineDateTimeFrom=" + deadlineDateTimeFrom;
         ResponseEntity<TaskResponse[]> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
                 TaskResponse[].class, port);
 
@@ -231,9 +246,9 @@ class TaskControllerIntegrationTest {
 
         TaskResponse[] tasks = response.getBody();
         assertNotNull(tasks);
-        assertEquals(1, tasks.length);
+        assertEquals(2, tasks.length);
         assertAllWithStatuses(tasks, TaskStatus.PROCESSED);
-        assertAllWithDeadlineGreaterThanOrEqual(tasks, parseIsoDateTime(deadlineFrom));
+        assertAllWithDeadlineGreaterThanOrEqual(tasks, parseIsoDateTime(deadlineDateTimeFrom));
     }
 
     @Test
@@ -241,7 +256,7 @@ class TaskControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);
 
-        String url = "http://localhost:{port}/api/v1/tasks/count?statuses=PROCESSED&deadlineFrom=&deadlineTo=";
+        String url = "http://localhost:{port}/api/v1/tasks/count?statuses=PROCESSED&withoutDeadline=true";
         ResponseEntity<Long> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
                 Long.class, port);
 
@@ -257,7 +272,7 @@ class TaskControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         addCookieHeader(headers);
 
-        String url = "http://localhost:{port}/api/v1/tasks?statuses=PROCESSED&deadlineFrom=&deadlineTo=";
+        String url = "http://localhost:{port}/api/v1/tasks?statuses=PROCESSED&withoutDeadline=true";
         ResponseEntity<TaskResponse[]> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
                 TaskResponse[].class, port);
 

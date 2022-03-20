@@ -18,18 +18,22 @@ INSERT INTO task (user_id, title, status) VALUES (1, 'Unprocessed task 3', 'UNPR
 INSERT INTO task (user_id, title, status, deadline_date, deadline_date_time)
 VALUES (1, 'Processed task 1', 'PROCESSED', NULL, NULL);
 INSERT INTO task (user_id, title, status, deadline_date, deadline_date_time)
-VALUES (1, 'Processed task 2', 'PROCESSED', NULL, '2022-01-01 00:00:00');
+VALUES (1, 'Processed task 2', 'PROCESSED', '2022-01-01', NULL);
 INSERT INTO task (user_id, title, status, deadline_date, deadline_date_time)
-VALUES (1, 'Processed task 3', 'PROCESSED', NULL, '2022-01-02 23:59:00');
+VALUES (1, 'Processed task 3', 'PROCESSED', '2022-01-02', NULL);
+INSERT INTO task (user_id, title, status, deadline_date, deadline_date_time)
+VALUES (1, 'Processed task 4', 'PROCESSED', NULL, '2022-01-01 00:00:00');
+INSERT INTO task (user_id, title, status, deadline_date, deadline_date_time)
+VALUES (1, 'Processed task 5', 'PROCESSED', NULL, '2022-01-02 23:59:00');
 
 INSERT INTO task (user_id, title, status, previous_status, deadline_date, deadline_date_time, completed_at)
 VALUES (1, 'Completed task 1', 'COMPLETED', 'UNPROCESSED', NULL, NULL, NULL);
 INSERT INTO task (user_id, title, status, previous_status, deadline_date, deadline_date_time, completed_at)
-VALUES (1, 'Completed task 2', 'COMPLETED', 'PROCESSED', NULL, '2022-01-01 00:01:00', '2022-01-01 00:00:00');
+VALUES (1, 'Completed task 2', 'COMPLETED', 'PROCESSED', NULL, '2022-01-01 00:00:00', '2022-01-01 00:00:00');
 INSERT INTO task (user_id, title, status, previous_status, deadline_date, deadline_date_time, completed_at)
-VALUES (1, 'Completed task 3', 'COMPLETED', 'PROCESSED', NULL, '2022-01-01 23:59:00', '2022-01-02 23:59:00');
+VALUES (1, 'Completed task 3', 'COMPLETED', 'PROCESSED', NULL, '2022-01-01 23:59:00', '2022-01-02 00:00:00');
 INSERT INTO task (user_id, title, status, previous_status, deadline_date, deadline_date_time, completed_at)
-VALUES (1, 'Completed task 4', 'COMPLETED', 'PROCESSED', NULL, '2022-01-02 00:00:00', '2022-01-01 00:01:00');
+VALUES (1, 'Completed task 4', 'COMPLETED', 'PROCESSED', NULL, '2022-01-02 00:00:00', '2022-01-01 23:59:00');
 
 DELETE FROM tag;
 INSERT INTO tag (user_id, name) VALUES (1, 'Test tag');

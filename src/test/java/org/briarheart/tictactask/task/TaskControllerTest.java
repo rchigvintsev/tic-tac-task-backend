@@ -29,13 +29,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.briarheart.tictactask.util.DateTimeUtils.parseIsoDate;
+import static org.briarheart.tictactask.util.DateTimeUtils.parseIsoDateTime;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
@@ -151,8 +151,7 @@ class TaskControllerTest {
     void shouldReturnProcessedTasksWithoutDeadline() {
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineFrom(null);
-        request.setDeadlineTo(null);
+        request.setWithoutDeadline(true);
 
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
@@ -178,8 +177,7 @@ class TaskControllerTest {
     void shouldReturnNumberOfProcessedTasksWithoutDeadline() {
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineFrom(null);
-        request.setDeadlineTo(null);
+        request.setWithoutDeadline(true);
 
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
@@ -196,13 +194,12 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnProcessedTasksWithDeadline() {
-        String deadlineFrom = "2020-01-01T00:00";
-        String deadlineTo = "2020-01-31T23:59";
-
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineFrom(parseIsoDateTime(deadlineFrom));
-        request.setDeadlineTo(parseIsoDateTime(deadlineTo));
+        request.setDeadlineDateFrom(parseIsoDate("2020-01-01"));
+        request.setDeadlineDateTo(parseIsoDate("2020-01-31"));
+        request.setDeadlineDateTimeFrom(parseIsoDateTime("2020-01-01T00:00"));
+        request.setDeadlineDateTimeTo(parseIsoDateTime("2020-01-31T23:59"));
 
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
@@ -227,13 +224,12 @@ class TaskControllerTest {
 
     @Test
     void shouldReturnNumberOfProcessedTasksWithDeadline() {
-        String deadlineFrom = "2020-01-01T00:00";
-        String deadlineTo = "2020-01-31T23:59";
-
         GetTasksRequest request = new GetTasksRequest();
         request.setStatuses(Set.of(TaskStatus.PROCESSED));
-        request.setDeadlineFrom(parseIsoDateTime(deadlineFrom));
-        request.setDeadlineTo(parseIsoDateTime(deadlineTo));
+        request.setDeadlineDateFrom(parseIsoDate("2020-01-01"));
+        request.setDeadlineDateTo(parseIsoDate("2020-01-31"));
+        request.setDeadlineDateTimeFrom(parseIsoDateTime("2020-01-01T00:00"));
+        request.setDeadlineDateTimeTo(parseIsoDateTime("2020-01-31T23:59"));
 
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         Authentication authenticationMock = createAuthentication(user);
@@ -730,16 +726,22 @@ class TaskControllerTest {
         String result = "statuses=" + request.getStatuses().stream()
                 .map(Enum::toString)
                 .collect(Collectors.joining(","));
-        if (request.isDeadlineFromDirty()) {
-            result += "&deadlineFrom=" + Objects.toString(request.getDeadlineFrom(), "");
-        }
-        if (request.isDeadlineToDirty()) {
-            result += "&deadlineTo=" + Objects.toString(request.getDeadlineTo(), "");
+        if (request.isWithoutDeadline()) {
+            result += "&withoutDeadline=true";
+        } else {
+            if (request.getDeadlineDateFrom() != null) {
+                result += "&deadlineDateFrom=" + request.getDeadlineDateFrom();
+            }
+            if (request.getDeadlineDateTo() != null) {
+                result += "&deadlineDateTo=" + request.getDeadlineDateTo();
+            }
+            if (request.getDeadlineDateTimeFrom() != null) {
+                result += "&deadlineDateTimeFrom=" + request.getDeadlineDateTimeFrom();
+            }
+            if (request.getDeadlineDateTimeTo() != null) {
+                result += "&deadlineDateTimeTo=" + request.getDeadlineDateTimeTo();
+            }
         }
         return result;
-    }
-
-    private LocalDateTime parseIsoDateTime(String dateTime) {
-        return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_DATE_TIME);
     }
 }

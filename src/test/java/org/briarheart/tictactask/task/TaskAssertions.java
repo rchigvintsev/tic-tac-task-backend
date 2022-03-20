@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.function.ThrowingConsumer;
 import org.junit.platform.commons.util.UnrecoverableExceptions;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -63,10 +64,18 @@ public class TaskAssertions {
     }
 
     public static void assertWithDeadlineWithinRange(TaskResponse task, LocalDateTime from, LocalDateTime to) {
-        LocalDateTime deadline = task.getDeadlineDateTime();
-        assertNotNull(deadline);
-        assertTrue(!deadline.isBefore(from) && !deadline.isAfter(to),
-                "Task deadline (" + deadline + ") was expected to be within range from " + from + " to " + to);
+        LocalDate deadlineDate = task.getDeadlineDate();
+        LocalDateTime deadlineDateTime = task.getDeadlineDateTime();
+
+        if (deadlineDate != null) {
+            assertNull(deadlineDateTime);
+            assertTrue(!deadlineDate.isBefore(from.toLocalDate()) && !deadlineDate.isAfter(to.toLocalDate()),
+                    "Task deadline (" + deadlineDate + ") was expected to be within range from " + from + " to " + to);
+        } else {
+            assertNotNull(deadlineDateTime);
+            assertTrue(!deadlineDateTime.isBefore(from) && !deadlineDateTime.isAfter(to), "Task deadline ("
+                    + deadlineDateTime + ") was expected to be within range from " + from + " to " + to);
+        }
     }
 
     public static void assertAllWithDeadlineWithinRange(List<Task> tasks, LocalDateTime from, LocalDateTime to) {
@@ -80,17 +89,25 @@ public class TaskAssertions {
         }
     }
 
-    public static void assertAllDeadlineLessThanOrEqual(List<Task> tasks, LocalDateTime deadline) {
+    public static void assertAllWithDeadlineLessThanOrEqual(List<Task> tasks, LocalDateTime deadline) {
         TaskResponse[] responses = tasks.stream().map(TaskResponse::new).toArray(TaskResponse[]::new);
-        assertAllDeadlineLessThanOrEqual(responses, deadline);
+        assertAllWithDeadlineLessThanOrEqual(responses, deadline);
     }
 
-    public static void assertAllDeadlineLessThanOrEqual(TaskResponse[] tasks, LocalDateTime deadline) {
+    public static void assertAllWithDeadlineLessThanOrEqual(TaskResponse[] tasks, LocalDateTime deadline) {
         for (TaskResponse task : tasks) {
-            LocalDateTime taskDeadline = task.getDeadlineDateTime();
-            assertNotNull(taskDeadline);
-            assertFalse(taskDeadline.isAfter(deadline),
-                    "Task deadline (" + taskDeadline + ") was expected to be less than or equal to " + deadline);
+            LocalDate deadlineDate = task.getDeadlineDate();
+            LocalDateTime deadlineDateTime = task.getDeadlineDateTime();
+
+            if (deadlineDate != null) {
+                assertNull(deadlineDateTime);
+                assertFalse(deadlineDate.isAfter(deadline.toLocalDate()), "Task deadline (" + deadlineDate
+                        + ") was expected to be less than or equal to " + deadline);
+            } else {
+                assertNotNull(deadlineDateTime);
+                assertFalse(deadlineDateTime.isAfter(deadline), "Task deadline (" + deadlineDateTime
+                        + ") was expected to be less than or equal to " + deadline);
+            }
         }
     }
 
@@ -101,10 +118,18 @@ public class TaskAssertions {
 
     public static void assertAllWithDeadlineGreaterThanOrEqual(TaskResponse[] tasks, LocalDateTime deadline) {
         for (TaskResponse task : tasks) {
-            LocalDateTime taskDeadline = task.getDeadlineDateTime();
-            assertNotNull(taskDeadline);
-            assertFalse(taskDeadline.isBefore(deadline),
-                    "Task deadline (" + taskDeadline + ") was expected to be greater than or equal to " + deadline);
+            LocalDate deadlineDate = task.getDeadlineDate();
+            LocalDateTime deadlineDateTime = task.getDeadlineDateTime();
+
+            if (deadlineDate != null) {
+                assertNull(deadlineDateTime);
+                assertFalse(deadlineDate.isBefore(deadline.toLocalDate()), "Task deadline (" + deadlineDate
+                        + ") was expected to be greater than or equal to " + deadline);
+            } else {
+                assertNotNull(deadlineDateTime);
+                assertFalse(deadlineDateTime.isBefore(deadline), "Task deadline (" + deadlineDateTime
+                        + ") was expected to be greater than or equal to " + deadline);
+            }
         }
     }
 
@@ -115,6 +140,7 @@ public class TaskAssertions {
 
     public static void assertAllWithoutDeadline(TaskResponse[] tasks) {
         for (TaskResponse task : tasks) {
+            assertNull(task.getDeadlineDate());
             assertNull(task.getDeadlineDateTime());
         }
     }

@@ -63,25 +63,7 @@ public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
         }
 
         if (status == TaskStatus.PROCESSED || status == TaskStatus.COMPLETED) {
-            Criteria criteria = Criteria.where("status").is(status);
-
-            if (request.isDeadlineFromDirty()) {
-                LocalDateTime deadlineFrom = request.getDeadlineFrom();
-                if (deadlineFrom != null) {
-                    criteria = criteria.and("deadline_date_time").greaterThanOrEquals(deadlineFrom);
-                } else {
-                    criteria = criteria.and("deadline_date_time").isNull();
-                }
-            }
-
-            if (request.isDeadlineToDirty()) {
-                LocalDateTime deadlineTo = request.getDeadlineTo();
-                if (deadlineTo != null) {
-                    criteria = criteria.and("deadline_date_time").lessThanOrEquals(deadlineTo);
-                } else if (!request.isDeadlineFromDirty() || request.getDeadlineFrom() != null) {
-                    criteria = criteria.and("deadline_date_time").isNull();
-                }
-            }
+            Criteria criteria = Criteria.where("status").is(status).and(buildDeadlineCriteria(request));
 
             if (status == TaskStatus.COMPLETED) {
                 Set<TaskStatus> previousStatuses = request.getStatuses().stream()
@@ -108,5 +90,39 @@ public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
         }
 
         return Criteria.empty();
+    }
+
+    private Criteria buildDeadlineCriteria(GetTasksRequest request) {
+        if (request.isWithoutDeadline()) {
+            return Criteria.where("deadline_date").isNull().and("deadline_date_time").isNull();
+        }
+
+        Criteria deadlineCriteria = Criteria.empty();
+        Criteria deadlineDateCriteria = Criteria.empty();
+
+        if (request.getDeadlineDateFrom() != null) {
+            deadlineDateCriteria = deadlineDateCriteria.and("deadline_date")
+                    .greaterThanOrEquals(request.getDeadlineDateFrom());
+        }
+
+        if (request.getDeadlineDateTo() != null) {
+            deadlineDateCriteria = deadlineDateCriteria.and("deadline_date")
+                    .lessThanOrEquals(request.getDeadlineDateTo());
+        }
+
+        deadlineCriteria = deadlineCriteria.or(deadlineDateCriteria);
+        Criteria deadlineDateTimeCriteria = Criteria.empty();
+
+        if (request.getDeadlineDateTimeFrom() != null) {
+            deadlineDateTimeCriteria = deadlineDateTimeCriteria.and("deadline_date_time")
+                    .greaterThanOrEquals(request.getDeadlineDateTimeFrom());
+        }
+
+        if (request.getDeadlineDateTimeTo() != null) {
+            deadlineDateTimeCriteria = deadlineDateTimeCriteria.and("deadline_date_time")
+                    .lessThanOrEquals(request.getDeadlineDateTimeTo());
+        }
+
+        return deadlineCriteria.or(deadlineDateTimeCriteria);
     }
 }

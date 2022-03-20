@@ -107,7 +107,7 @@ public class DefaultTaskService implements TaskService {
                     Mono<Task> result = rescheduleTaskIfNecessary(task);
                     task.setPreviousStatus(task.getStatus());
                     task.setStatus(TaskStatus.COMPLETED);
-                    task.setCompletedAt(LocalDateTime.now(ZoneOffset.UTC));
+                    task.setCompletedAt(getCurrentTime());
                     return result.then(taskRepository.save(task)
                             .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId())));
                 });
