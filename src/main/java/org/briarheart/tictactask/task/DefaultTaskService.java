@@ -104,12 +104,11 @@ public class DefaultTaskService implements TaskService {
         return getTask(id, user)
                 .filter(task -> task.getStatus() != TaskStatus.COMPLETED)
                 .flatMap(task -> {
-                    Mono<Task> result = rescheduleTaskIfNecessary(task);
                     task.setPreviousStatus(task.getStatus());
                     task.setStatus(TaskStatus.COMPLETED);
                     task.setCompletedAt(getCurrentTime());
-                    return result.then(taskRepository.save(task)
-                            .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId())));
+                    return taskRepository.save(task)
+                            .doOnSuccess(t -> log.debug("Task with id {} is completed", t.getId()));
                 });
     }
 
@@ -213,7 +212,7 @@ public class DefaultTaskService implements TaskService {
     private Task copyTask(Task task) {
         Task copy = new Task(task);
         copy.setId(null);
-        copy.setParentId(task.getId());
+        copy.setParentId(task.getParentId());
         copy.setPreviousStatus(null);
         copy.setStatus(determineTaskStatus(task));
         copy.setCreatedAt(getCurrentTime());
@@ -244,18 +243,8 @@ public class DefaultTaskService implements TaskService {
         return Mono.just(task);
     }
 
-    private Mono<Task> rescheduleTaskIfNecessary(Task task) {
-        if (task.isRecurrenceEnabled()) {
-            Task copy = copyTask(task);
-            copy.reschedule();
-            return taskRepository.save(copy).doOnSuccess(t -> log.debug("Task with id {} is rescheduled to {}",
-                            task.getId(), t.getDeadlineDateTime()));
-        }
-        return Mono.empty();
-    }
-
     private Mono<Task> deleteChildTasks(Task task) {
-        return taskRepository.findByParentId(task.getId())
+        return taskRepository.findByParentIdAndUserId(task.getId(), task.getUserId())
                 .flatMap(taskRepository::delete)
                 .then(Mono.just(task));
     }

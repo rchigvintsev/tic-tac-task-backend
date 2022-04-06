@@ -53,14 +53,4 @@ public class Task {
         this.deadlineDateTime = other.deadlineDateTime;
         this.recurrenceStrategy = other.recurrenceStrategy;
     }
-
-    public boolean isRecurrenceEnabled() {
-        return (deadlineDate != null || deadlineDateTime != null) && recurrenceStrategy != null;
-    }
-
-    public void reschedule() {
-        if (isRecurrenceEnabled()) {
-            recurrenceStrategy.reschedule(this);
-        }
-    }
 }

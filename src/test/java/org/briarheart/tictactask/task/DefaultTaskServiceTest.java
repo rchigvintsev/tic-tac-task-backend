@@ -5,7 +5,6 @@ import org.briarheart.tictactask.task.comment.TaskComment;
 import org.briarheart.tictactask.task.comment.TaskCommentRepository;
 import org.briarheart.tictactask.task.list.TaskList;
 import org.briarheart.tictactask.task.list.TaskListRepository;
-import org.briarheart.tictactask.task.recurrence.DailyTaskRecurrenceStrategy;
 import org.briarheart.tictactask.task.tag.TagRepository;
 import org.briarheart.tictactask.task.tag.TaskTag;
 import org.briarheart.tictactask.task.tag.TaskTagRelation;
@@ -14,7 +13,6 @@ import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.util.TestUsers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
@@ -268,28 +266,6 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldRescheduleTaskOnCompleteWhenTaskRecurrenceIsEnabled() {
-        User user = TestUsers.JOHN_DOE;
-        LocalDateTime taskDeadline = LocalDateTime.now(ZoneOffset.UTC);
-        Task task = Task.builder()
-                .id(2L)
-                .userId(user.getId())
-                .title("Test task")
-                .deadlineDateTime(taskDeadline)
-                .recurrenceStrategy(new DailyTaskRecurrenceStrategy())
-                .build();
-        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
-
-        taskService.completeTask(task.getId(), user).block();
-
-        ArgumentCaptor<Task> taskCaptor = ArgumentCaptor.forClass(Task.class);
-        verify(taskRepository, times(2)).save(taskCaptor.capture());
-        Task rescheduledTask = taskCaptor.getAllValues().get(0);
-        assertTrue(rescheduledTask.getDeadlineDateTime().isAfter(taskDeadline));
-    }
-
-    @Test
     void shouldUpdateCompletedAtAttributeOnTaskComplete() {
         User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
@@ -329,7 +305,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.COMPLETED)
                 .build();
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskRepository.findByParentId(task.getId())).thenReturn(Flux.empty());
+        when(taskRepository.findByParentIdAndUserId(task.getId(), user.getId())).thenReturn(Flux.empty());
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task result = taskService.restoreTask(task.getId(), user).block();
@@ -356,7 +332,7 @@ class DefaultTaskServiceTest {
                 .build();
         when(taskListRepository.findById(taskList.getId())).thenReturn(Mono.just(taskList));
         when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskRepository.findByParentId(task.getId())).thenReturn(Flux.empty());
+        when(taskRepository.findByParentIdAndUserId(task.getId(), user.getId())).thenReturn(Flux.empty());
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
 
         Task result = taskService.restoreTask(task.getId(), user).block();
@@ -382,7 +358,7 @@ class DefaultTaskServiceTest {
                 .status(TaskStatus.PROCESSED)
                 .build();
         when(taskRepository.findByIdAndUserId(parentTask.getId(), user.getId())).thenReturn(Mono.just(parentTask));
-        when(taskRepository.findByParentId(parentTask.getId())).thenReturn(Flux.just(childTask));
+        when(taskRepository.findByParentIdAndUserId(parentTask.getId(), user.getId())).thenReturn(Flux.just(childTask));
         when(taskRepository.save(any(Task.class))).thenAnswer(args -> Mono.just(new Task(args.getArgument(0))));
         when(taskRepository.delete(any(Task.class))).thenReturn(Mono.just(true).then());
 

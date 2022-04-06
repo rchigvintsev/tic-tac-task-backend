@@ -6,9 +6,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.briarheart.tictactask.controller.AbstractController;
 import org.briarheart.tictactask.task.comment.TaskComment;
 import org.briarheart.tictactask.task.comment.TaskCommentController.CreateTaskCommentRequest;
@@ -203,6 +201,7 @@ public class TaskController extends AbstractController {
     @NoArgsConstructor
     public static class TaskResponse {
         private Long id;
+        private Long parentId;
         private Long taskListId;
         private String title;
         private String description;
@@ -215,6 +214,7 @@ public class TaskController extends AbstractController {
 
         public TaskResponse(Task task) {
             this.id = task.getId();
+            this.parentId = task.getParentId();
             this.taskListId = task.getTaskListId();
             this.title = task.getTitle();
             this.description = task.getDescription();
@@ -254,7 +254,19 @@ public class TaskController extends AbstractController {
         }
     }
 
+    @Getter
+    @Setter
+    @EqualsAndHashCode(callSuper = true)
+    @ToString(callSuper = true)
     public static class CreateTaskRequest extends CreateOrUpdateTaskRequest {
+        private Long parentId;
+
+        @Override
+        public Task toTask() {
+            Task task = super.toTask();
+            task.setParentId(parentId);
+            return task;
+        }
     }
 
     public static class UpdateTaskRequest extends CreateOrUpdateTaskRequest {
