@@ -57,8 +57,21 @@ public class TaskController extends AbstractController {
                             in = QUERY,
                             array = @ArraySchema(schema = @Schema(type = "string"), uniqueItems = true)
                     ),
-                    @Parameter(name = "deadlineDateTimeFrom", description = "Lower bound of task deadline", in = QUERY),
-                    @Parameter(name = "deadlineDateTimeTo", description = "Upper bound of task deadline", in = QUERY)
+                    @Parameter(name = "withoutDeadline", description = "Whether tasks must be without deadline "
+                            + "(if \"true\" all deadline date/time filters are ignored)", in = QUERY,
+                            schema = @Schema(type = "boolean")),
+                    @Parameter(name = "deadlineDateFrom", description = "Lower bound of task deadline date",
+                            in = QUERY, schema = @Schema(example = "2022-01-31")),
+                    @Parameter(name = "deadlineDateTo", description = "Upper bound of task deadline date",
+                            in = QUERY, schema = @Schema(example = "2022-01-31")),
+                    @Parameter(name = "deadlineDateTimeFrom", description = "Lower bound of task deadline date/time",
+                            in = QUERY, schema = @Schema(example = "2022-01-31T11:51")),
+                    @Parameter(name = "deadlineDateTimeTo", description = "Upper bound of task deadline date/time",
+                            in = QUERY, schema = @Schema(example = "2022-01-31T11:51")),
+                    @Parameter(name = "completedAtFrom", description = "Lower bound of task completion time",
+                            in = QUERY, schema = @Schema(example = "2022-01-31T11:51")),
+                    @Parameter(name = "completedAtTo", description = "Upper bound of task completion time",
+                            in = QUERY, schema = @Schema(example = "2022-01-31T11:51"))
             }
     )
     public Mono<Long> getTaskCount(@Parameter(hidden = true) GetTasksRequest request, Authentication authentication) {
@@ -76,8 +89,21 @@ public class TaskController extends AbstractController {
                             in = QUERY,
                             array = @ArraySchema(schema = @Schema(type = "string"), uniqueItems = true)
                     ),
-                    @Parameter(name = "deadlineDateTimeFrom", description = "Lower bound of task deadline", in = QUERY),
-                    @Parameter(name = "deadlineDateTimeTo", description = "Upper bound of task deadline", in = QUERY),
+                    @Parameter(name = "withoutDeadline", description = "Whether tasks must be without deadline "
+                            + "(if \"true\" all deadline date/time filters are ignored)", in = QUERY,
+                            schema = @Schema(type = "boolean")),
+                    @Parameter(name = "deadlineDateFrom", description = "Lower bound of task deadline date",
+                            in = QUERY, schema = @Schema(example = "2022-01-31")),
+                    @Parameter(name = "deadlineDateTo", description = "Upper bound of task deadline date",
+                            in = QUERY, schema = @Schema(example = "2022-01-31")),
+                    @Parameter(name = "deadlineDateTimeFrom", description = "Lower bound of task deadline date/time",
+                            in = QUERY, schema = @Schema(example = "2022-01-31T11:51")),
+                    @Parameter(name = "deadlineDateTimeTo", description = "Upper bound of task deadline date/time",
+                            in = QUERY, schema = @Schema(example = "2022-01-31T11:51")),
+                    @Parameter(name = "completedAtFrom", description = "Lower bound of task completion time",
+                            in = QUERY, schema = @Schema(example = "2022-01-31T11:51")),
+                    @Parameter(name = "completedAtTo", description = "Upper bound of task completion time",
+                            in = QUERY, schema = @Schema(example = "2022-01-31T11:51")),
                     @Parameter(name = "page", description = "Number of requested page", in = QUERY),
                     @Parameter(name = "size", description = "Requested page size", in = QUERY)
             }
