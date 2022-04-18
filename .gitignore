@@ -32,3 +32,6 @@ HELP.md
 flyway.conf
 
 /db/
+/nginx/
+
+.env
