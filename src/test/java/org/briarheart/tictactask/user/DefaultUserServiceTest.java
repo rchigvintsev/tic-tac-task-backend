@@ -6,6 +6,7 @@ import org.briarheart.tictactask.user.email.EmailConfirmationService;
 import org.briarheart.tictactask.user.email.EmailConfirmationToken;
 import org.briarheart.tictactask.user.profilepicture.ProfilePicture;
 import org.briarheart.tictactask.user.profilepicture.ProfilePictureRepository;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -18,8 +19,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
@@ -55,8 +54,8 @@ class DefaultUserServiceTest {
                             .userId(user.getId())
                             .email(user.getEmail())
                             .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                            .createdAt(LocalDateTime.now(ZoneOffset.UTC))
-                            .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(24, ChronoUnit.HOURS))
+                            .createdAt(DateTimeUtils.currentDateTimeUtc())
+                            .expiresAt(DateTimeUtils.currentDateTimeUtc().plus(24, ChronoUnit.HOURS))
                             .build();
                     return Mono.just(emailConfirmationToken);
                 });
@@ -366,13 +365,13 @@ class DefaultUserServiceTest {
                 .emailConfirmed(true)
                 .enabled(true)
                 .password("secret")
-                .createdAt(LocalDateTime.now(ZoneOffset.UTC).minus(1, ChronoUnit.DAYS))
+                .createdAt(DateTimeUtils.currentDateTimeUtc().minus(1, ChronoUnit.DAYS))
                 .build();
         when(userRepository.findById(user.getId())).thenReturn(Mono.just(user));
         when(userRepository.save(any(User.class))).thenAnswer(args -> Mono.just(new User(args.getArgument(0))));
 
         User updatedUser = new User(user);
-        updatedUser.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+        updatedUser.setCreatedAt(DateTimeUtils.currentDateTimeUtc());
 
         User result = service.updateUser(updatedUser).block();
         assertNotNull(result);

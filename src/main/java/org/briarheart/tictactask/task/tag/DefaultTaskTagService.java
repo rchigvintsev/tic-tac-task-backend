@@ -7,7 +7,9 @@ import org.briarheart.tictactask.task.Task;
 import org.briarheart.tictactask.task.TaskRepository;
 import org.briarheart.tictactask.task.TaskStatus;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.briarheart.tictactask.util.Pageables;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +25,10 @@ import reactor.core.publisher.Mono;
 @Service
 @Slf4j
 public class DefaultTaskTagService implements TaskTagService {
-    private final TagRepository tagRepository;
+    private final TaskTagRepository tagRepository;
     private final TaskRepository taskRepository;
 
-    public DefaultTaskTagService(TagRepository tagRepository, TaskRepository taskRepository) {
+    public DefaultTaskTagService(TaskTagRepository tagRepository, TaskRepository taskRepository) {
         Assert.notNull(tagRepository, "Tag repository must not be null");
         Assert.notNull(taskRepository, "Task repository must not be null");
 
@@ -37,7 +39,7 @@ public class DefaultTaskTagService implements TaskTagService {
     @Override
     public Flux<TaskTag> getTags(User user) {
         Assert.notNull(user, "User must not be null");
-        return tagRepository.findByUserId(user.getId());
+        return tagRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
     }
 
     @Override
@@ -50,17 +52,14 @@ public class DefaultTaskTagService implements TaskTagService {
     @Override
     public Mono<TaskTag> createTag(TaskTag tag) throws EntityAlreadyExistsException {
         Assert.notNull(tag, "Tag must not be null");
-        return tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())
-                .flatMap(t -> {
-                    String message = "Tag with name \"" + tag.getName() + "\" already exists";
-                    return Mono.<TaskTag>error(new EntityAlreadyExistsException(message));
-                })
-                .switchIfEmpty(Mono.defer(() -> {
+        return Mono.defer(() -> {
                     TaskTag newTag = new TaskTag(tag);
                     newTag.setId(null);
+                    newTag.setCreatedAt(DateTimeUtils.currentDateTimeUtc());
                     return tagRepository.save(newTag)
                             .doOnSuccess(t -> log.debug("Tag with id {} is created", t.getId()));
-                }));
+                })
+                .onErrorMap(e -> handleError(e, tag));
     }
 
     @Transactional
@@ -68,18 +67,14 @@ public class DefaultTaskTagService implements TaskTagService {
     public Mono<TaskTag> updateTag(TaskTag tag) throws EntityNotFoundException, EntityAlreadyExistsException {
         Assert.notNull(tag, "Tag must not be null");
         return findTag(tag.getId(), tag.getUserId())
-                .flatMap(t -> {
-                    if (!t.getName().equals(tag.getName())) {
-                        // If tag name is changed try to find other tag with the same name in order
-                        // to ensure that tag name is unique in particular user's space.
-                        return tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId());
-                    }
-                    return Mono.empty();
-                }).flatMap(t -> {
-                    String message = "Tag with name \"" + tag.getName() + "\" already exists";
-                    return Mono.<TaskTag>error(new EntityAlreadyExistsException(message));
-                }).switchIfEmpty(tagRepository.save(tag)
-                        .doOnSuccess(t -> log.debug("Tag with id {} is updated", t.getId())));
+                .flatMap(existingTag -> {
+                    TaskTag updatedTag = new TaskTag(tag);
+                    updatedTag.setId(existingTag.getId());
+                    updatedTag.setCreatedAt(existingTag.getCreatedAt());
+                    return tagRepository.save(updatedTag)
+                            .doOnSuccess(t -> log.debug("Tag with id {} is updated", t.getId()));
+                })
+                .onErrorMap(e -> handleError(e, tag));
     }
 
     @Transactional
@@ -103,5 +98,13 @@ public class DefaultTaskTagService implements TaskTagService {
     private Mono<TaskTag> findTag(Long tagId, Long userId) throws EntityNotFoundException {
         return tagRepository.findByIdAndUserId(tagId, userId)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Tag with id " + tagId + " is not found")));
+    }
+
+    private Throwable handleError(Throwable e, TaskTag tag) {
+        if (e instanceof DataIntegrityViolationException) {
+            String message = "Tag with name \"" + tag.getName() + "\" already exists";
+            return new EntityAlreadyExistsException(message);
+        }
+        return e;
     }
 }

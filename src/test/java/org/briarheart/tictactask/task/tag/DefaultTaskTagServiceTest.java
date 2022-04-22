@@ -6,11 +6,15 @@ import org.briarheart.tictactask.task.Task;
 import org.briarheart.tictactask.task.TaskRepository;
 import org.briarheart.tictactask.task.TaskStatus;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,13 +24,13 @@ import static org.mockito.Mockito.*;
  * @author Roman Chigvintsev
  */
 class DefaultTaskTagServiceTest {
-    private TagRepository tagRepository;
+    private TaskTagRepository tagRepository;
     private TaskRepository taskRepository;
     private DefaultTaskTagService tagService;
 
     @BeforeEach
     void setUp() {
-        tagRepository = mock(TagRepository.class);
+        tagRepository = mock(TaskTagRepository.class);
         taskRepository = mock(TaskRepository.class);
         tagService = new DefaultTaskTagService(tagRepository, taskRepository);
     }
@@ -35,7 +39,7 @@ class DefaultTaskTagServiceTest {
     void shouldReturnAllTags() {
         User user = User.builder().id(1L).email("alice@mail.com").emailConfirmed(true).enabled(true).build();
         TaskTag tag = TaskTag.builder().id(2L).userId(user.getId()).name("Test tag").build();
-        when(tagRepository.findByUserId(user.getId())).thenReturn(Flux.just(tag));
+        when(tagRepository.findByUserIdOrderByCreatedAtDesc(user.getId())).thenReturn(Flux.just(tag));
 
         TaskTag result = tagService.getTags(user).blockFirst();
         assertEquals(tag, result);
@@ -78,19 +82,21 @@ class DefaultTaskTagServiceTest {
     @Test
     void shouldCreateTag() {
         long tagId = 2L;
+        LocalDateTime now = DateTimeUtils.currentDateTimeUtc();
         when(tagRepository.save(any())).thenAnswer(args -> {
             TaskTag t = new TaskTag(args.getArgument(0));
             t.setId(tagId);
+            t.setCreatedAt(now);
             return Mono.just(t);
         });
 
-        TaskTag tag = TaskTag.builder().userId(1L).name("New tag").build();
-        when(tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())).thenReturn(Mono.empty());
+        TaskTag newTag = TaskTag.builder().userId(1L).name("New tag").build();
 
-        TaskTag expectedResult = new TaskTag(tag);
+        TaskTag expectedResult = new TaskTag(newTag);
         expectedResult.setId(tagId);
+        expectedResult.setCreatedAt(now);
 
-        TaskTag result = tagService.createTag(tag).block();
+        TaskTag result = tagService.createTag(newTag).block();
         assertEquals(expectedResult, result);
     }
 
@@ -103,7 +109,8 @@ class DefaultTaskTagServiceTest {
     @Test
     void shouldThrowExceptionOnTagCreateWhenTagAlreadyExists() {
         TaskTag tag = TaskTag.builder().name("New tag").userId(1L).build();
-        when(tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())).thenReturn(Mono.just(tag));
+        when(tagRepository.save(any(TaskTag.class)))
+                .thenReturn(Mono.error(new DataIntegrityViolationException("No way!")));
         EntityAlreadyExistsException e = assertThrows(EntityAlreadyExistsException.class,
                 () -> tagService.createTag(tag).block());
         assertEquals("Tag with name \"" + tag.getName() + "\" already exists", e.getMessage());
@@ -114,7 +121,6 @@ class DefaultTaskTagServiceTest {
         TaskTag tag = TaskTag.builder().id(1L).userId(2L).name("Test tag").build();
 
         when(tagRepository.findByIdAndUserId(tag.getId(), tag.getUserId())).thenReturn(Mono.just(tag));
-        when(tagRepository.findByNameAndUserId(tag.getName(), tag.getUserId())).thenReturn(Mono.empty());
         when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new TaskTag(args.getArgument(0))));
 
         TaskTag updatedTag = new TaskTag(tag);
@@ -149,10 +155,8 @@ class DefaultTaskTagServiceTest {
         updatedTag.setId(tag.getId());
         updatedTag.setName("Updated test tag");
 
-        when(tagRepository.save(any())).thenAnswer(args -> Mono.just(new TaskTag(args.getArgument(0))));
+        when(tagRepository.save(any())).thenReturn(Mono.error(new DataIntegrityViolationException("No way!")));
         when(tagRepository.findByIdAndUserId(tag.getId(), tag.getUserId())).thenReturn(Mono.just(tag));
-        when(tagRepository.findByNameAndUserId(updatedTag.getName(), updatedTag.getUserId()))
-                .thenReturn(Mono.just(updatedTag));
 
         EntityAlreadyExistsException e = assertThrows(EntityAlreadyExistsException.class,
                 () -> tagService.updateTag(updatedTag).block());

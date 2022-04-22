@@ -2,12 +2,12 @@ package org.briarheart.tictactask.task.comment;
 
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,7 +28,7 @@ class DefaultTaskCommentServiceTest {
     void setUp() {
         taskCommentRepository = mock(TaskCommentRepository.class);
 
-        currentTime = LocalDateTime.now(ZoneOffset.UTC);
+        currentTime = DateTimeUtils.currentDateTimeUtc();
         taskCommentService = new DefaultTaskCommentService(taskCommentRepository) {
             @Override
             protected LocalDateTime getCurrentTime() {

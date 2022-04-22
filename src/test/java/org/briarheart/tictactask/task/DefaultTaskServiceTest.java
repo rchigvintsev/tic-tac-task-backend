@@ -5,11 +5,12 @@ import org.briarheart.tictactask.task.comment.TaskComment;
 import org.briarheart.tictactask.task.comment.TaskCommentRepository;
 import org.briarheart.tictactask.task.list.TaskList;
 import org.briarheart.tictactask.task.list.TaskListRepository;
-import org.briarheart.tictactask.task.tag.TagRepository;
 import org.briarheart.tictactask.task.tag.TaskTag;
 import org.briarheart.tictactask.task.tag.TaskTagRelation;
 import org.briarheart.tictactask.task.tag.TaskTagRelationRepository;
+import org.briarheart.tictactask.task.tag.TaskTagRepository;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.briarheart.tictactask.util.TestUsers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
 class DefaultTaskServiceTest {
     private TaskRepository taskRepository;
     private TaskTagRelationRepository taskTagRelationRepository;
-    private TagRepository tagRepository;
+    private TaskTagRepository tagRepository;
     private TaskListRepository taskListRepository;
     private TaskCommentRepository taskCommentRepository;
 
@@ -45,11 +45,11 @@ class DefaultTaskServiceTest {
     void setUp() {
         taskRepository = mock(TaskRepository.class);
         taskTagRelationRepository = mock(TaskTagRelationRepository.class);
-        tagRepository = mock(TagRepository.class);
+        tagRepository = mock(TaskTagRepository.class);
         taskListRepository = mock(TaskListRepository.class);
         taskCommentRepository = mock(TaskCommentRepository.class);
 
-        currentTime = LocalDateTime.now(ZoneOffset.UTC);
+        currentTime = DateTimeUtils.currentDateTimeUtc();
         taskService = new DefaultTaskService(taskRepository, taskTagRelationRepository, tagRepository,
                 taskListRepository, taskCommentRepository) {
             @Override

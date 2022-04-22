@@ -7,6 +7,7 @@ import org.briarheart.tictactask.user.TokenExpiredException;
 import org.briarheart.tictactask.user.UnableToSendMessageException;
 import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.user.UserRepository;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,8 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
@@ -163,7 +162,7 @@ class DefaultPasswordServiceTest {
                 .id(2L)
                 .userId(user.getId())
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
+                .expiresAt(DateTimeUtils.currentDateTimeUtc().plus(1, ChronoUnit.HOURS))
                 .build();
 
         when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
@@ -188,7 +187,7 @@ class DefaultPasswordServiceTest {
                 .id(2L)
                 .userId(user.getId())
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
+                .expiresAt(DateTimeUtils.currentDateTimeUtc().plus(1, ChronoUnit.HOURS))
                 .build();
 
         when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
@@ -213,7 +212,7 @@ class DefaultPasswordServiceTest {
                 .id(2L)
                 .userId(user.getId())
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
+                .expiresAt(DateTimeUtils.currentDateTimeUtc().plus(1, ChronoUnit.HOURS))
                 .build();
 
         when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
@@ -247,7 +246,7 @@ class DefaultPasswordServiceTest {
                 .id(2L)
                 .userId(userId)
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).minus(1, ChronoUnit.HOURS))
+                .expiresAt(DateTimeUtils.currentDateTimeUtc().minus(1, ChronoUnit.HOURS))
                 .build();
         when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
                 userId,
@@ -266,7 +265,7 @@ class DefaultPasswordServiceTest {
                 .id(2L)
                 .userId(userId)
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
+                .expiresAt(DateTimeUtils.currentDateTimeUtc().plus(1, ChronoUnit.HOURS))
                 .build();
         when(tokenRepository.findFirstByUserIdAndTokenValueAndValidOrderByCreatedAtDesc(
                 userId,

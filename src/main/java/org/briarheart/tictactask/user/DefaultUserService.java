@@ -8,6 +8,7 @@ import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.user.email.EmailConfirmationService;
 import org.briarheart.tictactask.user.profilepicture.ProfilePicture;
 import org.briarheart.tictactask.user.profilepicture.ProfilePictureRepository;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.briarheart.tictactask.util.Pageables;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.data.domain.Pageable;
@@ -18,8 +19,6 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Locale;
 
 /**
@@ -161,7 +160,7 @@ public class DefaultUserService implements UserService {
             User newUser = new User(user);
             newUser.setId(null);
             newUser.setEmailConfirmed(false);
-            newUser.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+            newUser.setCreatedAt(DateTimeUtils.currentDateTimeUtc());
             newUser.setPassword(encodePassword(user.getPassword()));
             newUser.setAdmin(false);
             newUser.setProfilePictureUrl(null);

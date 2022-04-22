@@ -5,6 +5,8 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.time.LocalDateTime;
+
 /**
  * @author Roman Chigvintsev
  */
@@ -19,6 +21,7 @@ public class TaskTag {
     private Long userId;
     private String name;
     private Integer color;
+    private LocalDateTime createdAt;
 
     /**
      * Creates copy of the given tag.
@@ -31,5 +34,6 @@ public class TaskTag {
         this.userId = other.userId;
         this.name = other.name;
         this.color = other.color;
+        this.createdAt = other.createdAt;
     }
 }

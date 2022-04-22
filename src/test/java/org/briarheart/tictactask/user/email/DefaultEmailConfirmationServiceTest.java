@@ -7,6 +7,7 @@ import org.briarheart.tictactask.user.TokenExpiredException;
 import org.briarheart.tictactask.user.UnableToSendMessageException;
 import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.user.UserRepository;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -15,8 +16,6 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.MailSendException;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
@@ -104,7 +103,7 @@ class DefaultEmailConfirmationServiceTest {
                 .id(2L)
                 .userId(user.getId())
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
+                .expiresAt(DateTimeUtils.currentDateTimeUtc().plus(1, ChronoUnit.HOURS))
                 .build();
 
         when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(user.getId(), token.getTokenValue()))
@@ -138,7 +137,7 @@ class DefaultEmailConfirmationServiceTest {
                 .id(2L)
                 .userId(userId)
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).minus(1, ChronoUnit.HOURS))
+                .expiresAt(DateTimeUtils.currentDateTimeUtc().minus(1, ChronoUnit.HOURS))
                 .build();
         when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, token.getTokenValue()))
                 .thenReturn(Mono.just(token));
@@ -154,7 +153,7 @@ class DefaultEmailConfirmationServiceTest {
                 .id(2L)
                 .userId(userId)
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
+                .expiresAt(DateTimeUtils.currentDateTimeUtc().plus(1, ChronoUnit.HOURS))
                 .build();
         when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(userId, token.getTokenValue()))
                 .thenReturn(Mono.just(token));
@@ -171,7 +170,7 @@ class DefaultEmailConfirmationServiceTest {
                 .id(2L)
                 .userId(user.getId())
                 .tokenValue("K1Mb2ByFcfYndPmuFijB")
-                .expiresAt(LocalDateTime.now(ZoneOffset.UTC).plus(1, ChronoUnit.HOURS))
+                .expiresAt(DateTimeUtils.currentDateTimeUtc().plus(1, ChronoUnit.HOURS))
                 .build();
 
         when(tokenRepository.findFirstByUserIdAndTokenValueOrderByCreatedAtDesc(user.getId(), token.getTokenValue()))

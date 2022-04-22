@@ -1,0 +1,1 @@
+ALTER TABLE tag ADD created_at TIMESTAMP NOT NULL DEFAULT now();

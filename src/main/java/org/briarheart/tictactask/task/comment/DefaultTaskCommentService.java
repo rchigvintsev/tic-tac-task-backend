@@ -3,13 +3,13 @@ package org.briarheart.tictactask.task.comment;
 import lombok.extern.slf4j.Slf4j;
 import org.briarheart.tictactask.data.EntityNotFoundException;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 /**
  * Default implementation of {@link TaskCommentService}.
@@ -51,6 +51,6 @@ public class DefaultTaskCommentService implements TaskCommentService {
     }
 
     protected LocalDateTime getCurrentTime() {
-        return LocalDateTime.now(ZoneOffset.UTC);
+        return DateTimeUtils.currentDateTimeUtc();
     }
 }

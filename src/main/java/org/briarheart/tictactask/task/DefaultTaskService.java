@@ -6,11 +6,12 @@ import org.briarheart.tictactask.task.comment.TaskComment;
 import org.briarheart.tictactask.task.comment.TaskCommentRepository;
 import org.briarheart.tictactask.task.list.TaskList;
 import org.briarheart.tictactask.task.list.TaskListRepository;
-import org.briarheart.tictactask.task.tag.TagRepository;
 import org.briarheart.tictactask.task.tag.TaskTag;
 import org.briarheart.tictactask.task.tag.TaskTagRelation;
 import org.briarheart.tictactask.task.tag.TaskTagRelationRepository;
+import org.briarheart.tictactask.task.tag.TaskTagRepository;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.briarheart.tictactask.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,13 +35,13 @@ import java.util.stream.Collectors;
 public class DefaultTaskService implements TaskService {
     private final TaskRepository taskRepository;
     private final TaskTagRelationRepository taskTagRelationRepository;
-    private final TagRepository tagRepository;
+    private final TaskTagRepository tagRepository;
     private final TaskListRepository taskListRepository;
     private final TaskCommentRepository taskCommentRepository;
 
     public DefaultTaskService(TaskRepository taskRepository,
                               TaskTagRelationRepository taskTagRelationRepository,
-                              TagRepository tagRepository,
+                              TaskTagRepository tagRepository,
                               TaskListRepository taskListRepository,
                               TaskCommentRepository taskCommentRepository) {
         Assert.notNull(taskRepository, "Task repository must not be null");
@@ -196,7 +196,7 @@ public class DefaultTaskService implements TaskService {
     }
 
     protected LocalDateTime getCurrentTime() {
-        return LocalDateTime.now(ZoneOffset.UTC);
+        return DateTimeUtils.currentDateTimeUtc();
     }
 
     private Mono<Task> findTask(Long id, Long userId) {

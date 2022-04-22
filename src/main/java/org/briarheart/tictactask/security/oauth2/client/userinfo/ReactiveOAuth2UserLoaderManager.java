@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.briarheart.tictactask.security.oauth2.core.user.OAuth2UserAttributeAccessor;
 import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.user.UserRepository;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -15,8 +16,6 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 
 /**
@@ -94,7 +93,7 @@ public class ReactiveOAuth2UserLoaderManager<R extends OAuth2UserRequest, U exte
                     .enabled(true)
                     .fullName(attrAccessor.getFullName())
                     .profilePictureUrl(attrAccessor.getPicture())
-                    .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                    .createdAt(DateTimeUtils.currentDateTimeUtc())
                     .build();
             return userRepository.save(newUser).doOnSuccess(u -> log.debug("User with id {} is created", u.getId()));
         });

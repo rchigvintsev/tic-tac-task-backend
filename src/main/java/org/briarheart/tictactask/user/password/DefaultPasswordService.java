@@ -10,6 +10,7 @@ import org.briarheart.tictactask.user.TokenExpiredException;
 import org.briarheart.tictactask.user.UnableToSendMessageException;
 import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.user.UserRepository;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.joda.time.format.PeriodFormat;
@@ -24,7 +25,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.UUID;
@@ -159,7 +159,7 @@ public class DefaultPasswordService implements PasswordService {
 
     private Mono<PasswordResetConfirmationToken> createPasswordResetToken(User user) {
         return Mono.defer(() -> {
-            LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC);
+            LocalDateTime createdAt = DateTimeUtils.currentDateTimeUtc();
             LocalDateTime expiresAt = createdAt.plus(passwordResetTokenExpirationTimeout);
             PasswordResetConfirmationToken token = PasswordResetConfirmationToken.builder()
                     .userId(user.getId())

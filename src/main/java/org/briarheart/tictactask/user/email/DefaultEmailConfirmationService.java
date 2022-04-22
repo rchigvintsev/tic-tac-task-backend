@@ -10,6 +10,7 @@ import org.briarheart.tictactask.user.TokenExpiredException;
 import org.briarheart.tictactask.user.UnableToSendMessageException;
 import org.briarheart.tictactask.user.User;
 import org.briarheart.tictactask.user.UserRepository;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.mail.MailException;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.UUID;
@@ -130,7 +130,7 @@ public class DefaultEmailConfirmationService implements EmailConfirmationService
 
     private Mono<EmailConfirmationToken> createEmailConfirmationToken(User user) {
         return Mono.defer(() -> {
-            LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC);
+            LocalDateTime createdAt = DateTimeUtils.currentDateTimeUtc();
             LocalDateTime expiresAt = createdAt.plus(emailConfirmationTokenExpirationTimeout);
             EmailConfirmationToken token = EmailConfirmationToken.builder()
                     .userId(user.getId())

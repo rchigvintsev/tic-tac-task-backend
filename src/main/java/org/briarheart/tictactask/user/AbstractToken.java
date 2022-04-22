@@ -3,10 +3,10 @@ package org.briarheart.tictactask.user;
 import io.jsonwebtoken.lang.Assert;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.springframework.data.annotation.Id;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 /**
  * @author Roman Chigvintsev
@@ -43,7 +43,7 @@ public abstract class AbstractToken {
     }
 
     public boolean isExpired() {
-        return !expiresAt.isAfter(LocalDateTime.now(ZoneOffset.UTC));
+        return !expiresAt.isAfter(DateTimeUtils.currentDateTimeUtc());
     }
 
     public static abstract class AbstractTokenBuilder<T extends AbstractToken> {

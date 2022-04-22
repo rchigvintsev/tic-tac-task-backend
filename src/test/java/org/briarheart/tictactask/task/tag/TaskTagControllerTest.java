@@ -9,6 +9,7 @@ import org.briarheart.tictactask.task.tag.TaskTagController.CreateTagRequest;
 import org.briarheart.tictactask.task.tag.TaskTagController.TaskTagResponse;
 import org.briarheart.tictactask.task.tag.TaskTagController.UpdateTagRequest;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -135,6 +136,7 @@ class TaskTagControllerTest {
         when(taskTagService.createTag(any(TaskTag.class))).thenAnswer(args -> {
             TaskTag t = new TaskTag(args.getArgument(0));
             t.setId(tagId);
+            t.setCreatedAt(DateTimeUtils.currentDateTimeUtc());
             return Mono.just(t);
         });
 

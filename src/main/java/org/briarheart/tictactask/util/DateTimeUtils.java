@@ -4,6 +4,7 @@ import org.springframework.util.Assert;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
@@ -15,6 +16,10 @@ import java.time.format.DateTimeParseException;
 public class DateTimeUtils {
     private DateTimeUtils() {
         //no instance
+    }
+
+    public static LocalDateTime currentDateTimeUtc() {
+        return LocalDateTime.now(ZoneOffset.UTC);
     }
 
     public static LocalDate parseIsoDate(String s) {

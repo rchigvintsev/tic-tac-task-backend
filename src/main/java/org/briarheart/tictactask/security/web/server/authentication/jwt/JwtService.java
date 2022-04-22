@@ -9,6 +9,7 @@ import org.briarheart.tictactask.security.web.server.authentication.accesstoken.
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.InvalidAccessTokenException;
 import org.briarheart.tictactask.security.web.server.authentication.accesstoken.ServerAccessTokenRepository;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -64,7 +65,7 @@ public class JwtService implements AccessTokenService {
             claims.put(JwtClaim.PROFILE_PICTURE_URL.getName(), user.getProfilePictureUrl());
             claims.put(JwtClaim.ADMIN.getName(), user.isAdmin());
 
-            LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+            LocalDateTime now = DateTimeUtils.currentDateTimeUtc();
             LocalDateTime expiration = now.plus(accessTokenValiditySeconds, ChronoUnit.SECONDS);
 
             claims.setIssuedAt(Date.from(now.toInstant(ZoneOffset.UTC)));
