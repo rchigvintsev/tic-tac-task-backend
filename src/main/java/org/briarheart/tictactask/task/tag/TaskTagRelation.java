@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.briarheart.tictactask.task.Task;
 
+import java.time.LocalDateTime;
+
 /**
  * Many-to-many relation between {@link Task} and {@link TaskTag}.
  *
@@ -16,4 +18,5 @@ import org.briarheart.tictactask.task.Task;
 public class TaskTagRelation {
     private Long taskId;
     private Long tagId;
+    private LocalDateTime createdAt;
 }

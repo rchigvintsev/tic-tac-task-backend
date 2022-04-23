@@ -7,7 +7,6 @@ import org.briarheart.tictactask.task.comment.TaskCommentRepository;
 import org.briarheart.tictactask.task.list.TaskList;
 import org.briarheart.tictactask.task.list.TaskListRepository;
 import org.briarheart.tictactask.task.tag.TaskTag;
-import org.briarheart.tictactask.task.tag.TaskTagRelation;
 import org.briarheart.tictactask.task.tag.TaskTagRelationRepository;
 import org.briarheart.tictactask.task.tag.TaskTagRepository;
 import org.briarheart.tictactask.user.User;
@@ -21,9 +20,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link TaskService}.
@@ -135,21 +131,10 @@ public class DefaultTaskService implements TaskService {
                 .doOnSuccess(v -> log.debug("Task with id {} is deleted", id));
     }
 
-    @Transactional
     @Override
     public Flux<TaskTag> getTags(Long taskId, User user) throws EntityNotFoundException {
-        return getTask(taskId, user).flatMapMany(task -> {
-            Mono<List<TaskTagRelation>> taskTagRelations = taskTagRelationRepository.findByTaskId(taskId).collectList();
-            return taskTagRelations.flatMapMany(relationList -> {
-                if (relationList.isEmpty()) {
-                    return Flux.empty();
-                }
-                Set<Long> tagIds = relationList.stream()
-                        .map(TaskTagRelation::getTagId)
-                        .collect(Collectors.toSet());
-                return tagRepository.findByIdIn(tagIds);
-            });
-        });
+        Assert.notNull(user, "User must not be null");
+        return tagRepository.findByTaskIdAndUserIdOrderByCreatedAtDesc(taskId, user.getId());
     }
 
     @Transactional

@@ -10,7 +10,6 @@ import org.briarheart.tictactask.task.tag.TaskTagRelation;
 import org.briarheart.tictactask.task.tag.TaskTagRelationRepository;
 import org.briarheart.tictactask.task.tag.TaskTagRepository;
 import org.briarheart.tictactask.user.User;
-import org.briarheart.tictactask.util.DateTimeUtils;
 import org.briarheart.tictactask.util.TestUsers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,8 +20,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Set;
 
+import static org.briarheart.tictactask.util.DateTimeUtils.currentDateTimeUtc;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -49,7 +48,7 @@ class DefaultTaskServiceTest {
         taskListRepository = mock(TaskListRepository.class);
         taskCommentRepository = mock(TaskCommentRepository.class);
 
-        currentTime = DateTimeUtils.currentDateTimeUtc();
+        currentTime = currentDateTimeUtc();
         taskService = new DefaultTaskService(taskRepository, taskTagRelationRepository, tagRepository,
                 taskListRepository, taskCommentRepository) {
             @Override
@@ -420,10 +419,8 @@ class DefaultTaskServiceTest {
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
         TaskTag tag = TaskTag.builder().id(3L).userId(user.getId()).name("Test tag").build();
 
-        when(taskRepository.findByIdAndUserId(task.getId(), user.getId())).thenReturn(Mono.just(task));
-        when(taskTagRelationRepository.findByTaskId(task.getId()))
-                .thenReturn(Flux.just(new TaskTagRelation(task.getId(), tag.getId())));
-        when(tagRepository.findByIdIn(Set.of(tag.getId()))).thenReturn(Flux.just(tag));
+        when(tagRepository.findByTaskIdAndUserIdOrderByCreatedAtDesc(task.getId(), user.getId()))
+                .thenReturn(Flux.just(tag));
 
         TaskTag result = taskService.getTags(task.getId(), user).blockFirst();
         assertEquals(tag, result);
@@ -437,17 +434,6 @@ class DefaultTaskServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionOnTagsGetWhenTaskIsNotFound() {
-        User user = TestUsers.JOHN_DOE;
-        long taskId = 2L;
-
-        when(taskRepository.findByIdAndUserId(anyLong(), anyLong())).thenReturn(Mono.empty());
-        EntityNotFoundException e = assertThrows(EntityNotFoundException.class,
-                () -> taskService.getTags(taskId, user).blockFirst());
-        assertEquals("Task with id " + taskId + " is not found", e.getMessage());
-    }
-
-    @Test
     void shouldAssignTagToTask() {
         User user = TestUsers.JOHN_DOE;
         Task task = Task.builder().id(2L).userId(user.getId()).title("Test task").build();
@@ -457,7 +443,7 @@ class DefaultTaskServiceTest {
         when(tagRepository.findByIdAndUserId(tag.getId(), user.getId())).thenReturn(Mono.just(tag));
         when(taskTagRelationRepository.findByTaskIdAndTagId(task.getId(), tag.getId())).thenReturn(Mono.empty());
         when(taskTagRelationRepository.create(task.getId(), tag.getId()))
-                .thenAnswer(args -> Mono.just(new TaskTagRelation(task.getId(), tag.getId())));
+                .thenAnswer(args -> Mono.just(new TaskTagRelation(task.getId(), tag.getId(), currentDateTimeUtc())));
 
         taskService.assignTag(task.getId(), tag.getId(), user).block();
         verify(taskTagRelationRepository, times(1)).create(task.getId(), tag.getId());
