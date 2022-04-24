@@ -5,6 +5,7 @@ import org.briarheart.tictactask.task.Task;
 import org.briarheart.tictactask.task.TaskRepository;
 import org.briarheart.tictactask.task.TaskStatus;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
@@ -12,8 +13,9 @@ import org.springframework.data.domain.Pageable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
@@ -76,15 +78,18 @@ class DefaultTaskListServiceTest {
     @Test
     void shouldCreateTaskList() {
         long taskListId = 2L;
+        LocalDateTime now = DateTimeUtils.currentDateTimeUtc();
         when(taskListRepository.save(any(TaskList.class))).thenAnswer(args -> {
             TaskList l = new TaskList(args.getArgument(0));
             l.setId(taskListId);
+            l.setCreatedAt(now);
             return Mono.just(l);
         });
 
         TaskList taskList = TaskList.builder().userId(1L).name("New task list").build();
         TaskList expectedResult = new TaskList(taskList);
         expectedResult.setId(taskListId);
+        expectedResult.setCreatedAt(now);
 
         TaskList result = taskListService.createTaskList(taskList).block();
         assertEquals(expectedResult, result);
@@ -94,13 +99,11 @@ class DefaultTaskListServiceTest {
     void shouldNotAllowToMarkTaskListCompletedOnTaskListCreate() {
         when(taskListRepository.save(any(TaskList.class)))
                 .thenAnswer(args -> Mono.just(new TaskList(args.getArgument(0))));
-
         TaskList taskList = TaskList.builder().userId(1L).name("New task list").completed(true).build();
-        TaskList expectedResult = new TaskList(taskList);
-        expectedResult.setCompleted(false);
 
         TaskList result = taskListService.createTaskList(taskList).block();
-        assertEquals(expectedResult, result);
+        assertNotNull(result);
+        assertFalse(result.isCompleted());
     }
 
     @Test

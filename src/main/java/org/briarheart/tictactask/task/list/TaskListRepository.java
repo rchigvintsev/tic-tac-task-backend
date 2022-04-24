@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
  * @author Roman Chigvintsev
  */
 public interface TaskListRepository extends ReactiveCrudRepository<TaskList, Long> {
-    @Query("SELECT * FROM task_list WHERE completed = :completed AND user_id = :userId")
+    @Query("SELECT * FROM task_list WHERE completed = :completed AND user_id = :userId ORDER BY created_at DESC")
     Flux<TaskList> findByCompletedAndUserId(boolean completed, Long userId);
 
     @Query("SELECT * FROM task_list WHERE id = :id AND user_id = :userId")

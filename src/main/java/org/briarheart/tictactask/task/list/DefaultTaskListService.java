@@ -6,6 +6,7 @@ import org.briarheart.tictactask.task.Task;
 import org.briarheart.tictactask.task.TaskRepository;
 import org.briarheart.tictactask.task.TaskStatus;
 import org.briarheart.tictactask.user.User;
+import org.briarheart.tictactask.util.DateTimeUtils;
 import org.briarheart.tictactask.util.Pageables;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -52,6 +53,7 @@ public class DefaultTaskListService implements TaskListService {
             TaskList newTaskList = new TaskList(taskList);
             newTaskList.setId(null);
             newTaskList.setCompleted(false);
+            newTaskList.setCreatedAt(DateTimeUtils.currentDateTimeUtc());
             return taskListRepository.save(newTaskList)
                     .doOnSuccess(l -> log.debug("Task list with id {} is created", l.getId()));
         });
@@ -65,6 +67,7 @@ public class DefaultTaskListService implements TaskListService {
                 .flatMap(existingTaskList -> {
                     TaskList updatedTaskList = new TaskList(taskList);
                     updatedTaskList.setCompleted(existingTaskList.isCompleted());
+                    updatedTaskList.setCreatedAt(existingTaskList.getCreatedAt());
                     return taskListRepository.save(updatedTaskList);
                 })
                 .doOnSuccess(l -> log.debug("Task list with id {} is updated", l.getId()));

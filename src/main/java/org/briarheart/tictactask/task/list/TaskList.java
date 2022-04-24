@@ -3,6 +3,8 @@ package org.briarheart.tictactask.task.list;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
+import java.time.LocalDateTime;
+
 /**
  * @author Roman Chigvintsev
  */
@@ -17,6 +19,7 @@ public class TaskList {
     private String name;
     @Builder.Default
     private boolean completed = false;
+    private LocalDateTime createdAt;
 
     /**
      * Creates copy of the given task list.
@@ -28,5 +31,6 @@ public class TaskList {
         this.userId = other.userId;
         this.name = other.name;
         this.completed = other.completed;
+        this.createdAt = other.createdAt;
     }
 }
