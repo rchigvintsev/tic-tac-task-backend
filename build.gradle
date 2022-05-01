@@ -28,6 +28,7 @@ ext {
     jodaTimeVersion = '2.10.13'
     springdocOpenapiVersion = '1.6.4'
     embeddedDatabaseSpringTestVersion = '2.1.0'
+    jooqVersion = '3.16.6'
 }
 
 group = 'org.briarheart'
@@ -54,6 +55,7 @@ dependencies {
     implementation "io.jsonwebtoken:jjwt-api:$jjwtVersion"
     implementation "joda-time:joda-time:$jodaTimeVersion"
     implementation "org.springdoc:springdoc-openapi-webflux-ui:$springdocOpenapiVersion"
+    implementation "org.jooq:jooq:$jooqVersion"
 
     runtimeOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.postgresql:postgresql'
