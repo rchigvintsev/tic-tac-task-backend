@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -60,7 +61,9 @@ public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
         Assert.notNull(request, "Request must not be null");
         Assert.notNull(user, "User must not be null");
 
-        List<Field<Object>> taskFields = getAllFields();
+        List<Field<Object>> taskFields = new ArrayList<>(getAllFields());
+        taskFields.add(field("(case when DEADLINE_DATE is not null then DEADLINE_DATE::timestamp "
+                + "else DEADLINE_DATE_TIME end) as DEADLINE"));
         DSLContext create = DSL.using(SQLDialect.POSTGRES);
         Query query = create.select(taskFields)
                 .from(table("task"))
@@ -70,7 +73,7 @@ public class CustomizedTaskRepositoryImpl implements CustomizedTaskRepository {
             statusCondition = statusCondition.or(getTaskStatusCondition(status, request));
         }
         query = ((SelectConditionStep<?>) query).and(statusCondition)
-                .orderBy(field("created_at").desc())
+                .orderBy(field("deadline").asc(), field("created_at").desc())
                 .offset(Pageables.getOffset(pageable));
 
         Integer limit = Pageables.getLimit(pageable);
